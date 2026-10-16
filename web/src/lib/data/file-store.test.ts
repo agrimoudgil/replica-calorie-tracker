@@ -154,6 +154,41 @@ describe("file store", () => {
     expect(await db.searchFoods(A, "thepla")).toEqual([]);
   });
 
+  it("recipes: private, log as one food, edit without changing old meals, guard their ingredients", async () => {
+    const masala = await db.createCustomFood(A, { name: "Home masala", unit: "tbsp", gramsPerUnit: 6, perServing: { kcal: 20, proteinG: 1, carbG: 3, fatG: 0.5, fiberG: 1 } });
+    const input = {
+      name: "My dal",
+      servings: 4,
+      servingUnit: "katori" as const,
+      ingredients: [
+        { foodId: "seed-raw-toor-dal", quantity: 1, unit: "katori" as const },
+        { foodId: "seed-onion", quantity: 1, unit: "piece" as const },
+        { foodId: masala.id, quantity: 1, unit: "tbsp" as const },
+      ],
+    };
+    const recipe = await db.createRecipe(A, input);
+    expect(recipe.ingredients).toHaveLength(3);
+    expect((await db.searchFoods(A, "my dal"))[0]).toMatchObject({ id: recipe.food.id, isRecipe: true });
+    expect(await db.getRecipe(B, recipe.food.id)).toBeNull();
+    await expect(db.createRecipe(B, input)).rejects.toThrow("isn't in your food list"); // A's masala
+    await expect(db.updateRecipe(B, recipe.food.id, input)).rejects.toThrow("isn't one of yours");
+
+    const meal = await db.createDraftMeal(A, draft());
+    const saved = await db.saveMeal(A, meal.id, { mealType: "dinner", items: [{ foodId: recipe.food.id, quantity: 1, unit: "katori" }] });
+    const kcal = saved.items[0].nutrients.kcal;
+    expect(kcal).toBeCloseTo((343 * 1.3 + 40 * 1.1 + 20) / 4, 0);
+
+    await expect(db.deleteCustomFood(A, masala.id)).rejects.toThrow("your recipe “My dal”");
+    const updated = await db.updateRecipe(A, recipe.food.id, { ...input, servings: 2, ingredients: input.ingredients.slice(0, 2) });
+    expect(updated.ingredients.map((i) => i.food.id)).toEqual(["seed-raw-toor-dal", "seed-onion"]);
+    expect((await db.getMeal(A, meal.id))?.items[0].nutrients.kcal).toBe(kcal); // logged meals keep their numbers
+
+    await db.deleteCustomFood(A, masala.id); // no longer an ingredient
+    await db.deleteCustomFood(A, recipe.food.id);
+    expect(await db.getRecipe(A, recipe.food.id)).toBeNull();
+    expect((await db.getMeal(A, meal.id))?.items[0]).toMatchObject({ foodId: null, nutrients: { kcal } });
+  });
+
   it("drafts never count toward the day", async () => {
     await db.createDraftMeal(A, draft());
     expect((await db.getDay(A, "2026-10-16")).meals).toHaveLength(0);

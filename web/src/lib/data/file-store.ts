@@ -10,6 +10,7 @@ import { computeTargets, ageOn } from "@/lib/nutrition/targets";
 import type { Food } from "@/lib/nutrition/types";
 import { buildCustomFood } from "./custom-food";
 import { applyItemEdits, mealScore } from "./meal-math";
+import { assembleRecipe, buildRecipe, recipeMeta, usedInRecipe, type IngredientGrams, type RecipeMeta } from "./recipe";
 import { DataError, type AiUsage, type DataLayer, type Meal, type Profile } from "./types";
 
 /*
@@ -26,6 +27,8 @@ type State = {
   customFoods: Food[];
   aiUsage: AiUsage[];
   favourites: Record<string, string[]>;
+  /** By recipe id: what the database keeps in source_ref and recipe_ingredients. */
+  recipes: Record<string, RecipeMeta & { ingredients: IngredientGrams[] }>;
 };
 
 export function createFileStore(dir: string): DataLayer {
@@ -37,9 +40,10 @@ export function createFileStore(dir: string): DataLayer {
     try {
       state = JSON.parse(fs.readFileSync(file, "utf8")) as State;
     } catch {
-      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [], favourites: {} };
+      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [], favourites: {}, recipes: {} };
     }
     state.favourites ??= {}; // stores written before favourites existed
+    state.recipes ??= {}; // ...or before recipes existed
     return state;
   };
 
@@ -124,13 +128,43 @@ export function createFileStore(dir: string): DataLayer {
       const s = load();
       const index = s.customFoods.findIndex((f) => f.id === foodId && f.ownerId === userId);
       if (index < 0) throw new DataError("not_found", "That food isn't one of yours.");
+      const usedIn = s.customFoods.find((f) => f.ownerId === userId && s.recipes[f.id]?.ingredients.some((i) => i.foodId === foodId));
+      if (usedIn) throw usedInRecipe(usedIn.name);
       s.customFoods.splice(index, 1);
+      delete s.recipes[foodId];
       for (const meal of Object.values(s.meals)) {
         if (meal.userId !== userId) continue;
         for (const item of meal.items) if (item.foodId === foodId) item.foodId = null; // like ON DELETE SET NULL
       }
       for (const [uid, ids] of Object.entries(s.favourites)) s.favourites[uid] = ids.filter((id) => id !== foodId);
       persist();
+    },
+
+    async getRecipe(userId, recipeId) {
+      const food = load().customFoods.find((f) => f.id === recipeId && f.ownerId === userId && f.isRecipe);
+      const stored = food && load().recipes[food.id];
+      return food && stored ? assembleRecipe(food, stored, stored.ingredients, foodsFor(userId)) : null;
+    },
+
+    async createRecipe(userId, input) {
+      requireId(userId, "user");
+      const built = buildRecipe(userId, randomUUID(), input, foodsFor(userId));
+      const s = load();
+      s.customFoods.push(built.food);
+      s.recipes[built.food.id] = { ...recipeMeta(input), ingredients: built.ingredients };
+      persist();
+      return assembleRecipe(built.food, s.recipes[built.food.id], built.ingredients, foodsFor(userId));
+    },
+
+    async updateRecipe(userId, recipeId, input) {
+      const s = load();
+      const index = s.customFoods.findIndex((f) => f.id === recipeId && f.ownerId === userId && f.isRecipe);
+      if (index < 0) throw new DataError("not_found", "That recipe isn't one of yours.");
+      const built = buildRecipe(userId, recipeId, input, foodsFor(userId));
+      s.customFoods[index] = built.food;
+      s.recipes[recipeId] = { ...recipeMeta(input), ingredients: built.ingredients };
+      persist();
+      return assembleRecipe(built.food, s.recipes[recipeId], built.ingredients, foodsFor(userId));
     },
 
     async createDraftMeal(userId, draft) {
@@ -260,6 +294,7 @@ export function createFileStore(dir: string): DataLayer {
       const s = load();
       delete s.profiles[userId];
       for (const [id, meal] of Object.entries(s.meals)) if (meal.userId === userId) delete s.meals[id];
+      for (const f of s.customFoods) if (f.ownerId === userId) delete s.recipes[f.id];
       s.customFoods = s.customFoods.filter((f) => f.ownerId !== userId);
       s.aiUsage = s.aiUsage.filter((u) => u.userId !== userId);
       delete s.favourites[userId];

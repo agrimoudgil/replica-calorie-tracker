@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_INGREDIENTS, MAX_SERVINGS, SERVING_UNITS } from "@/lib/data/recipe";
 import { DIET_TYPES, MEAL_TYPES, UNITS } from "@/lib/nutrition/types";
 
 /** Shared by the onboarding form and PUT /api/profile. */
@@ -103,6 +104,18 @@ export const customFoodSchema = z.object({
   unit: z.enum(UNITS),
   gramsPerUnit: z.number({ error: "Enter how many grams one serving weighs." }).positive("Enter how many grams one serving weighs.").max(2000, "One serving can't weigh more than 2,000 g."),
   perServing: macroNumbersSchema,
+});
+
+/** A recipe: ingredients and how many servings the pot makes. Nutrients are computed on the server. */
+export const recipeSchema = z.object({
+  name: z.string().trim().min(1, "Give the recipe a name.").max(120, "Keep the name under 120 characters."),
+  servings: z.number({ error: "How many servings does it make?" }).positive("How many servings does it make?").max(MAX_SERVINGS, `Up to ${MAX_SERVINGS} servings.`),
+  servingUnit: z.enum(SERVING_UNITS),
+  cookedGrams: z.number().min(1, "Enter the cooked weight in grams, or leave it empty.").max(50000, "The cooked weight looks too high.").optional(),
+  ingredients: z
+    .array(z.object({ foodId, quantity, unit: z.enum(UNITS) }).strict())
+    .min(1, "Add at least one ingredient.")
+    .max(MAX_INGREDIENTS, `Up to ${MAX_INGREDIENTS} ingredients.`),
 });
 
 /** The user must tick "I understand" before an account is deleted. */

@@ -185,6 +185,61 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     expect(after?.items[2]).toMatchObject({ name: "A's thepla", foodId: null });
   }, 30_000);
 
+  it("recipes work live, stay private and guard their ingredients", async () => {
+    const masala = await a.store.createCustomFood(a.id, { name: "A's masala", unit: "tbsp", gramsPerUnit: 6, perServing: { kcal: 20, proteinG: 1, carbG: 3, fatG: 0.5, fiberG: 1 } });
+    const input = {
+      name: "A's dal",
+      servings: 4,
+      servingUnit: "katori" as const,
+      cookedGrams: 900,
+      ingredients: [
+        { foodId: "seed-raw-toor-dal", quantity: 1, unit: "katori" as const },
+        { foodId: "seed-onion", quantity: 1, unit: "piece" as const },
+        { foodId: "seed-tomato", quantity: 1, unit: "piece" as const },
+        { foodId: masala.id, quantity: 1, unit: "tbsp" as const },
+      ],
+    };
+    const recipe = await a.store.createRecipe(a.id, input);
+    expect(recipe.food).toMatchObject({ isRecipe: true, ownerId: a.id, defaultUnit: "katori", unitGrams: { katori: 225 } });
+    const reread = await a.store.getRecipe(a.id, recipe.food.id);
+    expect(reread).toMatchObject({ servings: 4, cookedGrams: 900, servingUnit: "katori" });
+    expect(reread?.ingredients.map((i) => [i.food.id, i.quantity, i.unit])).toEqual([
+      ["seed-raw-toor-dal", 1, "katori"],
+      ["seed-onion", 1, "piece"],
+      ["seed-tomato", 1, "piece"],
+      [masala.id, 1, "tbsp"],
+    ]);
+
+    // B sees none of it and can't use A's private ingredient or add to A's recipe.
+    expect(await b.store.getRecipe(b.id, recipe.food.id)).toBeNull();
+    expect(await b.store.getRecipe(a.id, recipe.food.id)).toBeNull(); // even naming A's id
+    await expect(b.store.createRecipe(b.id, input)).rejects.toThrow("isn't in your food list");
+    const { data: peek } = await b.client.from("recipe_ingredients").select("id").eq("recipe_id", recipe.food.id);
+    expect(peek ?? []).toHaveLength(0);
+    const sneak = await b.client.from("recipe_ingredients").insert({ recipe_id: recipe.food.id, ingredient_id: "seed-oil", grams: 100 });
+    expect(sneak.error).not.toBeNull();
+
+    // Logged as one food; editing the recipe later leaves that meal alone.
+    const meal = await a.store.createDraftMeal(a.id, draft());
+    const saved = await a.store.saveMeal(a.id, meal.id, { mealType: "dinner", items: [{ foodId: recipe.food.id, quantity: 1, unit: "katori" }] });
+    const kcal = saved.items[0].nutrients.kcal;
+    expect(kcal).toBeCloseTo((343 * 1.3 + 40 * 1.1 + 18 + 20) / 4, 0);
+    await expect(a.store.deleteCustomFood(a.id, masala.id)).rejects.toThrow("your recipe “A's dal”");
+    const updated = await a.store.updateRecipe(a.id, recipe.food.id, { ...input, cookedGrams: undefined, ingredients: input.ingredients.slice(0, 3) });
+    expect(updated.ingredients).toHaveLength(3);
+    const afterEdit = await a.store.getRecipe(a.id, recipe.food.id);
+    expect(afterEdit?.ingredients.map((i) => i.food.id)).not.toContain(masala.id);
+    expect(afterEdit?.cookedGrams).toBeUndefined();
+    expect((await a.store.getMeal(a.id, meal.id))?.items[0].nutrients.kcal).toBe(kcal);
+
+    await a.store.deleteCustomFood(a.id, masala.id); // no longer an ingredient
+    await a.store.deleteCustomFood(a.id, recipe.food.id);
+    expect(await a.store.getRecipe(a.id, recipe.food.id)).toBeNull();
+    const { data: left } = await admin().from("recipe_ingredients").select("id").eq("recipe_id", recipe.food.id);
+    expect(left).toHaveLength(0);
+    expect((await a.store.getMeal(a.id, meal.id))?.items[0]).toMatchObject({ foodId: null, nutrients: { kcal } });
+  }, 60_000);
+
   it("returns meals in a date range for the owner only", async () => {
     const meal = await a.store.createDraftMeal(a.id, draft({ eatenAt: "2026-10-10T07:30:00.000Z" }));
     await a.store.saveMeal(a.id, meal.id, { mealType: "lunch", items: [{ id: meal.items[0].id, quantity: 1, unit: "piece" }] });
@@ -200,6 +255,9 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
   });
 
   it("deletes an account with all its rows and photos", async () => {
+    // A recipe made from the person's own food used to make this fail, depending on row order.
+    const own = await b.store.createCustomFood(b.id, { name: "B's ghee mix", unit: "tbsp", gramsPerUnit: 14, perServing: { kcal: 120, proteinG: 0, carbG: 0, fatG: 13, fiberG: 0 } });
+    await b.store.createRecipe(b.id, { name: "B's dal", servings: 2, servingUnit: "katori", ingredients: [{ foodId: own.id, quantity: 1, unit: "tbsp" }, { foodId: "seed-raw-toor-dal", quantity: 1, unit: "katori" }] });
     await b.store.deleteAccount(b.id);
     const { data } = await admin().from("meals").select("id").eq("user_id", b.id);
     expect(data).toHaveLength(0);

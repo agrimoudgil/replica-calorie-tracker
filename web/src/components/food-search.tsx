@@ -14,12 +14,15 @@ export function FoodSearchField({
   onPick,
   autoFocus,
   emptyMessage = (q: string) => `Nothing called “${q}” yet. Try another name, like roti for phulka, or create it as your own food.`,
+  include = () => true,
 }: {
   label: string;
   placeholder?: string;
   onPick: (food: Food) => void;
   autoFocus?: boolean;
   emptyMessage?: (q: string) => string;
+  /** Which results to show, e.g. no recipes when picking ingredients. */
+  include?: (food: Food) => boolean;
 }) {
   const [results, setResults] = useState<Food[]>([]);
   const [searching, setSearching] = useState(false);
@@ -39,7 +42,7 @@ export function FoodSearchField({
       const res = await fetch(`/api/foods/search?q=${encodeURIComponent(q)}`).catch(() => null);
       if (q !== latest.current) return; // a newer search is on its way
       setSearching(false);
-      setResults(res?.ok ? ((await res.json()).foods as Food[]) : []);
+      setResults(res?.ok ? ((await res.json()).foods as Food[]).filter(include) : []);
     }, 200);
   };
 
@@ -54,7 +57,7 @@ export function FoodSearchField({
       emptyMessage={emptyMessage}
       options={results.map((f) => ({
         id: f.id,
-        label: f.ownerId ? `${f.name} (yours)` : f.name,
+        label: f.isRecipe ? `${f.name} (your recipe)` : f.ownerId ? `${f.name} (yours)` : f.name,
         detail: `${fmt.format(Math.round(nutrientsForGrams(f, gramsFor(f, f.defaultUnit, 1)).kcal))} kcal / ${f.defaultUnit}`,
       }))}
       onPick={(o) => {

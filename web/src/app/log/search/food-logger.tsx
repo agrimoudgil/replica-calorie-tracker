@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useRef, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, Utensils } from "lucide-react";
 import { CustomFoodForm } from "@/components/custom-food-form";
@@ -40,6 +41,8 @@ type FoodLoggerProps = {
   focus: "type" | "search";
   popular: Food[];
   favourites: QuickFood[];
+  /** The person's recipes (not already favourites): one tap adds a serving. */
+  recipes: QuickFood[];
   recents: QuickFood[];
   favouriteIds: string[];
   /** Foods to start with, e.g. from an insights idea. */
@@ -48,7 +51,7 @@ type FoodLoggerProps = {
   pastDay?: { date: string; eatenAt: Record<MealType, string> };
 };
 
-export function FoodLogger({ initialMealType, focus, popular, favourites: initialFavourites, recents, favouriteIds: initialIds, initialLines = [], pastDay }: FoodLoggerProps) {
+export function FoodLogger({ initialMealType, focus, popular, favourites: initialFavourites, recipes, recents, favouriteIds: initialIds, initialLines = [], pastDay }: FoodLoggerProps) {
   const router = useRouter();
   const textId = useId();
   const [favouriteIds, setFavouriteIds] = useState(() => new Set(initialIds));
@@ -212,12 +215,25 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
       <div className="flex flex-col gap-3">
         <FoodSearchField label="Or search the food list" autoFocus={focus === "search"} onPick={(f) => add(f)} />
         <QuickRow label="Favourites" foods={favourites} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
+        <QuickRow label="Your recipes" foods={recipes.filter((r) => !favouriteIds.has(r.food.id))} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
         <QuickRow label="Recent" foods={recents.filter((r) => !favouriteIds.has(r.food.id))} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
         {popular.length > 0 && (
           <QuickRow label="Popular" foods={popular.map((food) => ({ food, quantity: 1, unit: food.defaultUnit, count: 0 }))} onAdd={(q) => add(q.food)} plain />
         )}
         <div className="flex flex-wrap gap-2">
           <Button variant="ghost" size="sm" onClick={() => setCreating(true)}>Can&apos;t find it? Create your own food</Button>
+          {/* Carries the foods already picked, so they're still here after the recipe is saved. */}
+          <Link
+            href={`/recipes/new?${new URLSearchParams({
+              from: "log",
+              meal: mealType,
+              ...(pastDay ? { date: pastDay.date } : {}),
+              ...(lines.length ? { items: lines.map((l) => `${l.food.id}:${l.quantity}:${l.unit}`).join(",") } : {}),
+            })}`}
+            className="inline-flex h-9 items-center rounded-md px-3 text-sm font-semibold text-accent hover:bg-accent-soft"
+          >
+            Cook it often? Save it as a recipe
+          </Link>
         </div>
       </div>
 

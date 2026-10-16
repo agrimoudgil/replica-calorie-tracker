@@ -61,14 +61,38 @@ const rows: Row[] = [
   ["gulab-jamun", "Gulab jamun", "गुलाब जामुन", [], JAIN_VEG, { piece: 40 }, "piece", [320, 4, 50, 12, 0.5, 40, 6, 60, 80, 0.6]],
   ["milk", "Milk", "दूध", ["doodh", "toned milk"], JAIN_VEG, { glass: 250 }, "glass", [58, 3.1, 4.8, 3, 0, 4.8, 1.9, 44, 120, 0.1]],
   ["ghee", "Ghee", "घी", ["desi ghee", "clarified butter"], JAIN_VEG, { tbsp: 14 }, "tbsp", [900, 0, 0, 100, 0, 0, 62, 0, 0, 0]],
+  ["paneer", "Paneer", "पनीर", ["cottage cheese"], JAIN_VEG, { piece: 25 }, "g", [265, 18.3, 1.2, 20.8, 0, 1.2, 13, 20, 208, 0.2]],
 ];
+
+/*
+ * Raw staples for building recipes ("my dal" = toor dal + onion + tomato + oil).
+ * Rough per-100 g values after USDA FoodData Central. They're ingredients, not dishes:
+ * insights never suggest them as something to eat. Aliases avoid short words like
+ * "aloo" or "dal" so typed meals still match the cooked dishes above.
+ */
+const ingredientRows: Row[] = [
+  ["raw-toor-dal", "Toor dal (raw)", "तूर दाल (कच्ची)", ["raw toor dal", "arhar dal raw", "uncooked dal", "pigeon peas"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [343, 21.7, 62.8, 1.5, 15, 2, 0.3, 17, 130, 5.2]],
+  ["raw-rice", "Rice (raw)", "चावल (कच्चे)", ["raw rice", "uncooked rice"], JAIN_VEGAN, { katori: 140, tbsp: 12 }, "katori", [365, 7.1, 80, 0.7, 1.3, 0.1, 0.2, 5, 28, 0.8]],
+  ["atta", "Whole wheat flour (atta)", "आटा", ["atta", "gehun ka atta", "wheat flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "katori", [340, 13.2, 72, 2.5, 10.7, 0.4, 0.4, 2, 34, 3.6]],
+  ["besan", "Besan (gram flour)", "बेसन", ["besan", "gram flour", "chickpea flour"], JAIN_VEGAN, { katori: 90, tbsp: 7 }, "katori", [387, 22.4, 57.8, 6.7, 10.8, 10.9, 0.7, 64, 45, 4.9]],
+  ["onion", "Onion", "प्याज़", ["pyaz", "pyaaz", "raw onion"], VEGAN, { piece: 110 }, "piece", [40, 1.1, 9.3, 0.1, 1.7, 4.2, 0, 4, 23, 0.2]],
+  ["tomato", "Tomato", "टमाटर", ["tamatar"], JAIN_VEGAN, { piece: 100 }, "piece", [18, 0.9, 3.9, 0.2, 1.2, 2.6, 0, 5, 10, 0.3]],
+  ["raw-potato", "Potato (raw)", "आलू (कच्चा)", ["raw potato", "aloo raw"], VEGAN, { piece: 150 }, "piece", [77, 2, 17.5, 0.1, 2.2, 0.8, 0, 6, 12, 0.8]],
+  ["green-peas", "Green peas", "मटर", ["matar", "peas"], JAIN_VEGAN, { katori: 145 }, "katori", [81, 5.4, 14.5, 0.4, 5.1, 5.7, 0.1, 5, 25, 1.5]],
+  ["raw-spinach", "Spinach (raw)", "पालक (कच्चा)", ["raw spinach", "palak raw"], JAIN_VEGAN, { katori: 30 }, "katori", [23, 2.9, 3.6, 0.4, 2.2, 0.4, 0.1, 79, 99, 2.7]],
+  ["oil", "Cooking oil", "तेल", ["oil", "tel", "refined oil", "sunflower oil", "mustard oil"], JAIN_VEGAN, { tbsp: 14 }, "tbsp", [884, 0, 0, 100, 0, 0, 11, 0, 0, 0]],
+  ["sugar", "Sugar", "चीनी", ["cheeni", "chini", "shakkar"], JAIN_VEGAN, { tbsp: 12.5 }, "tbsp", [387, 0, 100, 0, 0, 100, 0, 1, 1, 0.1]],
+];
+
+/** Catalogue foods that are cooking ingredients only: never suggested as a meal. */
+export const INGREDIENT_ONLY_IDS: ReadonlySet<string> = new Set(ingredientRows.map(([id]) => `seed-${id}`));
 
 function toNutrients(n: Row[7]): Nutrients {
   const [kcal, proteinG, carbG, fatG, fiberG, sugarG, satFatG, sodiumMg, calciumMg, ironMg] = n;
   return { kcal, proteinG, carbG, fatG, fiberG, sugarG, satFatG, sodiumMg, calciumMg, ironMg };
 }
 
-export const SEED_FOODS: readonly Food[] = rows.map(([id, name, nameHi, aliases, dietTags, unitGrams, defaultUnit, n]) => ({
+export const SEED_FOODS: readonly Food[] = [...rows, ...ingredientRows].map(([id, name, nameHi, aliases, dietTags, unitGrams, defaultUnit, n]) => ({
   id: `seed-${id}`,
   ownerId: null,
   name,

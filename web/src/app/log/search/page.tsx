@@ -37,7 +37,11 @@ export default async function AddFoodPage({ searchParams }: PageProps<"/log/sear
     const food = foods.find((f) => f.id === id);
     return usual ? [usual] : food ? [{ food, quantity: 1, unit: food.defaultUnit, count: 0 }] : [];
   });
-  const popular = favourites.length || recents.length ? [] : POPULAR.map((id) => foods.find((f) => f.id === id)).filter((f) => f !== undefined);
+  // Your recipes get their own row (at your usual portion), unless they're already a favourite.
+  const recipes: QuickFood[] = foods
+    .filter((f) => f.isRecipe && f.ownerId === userId && !favouriteIds.includes(f.id))
+    .map((food) => recents.find((r) => r.food.id === food.id) ?? { food, quantity: 1, unit: food.defaultUnit, count: 0 });
+  const popular = favourites.length || recents.length || recipes.length ? [] : POPULAR.map((id) => foods.find((f) => f.id === id)).filter((f) => f !== undefined);
 
   return (
     <Screen>
@@ -51,7 +55,8 @@ export default async function AddFoodPage({ searchParams }: PageProps<"/log/sear
         focus={mode === "search" ? "search" : "type"}
         popular={popular}
         favourites={favourites}
-        recents={recents.filter((r) => !favouriteIds.includes(r.food.id)).slice(0, 8)}
+        recipes={recipes}
+        recents={recents.filter((r) => !favouriteIds.includes(r.food.id) && !r.food.isRecipe).slice(0, 8)}
         favouriteIds={favouriteIds}
         initialLines={parseItemsParam(typeof items === "string" ? items : "", foods)}
         pastDay={

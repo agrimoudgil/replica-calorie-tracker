@@ -100,6 +100,31 @@ export type NewFoodInput = {
   perServing: MacroNumbers;
 };
 
+/** A unit a recipe's serving can be counted in (not grams). */
+export type ServingUnit = Exclude<Unit, "g">;
+
+/** A dish made from several foods, e.g. "My dal": logged one serving at a time like any food. */
+export type RecipeInput = {
+  name: string;
+  /** How many servings the whole pot makes, and what one serving is. */
+  servings: number;
+  servingUnit: ServingUnit;
+  /** Weight of the cooked dish, if weighed. Without it, the ingredients' raw weight is used. */
+  cookedGrams?: number;
+  ingredients: Array<{ foodId: string; quantity: number; unit: Unit }>;
+};
+
+export type RecipeIngredient = { food: Food; grams: number; quantity: number; unit: Unit };
+
+export type Recipe = {
+  /** The recipe as a food: per-100 g nutrients, one serving as its default unit. */
+  food: Food;
+  servings: number;
+  servingUnit: ServingUnit;
+  cookedGrams?: number;
+  ingredients: RecipeIngredient[];
+};
+
 export type DaySummary = {
   date: string;
   totals: Nutrients;
@@ -145,11 +170,20 @@ export interface DataLayer {
 
   listFoods(userId: string): Promise<Food[]>;
   searchFoods(userId: string, query: string, limit?: number): Promise<Food[]>;
-  /** The person's own foods only (not the shared catalogue). */
+  /** The person's own foods and recipes only (not the shared catalogue). */
   listCustomFoods(userId: string): Promise<Food[]>;
   createCustomFood(userId: string, input: NewFoodInput): Promise<Food>;
-  /** Meals already logged keep their numbers; the item just loses its link to the food. */
+  /**
+   * Deletes a food or recipe. Meals already logged keep their numbers; the item just
+   * loses its link. A food still used in one of the person's recipes is refused.
+   */
   deleteCustomFood(userId: string, foodId: string): Promise<void>;
+
+  getRecipe(userId: string, recipeId: string): Promise<Recipe | null>;
+  /** Ingredients must be foods the person can see, and not recipes themselves. */
+  createRecipe(userId: string, input: RecipeInput): Promise<Recipe>;
+  /** Changes the recipe from now on; meals already logged keep their numbers. */
+  updateRecipe(userId: string, recipeId: string, input: RecipeInput): Promise<Recipe>;
 
   createDraftMeal(userId: string, draft: DraftMealInput): Promise<Meal>;
   getMeal(userId: string, mealId: string): Promise<Meal | null>;

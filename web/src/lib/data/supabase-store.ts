@@ -8,6 +8,7 @@ import { PHOTO_BUCKET } from "@/lib/supabase/config";
 import { buildCustomFood } from "./custom-food";
 import { rankFoods } from "./food-rank";
 import { applyItemEdits, mealScore } from "./meal-math";
+import { assembleRecipe, buildRecipe, decodeRecipeMeta, encodeRecipeMeta, recipeMeta, usedInRecipe } from "./recipe";
 import { DataError, type DataLayer, type Meal, type MealItem, type Profile } from "./types";
 
 /*
@@ -89,6 +90,7 @@ export function foodFromRow(r: Row): Food {
     per100g: nutrientsFromRow(r),
     source: r.source as Food["source"],
     verified: Boolean(r.verified),
+    ...(r.is_recipe ? { isRecipe: true } : {}),
   };
 }
 
@@ -105,6 +107,7 @@ export function foodToRow(f: Food) {
     ...nutrientsToRow(f.per100g),
     source: f.source,
     verified: f.verified,
+    is_recipe: f.isRecipe ?? false,
   };
 }
 
@@ -200,6 +203,18 @@ export function createSupabaseStore(clients: Clients): DataLayer {
     return meal;
   };
 
+  /**
+   * The foods among `ids` the user can see (RLS hides other people's). Needed because
+   * foreign keys ignore RLS: without this check a recipe could point at someone else's food.
+   */
+  const visibleFoods = async (db: SupabaseClient, ids: string[]): Promise<Food[]> => {
+    const unique = [...new Set(ids)];
+    if (!unique.length) return [];
+    const { data, error } = await db.from("foods").select("*").in("id", unique);
+    if (error) throw toDataError(error);
+    return data.map(foodFromRow);
+  };
+
   return {
     async getProfile(userId) {
       const db = await clients.user();
@@ -282,9 +297,76 @@ export function createSupabaseStore(clients: Clients): DataLayer {
 
     async deleteCustomFood(userId, foodId) {
       const db = await clients.user();
+      // RLS shows only the ingredients of the person's own recipes.
+      const { data: uses, error: useError } = await db.from("recipe_ingredients").select("recipe_id").eq("ingredient_id", foodId).limit(1);
+      if (useError) throw toDataError(useError);
+      if (uses.length) {
+        const { data: recipe } = await db.from("foods").select("name").eq("id", uses[0].recipe_id).maybeSingle();
+        throw usedInRecipe(recipe ? String(recipe.name) : undefined);
+      }
       const { data, error } = await db.from("foods").delete().eq("id", foodId).eq("owner_id", userId).select("id");
-      if (error) throw toDataError(error);
+      // 23503: a recipe started using it in the meantime (the ingredient key is ON DELETE RESTRICT).
+      if (error) throw error.code === "23503" ? usedInRecipe() : toDataError(error);
       if (!data.length) throw new DataError("not_found", "That food isn't one of yours.");
+    },
+
+    async getRecipe(userId, recipeId) {
+      if (!isId(recipeId)) return null;
+      const db = await clients.user();
+      const { data, error } = await db.from("foods").select("*").eq("id", recipeId).eq("owner_id", userId).eq("is_recipe", true).maybeSingle();
+      if (error) throw toDataError(error);
+      if (!data) return null;
+      const { data: rows, error: rowsError } = await db.from("recipe_ingredients").select("ingredient_id, grams").eq("recipe_id", recipeId);
+      if (rowsError) throw toDataError(rowsError);
+      const ingredients = rows.map((r) => ({ foodId: String(r.ingredient_id), grams: Number(r.grams) }));
+      const foods = await visibleFoods(db, ingredients.map((i) => i.foodId));
+      return assembleRecipe(foodFromRow(data), decodeRecipeMeta(data.source_ref), ingredients, foods);
+    },
+
+    async createRecipe(userId, input) {
+      const db = await clients.user();
+      const foods = await visibleFoods(db, input.ingredients.map((i) => i.foodId));
+      const built = buildRecipe(userId, "", input, foods);
+      const row: Record<string, unknown> = { ...foodToRow(built.food), source_ref: encodeRecipeMeta(input) };
+      delete row.id; // the database gives it a UUID
+      const { data, error } = await db.from("foods").insert(row).select("*").single();
+      if (error) throw toDataError(error);
+      const food = foodFromRow(data);
+      const { error: rowsError } = await db
+        .from("recipe_ingredients")
+        .insert(built.ingredients.map((i) => ({ recipe_id: food.id, ingredient_id: i.foodId, grams: i.grams })));
+      if (rowsError) {
+        await db.from("foods").delete().eq("id", food.id).eq("owner_id", userId); // never leave a recipe without ingredients
+        throw toDataError(rowsError);
+      }
+      return assembleRecipe(food, recipeMeta(input), built.ingredients, foods);
+    },
+
+    async updateRecipe(userId, recipeId, input) {
+      const notYours = new DataError("not_found", "That recipe isn't one of yours.");
+      if (!isId(recipeId)) throw notYours;
+      const db = await clients.user();
+      const { data: existing, error: findError } = await db.from("foods").select("id").eq("id", recipeId).eq("owner_id", userId).eq("is_recipe", true).maybeSingle();
+      if (findError) throw toDataError(findError);
+      if (!existing) throw notYours;
+      const foods = await visibleFoods(db, input.ingredients.map((i) => i.foodId));
+      const built = buildRecipe(userId, recipeId, input, foods);
+      // Add or resize ingredients first, then drop the ones taken out: a failure part-way
+      // leaves extra ingredients for a retry to clean up, never an empty recipe.
+      const { error: upsertError } = await db
+        .from("recipe_ingredients")
+        .upsert(built.ingredients.map((i) => ({ recipe_id: recipeId, ingredient_id: i.foodId, grams: i.grams })), { onConflict: "recipe_id,ingredient_id" });
+      if (upsertError) throw toDataError(upsertError);
+      // Ids here are real food ids (buildRecipe found each one), so quoting them is safe.
+      const keep = built.ingredients.map((i) => `"${i.foodId}"`).join(",");
+      const { error: dropError } = await db.from("recipe_ingredients").delete().eq("recipe_id", recipeId).not("ingredient_id", "in", `(${keep})`);
+      if (dropError) throw toDataError(dropError);
+      const row: Record<string, unknown> = { ...foodToRow(built.food), source_ref: encodeRecipeMeta(input) };
+      delete row.id;
+      delete row.owner_id;
+      const { data, error } = await db.from("foods").update(row).eq("id", recipeId).eq("owner_id", userId).select("*").single();
+      if (error) throw toDataError(error);
+      return assembleRecipe(foodFromRow(data), recipeMeta(input), built.ingredients, foods);
     },
 
     async createDraftMeal(userId, draft) {
@@ -451,6 +533,10 @@ export function createSupabaseStore(clients: Clients): DataLayer {
         if (removeError) throw new Error("Could not delete photos");
         if (data.length < 1000) break;
       }
+      // Recipes before the rest: an ingredient key is ON DELETE RESTRICT, so a cascade that
+      // happens to reach the person's own ingredient before their recipe would fail.
+      const { error: recipeError } = await admin.from("foods").delete().eq("owner_id", userId).eq("is_recipe", true);
+      if (recipeError) throw new Error("Could not delete recipes");
       const { error } = await admin.auth.admin.deleteUser(userId);
       if (error) throw new Error("Could not delete the account");
     },

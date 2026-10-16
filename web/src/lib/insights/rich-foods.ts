@@ -1,3 +1,4 @@
+import { INGREDIENT_ONLY_IDS } from "@/lib/nutrition/foods";
 import { gramsFor, nutrientsForGrams } from "@/lib/nutrition/portions";
 import type { DietType, Food, Nutrients } from "@/lib/nutrition/types";
 
@@ -21,10 +22,10 @@ function isTreatOrFat(n: Nutrients): boolean {
   return sugarShare > 0.3 || fatShare > 0.65;
 }
 
-/** Foods that fit the diet with the most of `nutrient` per usual serving, best first. */
+/** Foods that fit the diet with the most of `nutrient` per usual serving, best first. Raw ingredients never count. */
 export function foodsRichIn(nutrient: RichNutrient, foods: readonly Food[], diet: DietType | null, limit = 3): Food[] {
   return foods
-    .filter((f) => fitsDiet(f, diet) && !isTreatOrFat(f.per100g) && f.per100g[nutrient] !== undefined)
+    .filter((f) => fitsDiet(f, diet) && !INGREDIENT_ONLY_IDS.has(f.id) && !isTreatOrFat(f.per100g) && f.per100g[nutrient] !== undefined)
     .map((f) => ({ f, amount: servingOf(f).nutrients[nutrient] ?? 0 }))
     .filter((x) => x.amount > 0)
     .sort((a, b) => b.amount - a.amount || a.f.name.localeCompare(b.f.name))

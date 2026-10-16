@@ -47,4 +47,6 @@ export type Food = {
   per100g: Nutrients;
   source: "usda" | "off" | "ifct" | "ai" | "user";
   verified: boolean;
+  /** A person's recipe: nutrients worked out from its ingredients. */
+  isRecipe?: boolean;
 };
