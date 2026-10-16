@@ -8,6 +8,7 @@ import { rankFoods } from "./food-rank";
 import { sumNutrients } from "@/lib/nutrition/portions";
 import { computeTargets, ageOn } from "@/lib/nutrition/targets";
 import type { Food } from "@/lib/nutrition/types";
+import { buildCustomFood } from "./custom-food";
 import { applyItemEdits, mealScore } from "./meal-math";
 import { DataError, type AiUsage, type DataLayer, type Meal, type Profile } from "./types";
 
@@ -105,6 +106,31 @@ export function createFileStore(dir: string): DataLayer {
 
     async searchFoods(userId, query, limit = 20) {
       return rankFoods(foodsFor(userId), query, limit);
+    },
+
+    async listCustomFoods(userId) {
+      return load().customFoods.filter((f) => f.ownerId === userId).sort((a, b) => a.name.localeCompare(b.name));
+    },
+
+    async createCustomFood(userId, input) {
+      requireId(userId, "user");
+      const food = buildCustomFood(userId, randomUUID(), input);
+      load().customFoods.push(food);
+      persist();
+      return food;
+    },
+
+    async deleteCustomFood(userId, foodId) {
+      const s = load();
+      const index = s.customFoods.findIndex((f) => f.id === foodId && f.ownerId === userId);
+      if (index < 0) throw new DataError("not_found", "That food isn't one of yours.");
+      s.customFoods.splice(index, 1);
+      for (const meal of Object.values(s.meals)) {
+        if (meal.userId !== userId) continue;
+        for (const item of meal.items) if (item.foodId === foodId) item.foodId = null; // like ON DELETE SET NULL
+      }
+      for (const [uid, ids] of Object.entries(s.favourites)) s.favourites[uid] = ids.filter((id) => id !== foodId);
+      persist();
     },
 
     async createDraftMeal(userId, draft) {

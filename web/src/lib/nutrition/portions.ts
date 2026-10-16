@@ -11,6 +11,11 @@ export const GENERIC_UNIT_GRAMS: Record<Unit, number> = {
 
 export const MAX_ITEM_GRAMS = 3000;
 
+/** The amount a food starts at when added: one of its usual unit, or 100 g for foods counted in grams. */
+export function defaultQuantity(unit: Unit): number {
+  return unit === "g" ? 100 : 1;
+}
+
 export function gramsFor(food: Pick<Food, "unitGrams"> | null, unit: Unit, quantity: number): number {
   const perUnit = food?.unitGrams[unit] ?? GENERIC_UNIT_GRAMS[unit];
   return clampGrams(perUnit * quantity);

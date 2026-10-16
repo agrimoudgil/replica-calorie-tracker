@@ -28,19 +28,54 @@ export function profileSchema(now = new Date()) {
 
 export type ProfileForm = z.input<ReturnType<typeof profileSchema>>;
 
+// Up to 3,000 because quantities in grams are large numbers.
+const quantity = z.number().positive("Portions must be more than zero.").max(3000, "That portion is too large.");
+const foodId = z.string().min(1).max(100);
+const amount = (label: string, max: number) => z.number().min(0, `${label} can't be negative.`).max(max, `${label} looks too high.`);
+
+/** Numbers a person types for a portion. */
+export const macroNumbersSchema = z.object({
+  kcal: amount("Calories", 5000),
+  proteinG: amount("Protein", 500),
+  carbG: amount("Carbs", 1000),
+  fatG: amount("Fat", 500),
+  fiberG: amount("Fibre", 200),
+});
+
+export const quickAddSchema = z.object({
+  name: z.string().trim().max(120, "Keep the name under 120 characters."),
+  kcal: amount("Calories", 5000),
+  proteinG: amount("Protein", 500).optional(),
+  carbG: amount("Carbs", 1000).optional(),
+  fatG: amount("Fat", 500).optional(),
+  fiberG: amount("Fibre", 200).optional(),
+});
+
+const newItem = z.union([
+  z.object({ foodId, quantity, unit: z.enum(UNITS), name: z.string().trim().max(120).optional(), override: macroNumbersSchema.optional() }).strict(),
+  z.object({ custom: quickAddSchema }).strict(),
+]);
+
 export const saveMealSchema = z.object({
   mealType: z.enum(MEAL_TYPES),
   items: z
     .array(
-      z.object({
-        id: z.uuid(),
-        // Up to 3,000 because quantities in grams are large numbers.
-        quantity: z.number().positive("Portions must be more than zero.").max(3000, "That portion is too large."),
-        unit: z.enum(UNITS),
-      }),
+      z.union([
+        z
+          .object({
+            id: z.uuid(),
+            quantity,
+            unit: z.enum(UNITS),
+            name: z.string().trim().max(120).optional(),
+            foodId: foodId.optional(),
+            override: macroNumbersSchema.optional(),
+          })
+          .strict(),
+        newItem,
+      ]),
     )
     .min(1, "Keep at least one item.")
-    .max(12),
+    .max(12, "Up to 12 foods per meal."),
   // Echoes the meal's updatedAt; Supabase sends it with an offset ("+00:00").
   expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
 });
@@ -58,16 +93,16 @@ export const catalogueMealSchema = z.object({
   inputMethod: z.enum(["text", "search"]),
   rawText: z.string().max(1000).nullable().optional(),
   eatenAt: z.iso.datetime({ offset: true }),
-  items: z
-    .array(
-      z.object({
-        foodId: z.string().min(1).max(100),
-        quantity: z.number().positive("Portions must be more than zero.").max(3000, "That portion is too large."),
-        unit: z.enum(UNITS),
-      }),
-    )
-    .min(1, "Add at least one food.")
-    .max(12, "Up to 12 foods per meal."),
+  items: z.array(newItem).min(1, "Add at least one food.").max(12, "Up to 12 foods per meal."),
+});
+
+/** A food the person creates, described per serving. */
+export const customFoodSchema = z.object({
+  name: z.string().trim().min(1, "Give the food a name.").max(120, "Keep the name under 120 characters."),
+  nameHi: z.string().trim().max(120).optional(),
+  unit: z.enum(UNITS),
+  gramsPerUnit: z.number({ error: "Enter how many grams one serving weighs." }).positive("Enter how many grams one serving weighs.").max(2000, "One serving can't weigh more than 2,000 g."),
+  perServing: macroNumbersSchema,
 });
 
 /** The user must tick "I understand" before an account is deleted. */

@@ -127,6 +127,33 @@ describe("file store", () => {
     expect(await db.listFavouriteFoodIds(A)).toEqual([]);
   });
 
+  it("custom foods: private, searchable, usable in meals, deletable without breaking meals", async () => {
+    const food = await db.createCustomFood(A, { name: "Mom's thepla", unit: "piece", gramsPerUnit: 40, perServing: { kcal: 120, proteinG: 3, carbG: 16, fatG: 5, fiberG: 2 } });
+    expect((await db.searchFoods(A, "thepla")).map((f) => f.id)).toEqual([food.id]);
+    expect(await db.searchFoods(B, "thepla")).toEqual([]);
+    expect((await db.listCustomFoods(A)).map((f) => f.name)).toEqual(["Mom's thepla"]);
+    await expect(db.deleteCustomFood(B, food.id)).rejects.toThrow("isn't one of yours");
+
+    const meal = await db.createDraftMeal(A, draft());
+    const saved = await db.saveMeal(A, meal.id, {
+      mealType: "dinner",
+      items: [
+        { id: meal.items[0].id, quantity: 2, unit: "piece", name: "Tawa roti" },
+        { foodId: food.id, quantity: 2, unit: "piece" },
+        { custom: { name: "Pickle", kcal: 30 } },
+      ],
+    });
+    expect(saved.items.map((i) => [i.name, Math.round(i.nutrients.kcal), i.source])).toEqual([["Tawa roti", 208, "ai"], ["Mom's thepla", 240, "db"], ["Pickle", 30, "user"]]);
+    // B can't put A's food into B's meal.
+    const bMeal = await db.createDraftMeal(B, draft());
+    await expect(db.saveMeal(B, bMeal.id, { mealType: "lunch", items: [{ foodId: food.id, quantity: 1, unit: "piece" }] })).rejects.toThrow("isn't in your food list");
+
+    await db.deleteCustomFood(A, food.id);
+    const after = await db.getMeal(A, meal.id);
+    expect(after?.items[1]).toMatchObject({ name: "Mom's thepla", foodId: null, nutrients: { kcal: 240 } });
+    expect(await db.searchFoods(A, "thepla")).toEqual([]);
+  });
+
   it("drafts never count toward the day", async () => {
     await db.createDraftMeal(A, draft());
     expect((await db.getDay(A, "2026-10-16")).meals).toHaveLength(0);

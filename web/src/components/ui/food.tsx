@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { Minus, Plus, Star, Trash2 } from "lucide-react";
+import { Minus, Pencil, Plus, Star, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IconButton } from "./button";
 import { ConfidenceBadge, HealthScoreBadge, type Confidence } from "./badges";
@@ -78,6 +78,8 @@ export type FoodItem = {
   unit: Unit;
   kcal: number;
   confidence?: Confidence;
+  /** Numbers typed by the person: "quick" = a quick add (no portion), "own" = a food with their numbers. */
+  entered?: "quick" | "own";
 };
 
 type FoodItemRowProps = {
@@ -88,23 +90,30 @@ type FoodItemRowProps = {
   /** Shows a star toggle when given. */
   favourite?: boolean;
   onToggleFavourite?: (item: FoodItem) => void;
+  /** Shows a "fix this item" button when given. */
+  onEdit?: (item: FoodItem) => void;
 };
 
-export function FoodItemRow({ item, editable = false, onChange, onRemove, favourite, onToggleFavourite }: FoodItemRowProps) {
+export function FoodItemRow({ item, editable = false, onChange, onRemove, favourite, onToggleFavourite, onEdit }: FoodItemRowProps) {
+  const quick = item.entered === "quick";
   return (
     <div className="flex flex-col gap-2 border-b border-border py-3 last:border-b-0">
       <div className="flex min-h-11 items-start justify-between gap-3">
         <div className="flex min-w-0 flex-col">
           <span className="truncate text-base font-semibold">{item.name}</span>
           {item.nameHi && <span lang="hi" className="text-xs text-muted">{item.nameHi}</span>}
-          {!editable && (
-            <span className="text-sm text-muted">
-              {item.quantity} {item.unit}
-            </span>
+          {(!editable || quick) && (
+            <span className="text-sm text-muted">{quick ? "Quick add, your numbers" : `${item.quantity} ${item.unit}`}</span>
           )}
+          {item.entered === "own" && <span className="text-xs text-muted">Your numbers</span>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <span className="text-sm font-semibold tabular-nums">{Math.round(item.kcal)} kcal</span>
+          {onEdit && (
+            <IconButton label={`Fix ${item.name}`} onClick={() => onEdit(item)}>
+              <Pencil aria-hidden className="size-4 text-muted" />
+            </IconButton>
+          )}
           {onToggleFavourite && (
             <IconButton
               label={favourite ? `Remove ${item.name} from favourites` : `Add ${item.name} to favourites`}
@@ -121,7 +130,7 @@ export function FoodItemRow({ item, editable = false, onChange, onRemove, favour
           )}
         </div>
       </div>
-      {editable && (
+      {editable && !quick && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <PortionStepper name={item.name} quantity={item.quantity} unit={item.unit} onChange={(quantity, unit) => onChange?.({ ...item, quantity, unit })} />
           {item.confidence && item.confidence !== "high" && <ConfidenceBadge level={item.confidence} />}

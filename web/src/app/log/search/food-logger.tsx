@@ -2,13 +2,19 @@
 
 import { useId, useMemo, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Utensils } from "lucide-react";
+import { ChevronRight, Utensils } from "lucide-react";
+import { CustomFoodForm } from "@/components/custom-food-form";
+import { FoodSearchField } from "@/components/food-search";
+import { QuickAddForm } from "@/components/macro-inputs";
 import { Button } from "@/components/ui/button";
 import { HealthScoreBadge } from "@/components/ui/badges";
-import { Chip, SearchField, SegmentedControl } from "@/components/ui/fields";
+import { Chip, SegmentedControl } from "@/components/ui/fields";
 import { EmptyState } from "@/components/ui/feedback";
 import { FoodItemRow, type FoodItem } from "@/components/ui/food";
-import { changeUnit, gramsFor, nutrientsForGrams, sumNutrients } from "@/lib/nutrition/portions";
+import { BottomSheet } from "@/components/ui/overlays";
+import { quickAddItem } from "@/lib/data/meal-math";
+import type { QuickAdd } from "@/lib/data/types";
+import { changeUnit, defaultQuantity, gramsFor, nutrientsForGrams, sumNutrients } from "@/lib/nutrition/portions";
 import { healthScore } from "@/lib/nutrition/score";
 import type { Food, MealType, Unit } from "@/lib/nutrition/types";
 import { portionText } from "@/lib/format";
@@ -51,18 +57,20 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
   const [text, setText] = useState("");
   const [typed, setTyped] = useState<string[]>([]);
   const [lines, setLines] = useState<Line[]>(() => initialLines.map((l, i) => ({ ...l, key: `start-${i}` })));
+  const [quickLines, setQuickLines] = useState<Array<{ key: string; custom: QuickAdd }>>([]);
   const [parsing, setParsing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [results, setResults] = useState<Food[]>([]);
-  const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const searchTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const latestQuery = useRef("");
+  const [creating, setCreating] = useState(false);
   const mealId = useRef<string | null>(null);
 
-  const totals = useMemo(() => sumNutrients(lines.map((l) => portion(l).nutrients)), [lines]);
-  const score = lines.length ? healthScore(totals) : null;
+  const totals = useMemo(
+    () => sumNutrients([...lines.map((l) => portion(l).nutrients), ...quickLines.map((q) => quickAddItem(q.custom).nutrients)]),
+    [lines, quickLines],
+  );
+  const count = lines.length + quickLines.length;
+  const score = count ? healthScore(totals) : null;
 
   const changeLines = (update: (list: Line[]) => Line[]) => {
     mealId.current = null; // a changed meal is a new save, never a silent retry of the old one
@@ -70,11 +78,19 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
     setLines(update);
   };
 
-  const add = (food: Food, quantity = 1, unit: Unit = food.defaultUnit) =>
+  const addQuick = (custom: QuickAdd) => {
+    mealId.current = null;
+    setError(null);
+    setQuickLines((list) => [...list, { key: crypto.randomUUID(), custom }]);
+    setNotice(`Added ${custom.name}.`);
+  };
+
+  const add = (food: Food, quantity?: number, unit: Unit = food.defaultUnit) =>
     changeLines((list) => {
+      const q = quantity ?? defaultQuantity(unit);
       const same = list.find((l) => l.food.id === food.id && l.unit === unit);
-      if (same) return list.map((l) => (l === same ? { ...l, quantity: l.quantity + quantity } : l));
-      return [...list, { key: crypto.randomUUID(), food, quantity, unit }];
+      if (same) return list.map((l) => (l === same ? { ...l, quantity: l.quantity + q } : l));
+      return [...list, { key: crypto.randomUUID(), food, quantity: q, unit }];
     });
 
   /** Stars or un-stars a basket food, updating the Favourites row straight away. */
@@ -129,23 +145,6 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
     setNotice((added + missing).trim() || "Couldn't find any foods in that. Try searching below.");
   };
 
-  const search = (query: string) => {
-    clearTimeout(searchTimer.current);
-    latestQuery.current = query.trim();
-    if (!latestQuery.current) {
-      setSearching(false);
-      return setResults([]);
-    }
-    setSearching(true);
-    searchTimer.current = setTimeout(async () => {
-      const q = latestQuery.current;
-      const res = await fetch(`/api/foods/search?q=${encodeURIComponent(q)}`).catch(() => null);
-      if (q !== latestQuery.current) return; // a newer search is on its way
-      setSearching(false);
-      setResults(res?.ok ? ((await res.json()).foods as Food[]) : []);
-    }, 200);
-  };
-
   const editLine = (row: FoodItem) =>
     changeLines((list) =>
       list.map((l) => {
@@ -169,7 +168,7 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
         inputMethod: typed.length ? "text" : "search",
         rawText: typed.length ? typed.join("; ").slice(0, 1000) : null,
         eatenAt: pastDay ? pastDay.eatenAt[mealType] : new Date().toISOString(),
-        items: lines.map((l) => ({ foodId: l.food.id, quantity: l.quantity, unit: l.unit })),
+        items: [...lines.map((l) => ({ foodId: l.food.id, quantity: l.quantity, unit: l.unit })), ...quickLines.map((q) => ({ custom: q.custom }))],
       }),
     }).catch(() => null);
     if (res?.ok) {
@@ -211,34 +210,49 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
       <p role="status" className={notice ? "rounded-md bg-surface px-3 py-2 text-sm" : "sr-only"}>{notice}</p>
 
       <div className="flex flex-col gap-3">
-        <SearchField
-          label="Or search the food list"
-          placeholder="Try roti, poha, chole"
-          filter={false}
-          loading={searching}
-          autoFocus={focus === "search"}
-          onQueryChange={search}
-          emptyMessage={(q) => `Nothing called “${q}” yet. Try another name, like roti for phulka.`}
-          options={results.map((f) => ({ id: f.id, label: f.name, detail: `${fmt.format(Math.round(portion({ food: f, quantity: 1, unit: f.defaultUnit }).nutrients.kcal))} kcal / ${f.defaultUnit}` }))}
-          onPick={(o) => {
-            const food = results.find((f) => f.id === o.id);
-            if (food) add(food);
-          }}
-        />
+        <FoodSearchField label="Or search the food list" autoFocus={focus === "search"} onPick={(f) => add(f)} />
         <QuickRow label="Favourites" foods={favourites} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
         <QuickRow label="Recent" foods={recents.filter((r) => !favouriteIds.has(r.food.id))} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
         {popular.length > 0 && (
-          <QuickRow label="Quick add" foods={popular.map((food) => ({ food, quantity: 1, unit: food.defaultUnit, count: 0 }))} onAdd={(q) => add(q.food)} plain />
+          <QuickRow label="Popular" foods={popular.map((food) => ({ food, quantity: 1, unit: food.defaultUnit, count: 0 }))} onAdd={(q) => add(q.food)} plain />
         )}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setCreating(true)}>Can&apos;t find it? Create your own food</Button>
+        </div>
       </div>
+
+      <details className="group rounded-lg border border-border">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-4 text-base font-semibold [&::-webkit-details-marker]:hidden">
+          Quick add calories and protein
+          <ChevronRight aria-hidden className="size-5 text-muted transition-transform group-open:rotate-90" />
+        </summary>
+        <div className="px-4 pb-4">
+          <p className="pb-3 text-sm text-muted">For food you can&apos;t find or weigh, like a canteen thali. Just the numbers you know.</p>
+          <QuickAddForm onAdd={addQuick} />
+        </div>
+      </details>
+
+      <BottomSheet open={creating} onClose={() => setCreating(false)} title="Create your own food" full>
+        {/* Mounted only while open, so it starts empty every time. */}
+        {creating && (
+          <CustomFoodForm
+            onCancel={() => setCreating(false)}
+            onCreated={(food) => {
+              setCreating(false);
+              add(food);
+              setNotice(`Created ${food.name} and added it. It's in search from now on.`);
+            }}
+          />
+        )}
+      </BottomSheet>
 
       <section aria-labelledby="meal-heading" className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <h2 id="meal-heading" className="text-lg font-semibold">Your meal</h2>
           {score !== null && <HealthScoreBadge score={score} />}
         </div>
-        {lines.length === 0 ? (
-          <EmptyState icon={<Utensils />} title="Nothing added yet" body="Type your meal above, search, or tap a quick-add food." />
+        {count === 0 ? (
+          <EmptyState icon={<Utensils />} title="Nothing added yet" body="Type your meal above, search, tap a food, or quick add the numbers." />
         ) : (
           <>
             <div className="rounded-lg border border-border px-4">
@@ -251,6 +265,17 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
                   onRemove={(row) => changeLines((list) => list.filter((x) => x.key !== row.id))}
                   favourite={favouriteIds.has(l.food.id)}
                   onToggleFavourite={() => toggleFavourite(l)}
+                />
+              ))}
+              {quickLines.map((q) => (
+                <FoodItemRow
+                  key={q.key}
+                  item={{ id: q.key, name: q.custom.name, quantity: 1, unit: "piece", kcal: q.custom.kcal, entered: "quick" }}
+                  editable
+                  onRemove={() => {
+                    mealId.current = null;
+                    setQuickLines((list) => list.filter((x) => x.key !== q.key));
+                  }}
                 />
               ))}
             </div>
@@ -270,7 +295,7 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
       </section>
 
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-      <Button size="lg" onClick={save} loading={saving} disabled={lines.length === 0 || saving}>
+      <Button size="lg" onClick={save} loading={saving} disabled={count === 0 || saving}>
         Save meal
       </Button>
     </div>

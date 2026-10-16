@@ -30,6 +30,7 @@ export default async function ProfilePage() {
       <ul className="flex flex-col rounded-lg border border-border">
         {[
           { href: "/onboarding", label: "Edit body details and goal" },
+          { href: "/profile/foods", label: "My foods" },
           { href: "/profile/auto-snap", label: "Auto-log from gallery" },
         ].map((l) => (
           <li key={l.href} className="border-b border-border last:border-b-0">

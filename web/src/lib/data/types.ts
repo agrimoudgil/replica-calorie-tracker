@@ -66,12 +66,38 @@ export type DraftMealInput = {
   items: Omit<MealItem, "id" | "position">[];
 };
 
+/** Calories and macros a person types in for a portion. */
+export type MacroNumbers = { kcal: number; proteinG: number; carbG: number; fatG: number; fiberG: number };
+
+/** A food someone adds by hand, without a catalogue entry ("Quick add"). */
+export type QuickAdd = { name: string } & Partial<MacroNumbers> & { kcal: number };
+
+/**
+ * One item in a save. Existing items (by id) can change portion, be renamed, be swapped
+ * for another food, or get the person's own numbers. New items come from the catalogue
+ * or are quick-added. Items left out are removed.
+ */
+export type ItemEdit =
+  | { id: string; quantity: number; unit: Unit; name?: string; foodId?: string; override?: MacroNumbers }
+  | { foodId: string; quantity: number; unit: Unit; name?: string; override?: MacroNumbers }
+  | { custom: QuickAdd };
+
 export type SaveMealInput = {
   mealType: MealType;
-  /** Items kept from the draft, with their new portions. Items left out are removed. */
-  items: Array<{ id: string; quantity: number; unit: Unit }>;
+  items: ItemEdit[];
   /** Optimistic lock: the meal's updatedAt the client last saw. */
   expectedUpdatedAt?: string;
+};
+
+/** A food the person creates, described per serving. */
+export type NewFoodInput = {
+  name: string;
+  nameHi?: string;
+  unit: Unit;
+  /** Grams in one unit (ignored for "g"). */
+  gramsPerUnit: number;
+  /** Nutrition for one unit, or for 100 g when the unit is "g". */
+  perServing: MacroNumbers;
 };
 
 export type DaySummary = {
@@ -119,6 +145,11 @@ export interface DataLayer {
 
   listFoods(userId: string): Promise<Food[]>;
   searchFoods(userId: string, query: string, limit?: number): Promise<Food[]>;
+  /** The person's own foods only (not the shared catalogue). */
+  listCustomFoods(userId: string): Promise<Food[]>;
+  createCustomFood(userId: string, input: NewFoodInput): Promise<Food>;
+  /** Meals already logged keep their numbers; the item just loses its link to the food. */
+  deleteCustomFood(userId: string, foodId: string): Promise<void>;
 
   createDraftMeal(userId: string, draft: DraftMealInput): Promise<Meal>;
   getMeal(userId: string, mealId: string): Promise<Meal | null>;

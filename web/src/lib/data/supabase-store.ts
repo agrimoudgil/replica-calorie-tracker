@@ -5,6 +5,7 @@ import { sumNutrients } from "@/lib/nutrition/portions";
 import { ageOn, computeTargets } from "@/lib/nutrition/targets";
 import type { Food, Nutrients } from "@/lib/nutrition/types";
 import { PHOTO_BUCKET } from "@/lib/supabase/config";
+import { buildCustomFood } from "./custom-food";
 import { rankFoods } from "./food-rank";
 import { applyItemEdits, mealScore } from "./meal-math";
 import { DataError, type DataLayer, type Meal, type MealItem, type Profile } from "./types";
@@ -262,6 +263,30 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       return rankFoods(data.map(foodFromRow), query, limit);
     },
 
+    async listCustomFoods(userId) {
+      const db = await clients.user();
+      const { data, error } = await db.from("foods").select("*").eq("owner_id", userId).order("name");
+      if (error) throw toDataError(error);
+      return data.map(foodFromRow);
+    },
+
+    async createCustomFood(userId, input) {
+      const row: Record<string, unknown> = foodToRow(buildCustomFood(userId, "", input));
+      delete row.id; // the database gives custom foods a UUID
+      const db = await clients.user();
+      // RLS only allows owner_id = the signed-in user and source = 'user'.
+      const { data, error } = await db.from("foods").insert(row).select("*").single();
+      if (error) throw toDataError(error);
+      return foodFromRow(data);
+    },
+
+    async deleteCustomFood(userId, foodId) {
+      const db = await clients.user();
+      const { data, error } = await db.from("foods").delete().eq("id", foodId).eq("owner_id", userId).select("id");
+      if (error) throw toDataError(error);
+      if (!data.length) throw new DataError("not_found", "That food isn't one of yours.");
+    },
+
     async createDraftMeal(userId, draft) {
       if (!isId(draft.id)) throw new DataError("invalid", "Bad meal id.");
       const db = await clients.user();
@@ -290,7 +315,9 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       if (input.expectedUpdatedAt && input.expectedUpdatedAt !== meal.updatedAt) {
         throw new DataError("conflict", "This meal changed somewhere else. Reload to see the latest.");
       }
-      const foodIds = [...new Set(meal.items.map((i) => i.foodId).filter((id): id is string => Boolean(id)))];
+      // Foods behind the stored items, plus any the edits swap to or add (RLS: only visible ones come back).
+      const editFoodIds = input.items.flatMap((e) => ("foodId" in e && e.foodId ? [e.foodId] : []));
+      const foodIds = [...new Set([...meal.items.map((i) => i.foodId), ...editFoodIds].filter((id): id is string => Boolean(id)))];
       const db = await clients.user();
       let foods: Food[] = [];
       if (foodIds.length) {

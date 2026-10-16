@@ -2,17 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Info, Utensils } from "lucide-react";
+import { Info, Plus, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HealthScoreBadge } from "@/components/ui/badges";
 import { SegmentedControl } from "@/components/ui/fields";
 import { EmptyState } from "@/components/ui/feedback";
 import { FoodItemRow, type FoodItem } from "@/components/ui/food";
 import { useToast } from "@/components/ui/overlays";
-import type { Meal, MealItem } from "@/lib/data/types";
-import { changeUnit, rescaleItem, sumNutrients } from "@/lib/nutrition/portions";
+import { cleanMacros, isQuickAdd, itemFromFood, quickAddItem } from "@/lib/data/meal-math";
+import type { ItemEdit, MacroNumbers, Meal, MealItem, QuickAdd } from "@/lib/data/types";
+import { changeUnit, defaultQuantity, rescaleItem, sumNutrients } from "@/lib/nutrition/portions";
 import { healthScore } from "@/lib/nutrition/score";
-import type { MealType, Unit } from "@/lib/nutrition/types";
+import type { Food, MealType, Unit } from "@/lib/nutrition/types";
+import { AddItemSheet, FixItemSheet, type Fix } from "./item-sheets";
 
 const MEAL_OPTIONS: Array<{ value: MealType; label: string }> = [
   { value: "breakfast", label: "Breakfast" },
@@ -23,46 +25,117 @@ const MEAL_OPTIONS: Array<{ value: MealType; label: string }> = [
 
 const fmt = new Intl.NumberFormat("en-IN");
 
-const toRow = (i: MealItem): FoodItem => ({
-  id: i.id,
-  name: i.name,
-  nameHi: i.nameHi,
-  quantity: i.quantity,
-  unit: i.unit,
-  kcal: i.nutrients.kcal,
-  confidence: i.aiConfidence,
+/**
+ * One line of the meal while editing. `item` is the live preview; the other fields say
+ * what to send: existing items by id (with any rename / swap / own numbers), new
+ * catalogue foods by food id, quick adds as typed. The server recomputes everything.
+ */
+type Row = {
+  key: string;
+  kind: "existing" | "food" | "quick";
+  item: MealItem;
+  food: Pick<Food, "unitGrams"> | null;
+  name?: string;
+  swapTo?: string;
+  override?: MacroNumbers;
+  custom?: QuickAdd;
+};
+
+const macrosOf = (n: MealItem["nutrients"]): MacroNumbers => ({ kcal: n.kcal, proteinG: n.proteinG, carbG: n.carbG, fatG: n.fatG, fiberG: n.fiberG });
+
+const toRow = (r: Row): FoodItem => ({
+  id: r.key,
+  name: r.item.name,
+  nameHi: r.item.nameHi,
+  quantity: r.item.quantity,
+  unit: r.item.unit,
+  kcal: r.item.nutrients.kcal,
+  confidence: r.item.aiConfidence,
+  entered: isQuickAdd(r.item) ? "quick" : r.item.source === "user" ? "own" : undefined,
 });
+
+function toEdit(r: Row): ItemEdit {
+  const extra = { ...(r.name ? { name: r.name } : {}), ...(r.override ? { override: r.override } : {}) };
+  if (r.kind === "quick") return { custom: r.custom! };
+  if (r.kind === "food") return { foodId: r.item.foodId!, quantity: r.item.quantity, unit: r.item.unit, ...extra };
+  return { id: r.key, quantity: r.item.quantity, unit: r.item.unit, ...(r.swapTo ? { foodId: r.swapTo } : {}), ...extra };
+}
 
 export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; unitGrams: Record<string, Partial<Record<Unit, number>>>; dayPath?: string }) {
   const router = useRouter();
   const toast = useToast();
-  const [items, setItems] = useState<MealItem[]>(meal.items);
+  const [rows, setRows] = useState<Row[]>(() =>
+    meal.items.map((item) => ({
+      key: item.id,
+      kind: "existing" as const,
+      item,
+      food: item.foodId && unitGrams[item.foodId] ? { unitGrams: unitGrams[item.foodId] } : null,
+    })),
+  );
   const [mealType, setMealType] = useState<MealType>(meal.mealType);
   const [busy, setBusy] = useState<"save" | "discard" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fixing, setFixing] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
 
-  const totals = useMemo(() => sumNutrients(items.map((i) => i.nutrients)), [items]);
-  const score = items.length ? healthScore(totals) : null;
+  const totals = useMemo(() => sumNutrients(rows.map((r) => r.item.nutrients)), [rows]);
+  const score = rows.length ? healthScore(totals) : null;
+  const update = (key: string, f: (r: Row) => Row) => setRows((list) => list.map((r) => (r.key === key ? f(r) : r)));
 
-  const change = (row: FoodItem) =>
-    setItems((list) =>
-      list.map((i) => {
-        if (i.id !== row.id) return i;
-        const units = i.foodId ? unitGrams[i.foodId] : undefined;
-        const food = units ? { unitGrams: units } : null;
-        return row.unit !== i.unit ? changeUnit(i, row.unit, food) : rescaleItem(i, row.quantity, row.unit, food);
-      }),
-    );
+  /** Portion changes rescale the preview; own numbers scale along so what you see is what is saved. */
+  const changePortion = (row: FoodItem) =>
+    update(row.id, (r) => {
+      if (isQuickAdd(r.item)) return r;
+      const item = row.unit !== r.item.unit ? changeUnit(r.item, row.unit, r.food) : rescaleItem(r.item, row.quantity, row.unit, r.food);
+      return { ...r, item, ...(r.override ? { override: cleanMacros(macrosOf(item.nutrients)) } : {}) };
+    });
+
+  const applyFix = (key: string, fix: Fix) => {
+    update(key, (r) => {
+      let next = { ...r };
+      if (fix.swapTo) {
+        const f = fix.swapTo;
+        next = { ...next, food: f, item: { ...next.item, ...itemFromFood(f, next.item.quantity, next.item.unit), aiConfidence: undefined } };
+        if (next.kind === "existing") next.swapTo = f.id;
+        next.override = undefined;
+      }
+      if (fix.name) next = { ...next, name: fix.name, item: { ...next.item, name: fix.name } };
+      if (fix.override) {
+        const own = cleanMacros(fix.override);
+        if (next.kind === "quick") {
+          const custom = { ...next.custom!, ...own, name: next.item.name };
+          next = { ...next, custom, item: { ...next.item, ...quickAddItem(custom), id: next.item.id, position: next.item.position } };
+        } else {
+          next = { ...next, override: own, item: { ...next.item, nutrients: { ...next.item.nutrients, ...own }, source: "user", aiConfidence: undefined } };
+        }
+      } else if (fix.name && next.kind === "quick") {
+        next = { ...next, custom: { ...next.custom!, name: fix.name } };
+      }
+      return next;
+    });
+    setFixing(null);
+  };
+
+  const addFood = (food: Food) => {
+    const key = crypto.randomUUID();
+    setRows((list) => [...list, { key, kind: "food", food, item: { ...itemFromFood(food, defaultQuantity(food.defaultUnit), food.defaultUnit), id: key, position: list.length } }]);
+    setAdding(false);
+    toast.show(`${food.name} added`);
+  };
+
+  const quickAdd = (q: QuickAdd) => {
+    const key = crypto.randomUUID();
+    setRows((list) => [...list, { key, kind: "quick", food: null, custom: q, item: { ...quickAddItem(q), id: key, position: list.length } }]);
+    setAdding(false);
+    toast.show(`${q.name} added`);
+  };
 
   const remove = (row: FoodItem) => {
-    const index = items.findIndex((i) => i.id === row.id);
-    const removed = items[index];
-    setItems((list) => list.filter((i) => i.id !== row.id));
-    toast.show(`${removed.name} removed`, {
-      action: {
-        label: "Undo",
-        onClick: () => setItems((list) => [...list.slice(0, index), removed, ...list.slice(index)]),
-      },
+    const index = rows.findIndex((r) => r.key === row.id);
+    const removed = rows[index];
+    setRows((list) => list.filter((r) => r.key !== row.id));
+    toast.show(`${removed.item.name} removed`, {
+      action: { label: "Undo", onClick: () => setRows((list) => [...list.slice(0, index), removed, ...list.slice(index)]) },
     });
   };
 
@@ -72,11 +145,7 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
     const res = await fetch(`/api/meals/${meal.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        mealType,
-        items: items.map(({ id, quantity, unit }) => ({ id, quantity, unit })),
-        expectedUpdatedAt: meal.updatedAt,
-      }),
+      body: JSON.stringify({ mealType, items: rows.map(toEdit), expectedUpdatedAt: meal.updatedAt }),
     }).catch(() => null);
     if (res?.ok) {
       router.push(`${dayPath}${dayPath.includes("?") ? "&" : "?"}saved=${meal.id}`);
@@ -100,6 +169,8 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
     setBusy(null);
     setError("Couldn't delete. Try again.");
   };
+
+  const fixingRow = rows.find((r) => r.key === fixing) ?? null;
 
   return (
     <div className="flex flex-col gap-5">
@@ -138,28 +209,40 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
       <SegmentedControl legend="Which meal?" value={mealType} onChange={setMealType} options={MEAL_OPTIONS} />
 
       <section aria-labelledby="items-heading" className="flex flex-col gap-2">
-        <h2 id="items-heading" className="text-lg font-semibold">What we found</h2>
-        {items.length === 0 ? (
-          <EmptyState icon={<Utensils />} title="No items left" body="Undo a removal, or discard this meal and try another photo." />
+        <h2 id="items-heading" className="text-lg font-semibold">{meal.status === "draft" && meal.aiModel ? "What we found" : "Items"}</h2>
+        {rows.length > 0 && <p className="text-xs text-muted">Wrong item or numbers? Tap the pencil to rename it, swap it or enter your own numbers.</p>}
+        {rows.length === 0 ? (
+          <EmptyState icon={<Utensils />} title="No items left" body="Add a food below, undo a removal, or discard this meal." />
         ) : (
           <div className="rounded-lg border border-border px-4">
-            {items.map((item) => (
-              <FoodItemRow key={item.id} item={toRow(item)} editable onChange={change} onRemove={remove} />
+            {rows.map((r) => (
+              <FoodItemRow key={r.key} item={toRow(r)} editable onChange={changePortion} onRemove={remove} onEdit={() => setFixing(r.key)} />
             ))}
           </div>
         )}
+        <Button variant="secondary" onClick={() => setAdding(true)} icon={<Plus aria-hidden className="size-4" />}>
+          Add a food
+        </Button>
       </section>
 
       {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
       <div className="flex flex-col gap-2">
-        <Button size="lg" onClick={save} loading={busy === "save"} disabled={items.length === 0 || busy !== null}>
+        <Button size="lg" onClick={save} loading={busy === "save"} disabled={rows.length === 0 || busy !== null}>
           {meal.status === "draft" ? "Save meal" : "Save changes"}
         </Button>
         <Button variant="ghost" onClick={discard} loading={busy === "discard"} disabled={busy !== null}>
           {meal.status === "draft" ? "Discard" : "Delete meal"}
         </Button>
       </div>
+
+      <FixItemSheet
+        item={fixingRow?.item ?? null}
+        quick={fixingRow ? isQuickAdd(fixingRow.item) : false}
+        onApply={(fix) => fixing && applyFix(fixing, fix)}
+        onClose={() => setFixing(null)}
+      />
+      <AddItemSheet open={adding} onAddFood={addFood} onQuickAdd={quickAdd} onClose={() => setAdding(false)} />
     </div>
   );
 }

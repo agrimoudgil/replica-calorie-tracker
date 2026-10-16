@@ -152,6 +152,39 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     expect(await a.store.listFavouriteFoodIds(a.id)).toEqual([]);
   });
 
+  it("custom foods and item fixes work live and stay private", async () => {
+    const food = await a.store.createCustomFood(a.id, { name: "A's thepla", unit: "piece", gramsPerUnit: 40, perServing: { kcal: 120, proteinG: 3, carbG: 16, fatG: 5, fiberG: 2 } });
+    expect(food.ownerId).toBe(a.id);
+    expect((await a.store.searchFoods(a.id, "thepla")).map((f) => f.id)).toContain(food.id);
+    expect(await b.store.searchFoods(b.id, "A's thepla")).toEqual([]);
+    expect(await b.store.listCustomFoods(b.id)).toEqual([]);
+    await expect(b.store.deleteCustomFood(b.id, food.id)).rejects.toThrow("isn't one of yours");
+
+    const meal = await a.store.createDraftMeal(a.id, draft());
+    const saved = await a.store.saveMeal(a.id, meal.id, {
+      mealType: "dinner",
+      items: [
+        { id: meal.items[0].id, quantity: 2, unit: "piece", foodId: "seed-paratha", name: "Lachha paratha" },
+        { id: meal.items[1].id, quantity: 1, unit: "katori", override: { kcal: 150, proteinG: 4, carbG: 12, fatG: 9, fiberG: 3 } },
+        { foodId: food.id, quantity: 1, unit: "piece" },
+        { custom: { name: "Pickle", kcal: 30 } },
+      ],
+    });
+    expect(saved.items.map((i) => [i.name, Math.round(i.nutrients.kcal), i.source, i.foodId])).toEqual([
+      ["Lachha paratha", 512, "db", "seed-paratha"],
+      ["Mystery sabzi", 150, "user", null],
+      ["A's thepla", 120, "db", food.id],
+      ["Pickle", 30, "user", null],
+    ]);
+    // B can't use A's private food in B's own meal.
+    const bMeal = await b.store.createDraftMeal(b.id, draft());
+    await expect(b.store.saveMeal(b.id, bMeal.id, { mealType: "lunch", items: [{ foodId: food.id, quantity: 1, unit: "piece" }] })).rejects.toThrow("isn't in your food list");
+
+    await a.store.deleteCustomFood(a.id, food.id);
+    const after = await a.store.getMeal(a.id, meal.id);
+    expect(after?.items[2]).toMatchObject({ name: "A's thepla", foodId: null });
+  }, 30_000);
+
   it("returns meals in a date range for the owner only", async () => {
     const meal = await a.store.createDraftMeal(a.id, draft({ eatenAt: "2026-10-10T07:30:00.000Z" }));
     await a.store.saveMeal(a.id, meal.id, { mealType: "lunch", items: [{ id: meal.items[0].id, quantity: 1, unit: "piece" }] });
