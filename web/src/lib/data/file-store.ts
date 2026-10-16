@@ -2,7 +2,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { localDate } from "@/lib/dates";
-import { SEED_FOODS, normalizeFoodName } from "@/lib/nutrition/foods";
+import { isId } from "@/lib/ids";
+import { SEED_FOODS } from "@/lib/nutrition/foods";
+import { rankFoods } from "./food-rank";
 import { sumNutrients } from "@/lib/nutrition/portions";
 import { computeTargets, ageOn } from "@/lib/nutrition/targets";
 import type { Food } from "@/lib/nutrition/types";
@@ -23,12 +25,6 @@ type State = {
   customFoods: Food[];
   aiUsage: AiUsage[];
 };
-
-const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export function isId(value: string): boolean {
-  return ID.test(value);
-}
 
 export function createFileStore(dir: string): DataLayer {
   const file = path.join(dir, "store.json");
@@ -106,18 +102,7 @@ export function createFileStore(dir: string): DataLayer {
     },
 
     async searchFoods(userId, query, limit = 20) {
-      const q = normalizeFoodName(query);
-      if (!q) return [];
-      const ranked: Array<{ food: Food; rank: number }> = [];
-      for (const food of foodsFor(userId)) {
-        const labels = [food.name, ...food.aliases].map(normalizeFoodName);
-        const rank = labels.some((l) => l === q) ? 0 : labels.some((l) => l.startsWith(q)) ? 1 : labels.some((l) => l.includes(q)) ? 2 : -1;
-        if (rank >= 0) ranked.push({ food, rank });
-      }
-      return ranked
-        .sort((a, b) => a.rank - b.rank || a.food.name.localeCompare(b.food.name))
-        .slice(0, limit)
-        .map((r) => r.food);
+      return rankFoods(foodsFor(userId), query, limit);
     },
 
     async createDraftMeal(userId, draft) {
@@ -219,6 +204,17 @@ export function createFileStore(dir: string): DataLayer {
     async countAiUsageSince(userId, since) {
       const t = since.toISOString();
       return load().aiUsage.filter((u) => u.userId === userId && u.createdAt >= t).length;
+    },
+
+    async deleteAccount(userId) {
+      requireId(userId, "user");
+      const s = load();
+      delete s.profiles[userId];
+      for (const [id, meal] of Object.entries(s.meals)) if (meal.userId === userId) delete s.meals[id];
+      s.customFoods = s.customFoods.filter((f) => f.ownerId !== userId);
+      s.aiUsage = s.aiUsage.filter((u) => u.userId !== userId);
+      persist();
+      fs.rmSync(path.join(dir, "photos", userId), { recursive: true, force: true });
     },
   };
 }

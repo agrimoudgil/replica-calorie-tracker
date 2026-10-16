@@ -131,4 +131,7 @@ export interface DataLayer {
 
   recordAiUsage(usage: AiUsage): Promise<void>;
   countAiUsageSince(userId: string, since: Date): Promise<number>;
+
+  /** Removes the user and everything they own, photos included. Cannot be undone. */
+  deleteAccount(userId: string): Promise<void>;
 }

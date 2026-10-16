@@ -1,26 +1,46 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import { cookies } from "next/headers";
-import { isId } from "./file-store";
+import { redirect } from "next/navigation";
+import { isId } from "@/lib/ids";
+import { SIGN_IN_PATH, supabaseEnabled } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/server";
 
 /*
- * Development stand-in for Supabase Auth: a random user id in an http-only cookie.
- * It keeps the per-user code paths real (every data call takes a user id) without
- * accounts. /replica-backend replaces this with the signed-in Supabase user.
+ * Who is making this request.
+ * With Supabase: the signed-in user from the verified session token (getClaims).
+ * Without it (local development): a random id in an http-only cookie, created on
+ * first use, so the per-user code paths still run.
  */
-const COOKIE = "rct_uid";
+const DEV_COOKIE = "rct_uid";
 
 export async function currentUserId(): Promise<string | null> {
-  const value = (await cookies()).get(COOKIE)?.value;
+  if (supabaseEnabled) {
+    const supabase = await createClient();
+    const { data } = await supabase.auth.getClaims();
+    const sub = data?.claims?.sub;
+    return typeof sub === "string" && isId(sub) ? sub : null;
+  }
+  const value = (await cookies()).get(DEV_COOKIE)?.value;
   return value && isId(value) ? value : null;
 }
 
-/** Returns the current user id, creating a development user on first use. */
-export async function ensureUserId(): Promise<string> {
+/** For pages: the user id, or a redirect to sign in. */
+export async function requireUserId(): Promise<string> {
+  const id = await currentUserId();
+  if (!id) redirect(SIGN_IN_PATH);
+  return id;
+}
+
+/**
+ * For saving the profile. With Supabase the user must already be signed in (null if
+ * not); in local development a cookie user is created on first use.
+ */
+export async function ensureUserId(): Promise<string | null> {
   const existing = await currentUserId();
-  if (existing) return existing;
+  if (existing || supabaseEnabled) return existing;
   const id = randomUUID();
-  (await cookies()).set(COOKIE, id, {
+  (await cookies()).set(DEV_COOKIE, id, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -28,4 +48,9 @@ export async function ensureUserId(): Promise<string> {
     maxAge: 60 * 60 * 24 * 365,
   });
   return id;
+}
+
+/** Forgets the development cookie user (sign-out without Supabase). */
+export async function clearDevUser() {
+  (await cookies()).delete(DEV_COOKIE);
 }

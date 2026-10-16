@@ -3,16 +3,18 @@ import { redirect } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { db } from "@/lib/data";
-import { currentUserId } from "@/lib/data/session";
+import { requireUserId } from "@/lib/data/session";
+import { supabaseEnabled } from "@/lib/supabase/config";
+import { AccountActions } from "./account-actions";
 
 export const metadata = { title: "Profile · Replica calorie tracker" };
 
 const fmt = new Intl.NumberFormat("en-IN");
 
-/** S13 (partial): targets and a link to edit details. Settings come later. */
+/** S13 (partial): targets, edit details, sign out, delete account. */
 export default async function ProfilePage() {
-  const userId = await currentUserId();
-  const profile = userId ? await db.getProfile(userId) : null;
+  const userId = await requireUserId();
+  const profile = await db.getProfile(userId);
   if (!profile) redirect("/onboarding");
   const t = profile.targets;
   return (
@@ -38,6 +40,7 @@ export default async function ProfilePage() {
           </li>
         ))}
       </ul>
+      <AccountActions realAccounts={supabaseEnabled} />
     </Screen>
   );
 }

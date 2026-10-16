@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/data";
 import { currentUserId, ensureUserId } from "@/lib/data/session";
-import { fail, fromError, invalid } from "@/lib/api/http";
+import { fail, fromError, invalid, unauthenticated } from "@/lib/api/http";
 import { profileSchema } from "@/lib/api/schemas";
 
 export async function GET() {
@@ -17,6 +17,7 @@ export async function PUT(req: Request) {
   if (!parsed.success) return invalid(parsed.error);
   try {
     const userId = await ensureUserId();
+    if (!userId) return unauthenticated();
     const { displayName, sex, birthYear, heightCm, weightKg, activityLevel, goal, dietType } = parsed.data;
     const profile = await db.upsertProfile(userId, { displayName, sex, birthYear, heightCm, weightKg, activityLevel, goal, dietType });
     return NextResponse.json(profile);

@@ -6,15 +6,14 @@ import { HealthScoreBadge } from "@/components/ui/badges";
 import { FoodItemRow } from "@/components/ui/food";
 import { db } from "@/lib/data";
 import { mealTotals } from "@/lib/data/meal-math";
-import { currentUserId } from "@/lib/data/session";
+import { requireUserId } from "@/lib/data/session";
 import { MEAL_LABEL } from "@/lib/meal-type";
 
 const fmt = new Intl.NumberFormat("en-IN");
 
 /** S08: one saved meal with its items and nutrients. */
 export default async function MealPage({ params }: PageProps<"/meals/[id]">) {
-  const userId = await currentUserId();
-  if (!userId) redirect("/onboarding");
+  const userId = await requireUserId();
   const meal = await db.getMeal(userId, (await params).id);
   if (!meal) notFound();
   if (meal.status === "draft") redirect(`/log/review/${meal.id}`);

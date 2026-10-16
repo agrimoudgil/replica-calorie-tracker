@@ -41,8 +41,12 @@ export const saveMealSchema = z.object({
     )
     .min(1, "Keep at least one item.")
     .max(12),
-  expectedUpdatedAt: z.iso.datetime().optional(),
+  // Echoes the meal's updatedAt; Supabase sends it with an offset ("+00:00").
+  expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
 });
+
+/** The user must tick "I understand" before an account is deleted. */
+export const deleteAccountSchema = z.object({ confirm: z.literal(true, { error: "Confirm that you want to delete everything." }) });
 
 export const photoFieldsSchema = z.object({
   mealId: z.uuid(),

@@ -4,7 +4,7 @@ import { MealCard } from "@/components/ui/food";
 import { CalorieRing, MacroBar } from "@/components/ui/progress";
 import { db } from "@/lib/data";
 import { mealScore } from "@/lib/data/meal-math";
-import { currentUserId } from "@/lib/data/session";
+import { requireUserId } from "@/lib/data/session";
 import { localDate, localHour } from "@/lib/dates";
 import { MEAL_LABEL, suggestMealType } from "@/lib/meal-type";
 import { MEAL_TYPES } from "@/lib/nutrition/types";
@@ -14,9 +14,9 @@ const fmt = new Intl.NumberFormat("en-IN");
 
 /** S02 Today: calories left, macros, and the day's meals. */
 export default async function TodayPage({ searchParams }: PageProps<"/">) {
-  const userId = await currentUserId();
-  const profile = userId ? await db.getProfile(userId) : null;
-  if (!userId || !profile) redirect("/onboarding");
+  const userId = await requireUserId();
+  const profile = await db.getProfile(userId);
+  if (!profile) redirect("/onboarding");
 
   const now = new Date();
   const day = await db.getDay(userId, localDate(now, profile.timezone));

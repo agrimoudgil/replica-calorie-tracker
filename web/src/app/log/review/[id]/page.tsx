@@ -1,7 +1,7 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { db } from "@/lib/data";
-import { currentUserId } from "@/lib/data/session";
+import { requireUserId } from "@/lib/data/session";
 import type { Unit } from "@/lib/nutrition/types";
 import { ReviewForm } from "./review-form";
 
@@ -9,8 +9,7 @@ export const metadata = { title: "Check your meal · Replica calorie tracker" };
 
 /** S05: check the estimate, fix portions, remove wrong items, save. */
 export default async function ReviewPage({ params }: PageProps<"/log/review/[id]">) {
-  const userId = await currentUserId();
-  if (!userId) redirect("/onboarding");
+  const userId = await requireUserId();
   const { id } = await params;
   const meal = await db.getMeal(userId, id);
   if (!meal) notFound();
