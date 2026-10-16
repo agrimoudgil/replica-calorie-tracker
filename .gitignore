@@ -15,3 +15,6 @@ next-env.d.ts
 *.log
 .DS_Store
 Thumbs.db
+
+# your own meal photos for AI trials (private, never committed)
+test-photos/

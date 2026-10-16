@@ -12,7 +12,8 @@
     "db:login": "supabase login",
     "db:link": "supabase link",
     "db:push": "supabase db push",
-    "db:seed": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts"
+    "db:seed": "node --env-file-if-exists=.env.local --import tsx scripts/seed.ts",
+    "try:estimates": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/try-estimates.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0",
