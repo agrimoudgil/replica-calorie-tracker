@@ -1,27 +1,35 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IconButton } from "./button";
 import { ConfidenceBadge, HealthScoreBadge, type Confidence } from "./badges";
 
-export const UNITS = ["katori", "piece", "glass", "tbsp", "g"] as const;
-export type Unit = (typeof UNITS)[number];
+import { MEAL_LABEL } from "@/lib/meal-type";
+import { UNITS, type MealType, type Unit } from "@/lib/nutrition/types";
+
+export { UNITS, type MealType, type Unit };
+
+/** How much one tap of − / + changes the quantity, per unit. */
+const UNIT_STEP: Record<Unit, number> = { piece: 1, katori: 0.5, glass: 0.5, tbsp: 1, g: 10 };
 
 type PortionStepperProps = {
   name: string;
   quantity: number;
   unit: Unit;
   onChange: (quantity: number, unit: Unit) => void;
-  step?: number;
-  min?: number;
 };
 
-export function PortionStepper({ name, quantity, unit, onChange, step = 0.5, min = 0.5 }: PortionStepperProps) {
+export function PortionStepper({ name, quantity, unit, onChange }: PortionStepperProps) {
+  const step = UNIT_STEP[unit];
+  const min = unit === "g" ? 1 : 0.25;
   const id = useId();
-  const invalid = !(quantity >= min);
+  // While typing, show exactly what was typed (even an empty field); commit valid numbers.
+  const [typed, setTyped] = useState<string | null>(null);
+  const typedNumber = typed === null ? quantity : parseFloat(typed);
+  const invalid = !(typedNumber >= min);
   return (
     <div className="flex items-center gap-1" role="group" aria-label={`Portion of ${name}`}>
       <IconButton label={`Less ${name}`} tone="surface" disabled={quantity - step < min} onClick={() => onChange(quantity - step, unit)}>
@@ -34,9 +42,14 @@ export function PortionStepper({ name, quantity, unit, onChange, step = 0.5, min
         inputMode="decimal"
         min={min}
         step={step}
-        value={Number.isFinite(quantity) ? quantity : ""}
+        value={typed ?? quantity}
         aria-invalid={invalid || undefined}
-        onChange={(e) => onChange(parseFloat(e.target.value), unit)}
+        onChange={(e) => {
+          setTyped(e.target.value);
+          const n = parseFloat(e.target.value);
+          if (n >= min) onChange(n, unit);
+        }}
+        onBlur={() => setTyped(null)}
         className={cn("h-11 w-14 rounded-md border bg-bg text-center text-base tabular-nums", invalid ? "border-danger" : "border-input")}
       />
       <IconButton label={`More ${name}`} tone="surface" onClick={() => onChange((Number.isFinite(quantity) ? quantity : 0) + step, unit)}>
@@ -106,20 +119,23 @@ export function FoodItemRow({ item, editable = false, onChange, onRemove }: Food
   );
 }
 
-export type MealType = "breakfast" | "lunch" | "snack" | "dinner";
-const mealLabel: Record<MealType, string> = { breakfast: "Breakfast", lunch: "Lunch", snack: "Snack", dinner: "Dinner" };
+const addClass =
+  "inline-flex h-11 shrink-0 items-center gap-1.5 rounded-pill bg-accent-soft px-4 text-sm font-semibold text-on-accent-soft";
+
+const mealLabel = MEAL_LABEL;
 
 type MealCardProps = {
   type: MealType;
   href?: string;
   items?: string[];
   kcal?: number;
-  score?: number;
+  score?: number | null;
   onAdd?: () => void;
+  addHref?: string;
   loading?: boolean;
 };
 
-export function MealCard({ type, href = "#", items = [], kcal = 0, score, onAdd, loading }: MealCardProps) {
+export function MealCard({ type, href = "#", items = [], kcal = 0, score, onAdd, addHref, loading }: MealCardProps) {
   const base = "rounded-lg border border-border bg-bg p-4 shadow-card";
   if (loading) {
     return (
@@ -136,14 +152,15 @@ export function MealCard({ type, href = "#", items = [], kcal = 0, score, onAdd,
           <span className="text-base font-semibold">{mealLabel[type]}</span>
           <span className="text-sm text-muted">Nothing logged yet</span>
         </div>
-        <button
-          type="button"
-          onClick={onAdd}
-          aria-label={`Add ${mealLabel[type].toLowerCase()}`}
-          className="inline-flex h-11 items-center gap-1.5 rounded-pill bg-accent-soft px-4 text-sm font-semibold text-on-accent-soft"
-        >
-          <Plus aria-hidden className="size-4" /> Add
-        </button>
+        {addHref ? (
+          <Link href={addHref} aria-label={`Add ${mealLabel[type].toLowerCase()}`} className={addClass}>
+            <Plus aria-hidden className="size-4" /> Add
+          </Link>
+        ) : (
+          <button type="button" onClick={onAdd} aria-label={`Add ${mealLabel[type].toLowerCase()}`} className={addClass}>
+            <Plus aria-hidden className="size-4" /> Add
+          </button>
+        )}
       </div>
     );
   }
@@ -154,7 +171,11 @@ export function MealCard({ type, href = "#", items = [], kcal = 0, score, onAdd,
         <span className="text-sm font-semibold tabular-nums">{Math.round(kcal)} kcal</span>
       </span>
       <span className="line-clamp-2 text-sm text-muted">{items.join(", ")}</span>
-      {score !== undefined && <HealthScoreBadge score={score} />}
+      {score !== undefined && score !== null && (
+        <span className="self-start">
+          <HealthScoreBadge score={score} />
+        </span>
+      )}
     </Link>
   );
 }
