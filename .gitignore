@@ -1,0 +1,17 @@
+# secrets and local data never go into git
+.env
+.env.*
+!.env.example
+web/.data/
+
+# build output and dependencies
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# logs and OS files
+*.log
+.DS_Store
+Thumbs.db
