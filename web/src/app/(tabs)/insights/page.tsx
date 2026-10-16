@@ -14,6 +14,7 @@ import { MIN_DAYS, weeklyInsights, type Gap } from "@/lib/insights/weekly";
 import { MEAL_LABEL, suggestMealType } from "@/lib/meal-type";
 import type { Food, MealType } from "@/lib/nutrition/types";
 import { cn } from "@/lib/cn";
+import { portionText } from "@/lib/format";
 
 export const metadata = { title: "Insights · Replica calorie tracker" };
 
@@ -168,12 +169,6 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-/** "3 phulka", "1.5 katori dal tadka", "1 glass masala chai". */
-function portionText(i: { quantity: number; unit: string; food: Food }) {
-  const name = i.food.name.toLowerCase();
-  return i.unit === "piece" ? `${i.quantity} ${name}` : `${i.quantity} ${i.unit === "g" ? "g" : i.unit} ${name}`;
-}
-
 const addHref = (query: string, mealType: MealType) => `/log/search?mode=search&meal=${mealType}&items=${encodeURIComponent(query)}`;
 
 function IdeaCard({ idea, mealType }: { idea: MealIdea; mealType: MealType }) {
@@ -183,7 +178,7 @@ function IdeaCard({ idea, mealType }: { idea: MealIdea; mealType: MealType }) {
         <h3 className="text-base font-semibold">{idea.title}</h3>
         <span className="shrink-0 text-sm font-semibold tabular-nums">{fmt.format(Math.round(idea.nutrients.kcal))} kcal</span>
       </div>
-      <p className="text-sm text-muted">{idea.items.map(portionText).join(" · ")}</p>
+      <p className="text-sm text-muted">{idea.items.map((i) => portionText(i.quantity, i.unit, i.food.name)).join(" · ")}</p>
       <p className="text-sm">{idea.reason}</p>
       <div className="flex items-center justify-between gap-3">
         <span className="text-xs text-muted tabular-nums">

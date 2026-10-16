@@ -11,6 +11,8 @@ import { FoodItemRow, type FoodItem } from "@/components/ui/food";
 import { changeUnit, gramsFor, nutrientsForGrams, sumNutrients } from "@/lib/nutrition/portions";
 import { healthScore } from "@/lib/nutrition/score";
 import type { Food, MealType, Unit } from "@/lib/nutrition/types";
+import { portionText } from "@/lib/format";
+import type { QuickFood } from "@/lib/recents";
 
 const MEAL_OPTIONS: Array<{ value: MealType; label: string }> = [
   { value: "breakfast", label: "Breakfast" },
@@ -31,13 +33,20 @@ type FoodLoggerProps = {
   initialMealType: MealType;
   focus: "type" | "search";
   popular: Food[];
+  favourites: QuickFood[];
+  recents: QuickFood[];
+  favouriteIds: string[];
   /** Foods to start with, e.g. from an insights idea. */
   initialLines?: Array<Omit<Line, "key">>;
+  /** Set when adding to a past day: the day, and the usual time for each meal on it. */
+  pastDay?: { date: string; eatenAt: Record<MealType, string> };
 };
 
-export function FoodLogger({ initialMealType, focus, popular, initialLines = [] }: FoodLoggerProps) {
+export function FoodLogger({ initialMealType, focus, popular, favourites: initialFavourites, recents, favouriteIds: initialIds, initialLines = [], pastDay }: FoodLoggerProps) {
   const router = useRouter();
   const textId = useId();
+  const [favouriteIds, setFavouriteIds] = useState(() => new Set(initialIds));
+  const [favourites, setFavourites] = useState(initialFavourites);
   const [mealType, setMealType] = useState(initialMealType);
   const [text, setText] = useState("");
   const [typed, setTyped] = useState<string[]>([]);
@@ -67,6 +76,34 @@ export function FoodLogger({ initialMealType, focus, popular, initialLines = [] 
       if (same) return list.map((l) => (l === same ? { ...l, quantity: l.quantity + quantity } : l));
       return [...list, { key: crypto.randomUUID(), food, quantity, unit }];
     });
+
+  /** Stars or un-stars a basket food, updating the Favourites row straight away. */
+  const toggleFavourite = async (line: Line) => {
+    const on = !favouriteIds.has(line.food.id);
+    const apply = (value: boolean) => {
+      setFavouriteIds((ids) => {
+        const next = new Set(ids);
+        if (value) next.add(line.food.id);
+        else next.delete(line.food.id);
+        return next;
+      });
+      setFavourites((list) =>
+        value
+          ? [...list.filter((f) => f.food.id !== line.food.id), { food: line.food, quantity: line.quantity, unit: line.unit, count: 0 }]
+          : list.filter((f) => f.food.id !== line.food.id),
+      );
+    };
+    apply(on);
+    const res = await fetch(`/api/favourites/${encodeURIComponent(line.food.id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ favourite: on }),
+    }).catch(() => null);
+    if (!res?.ok) {
+      apply(!on);
+      setNotice("Couldn't update favourites. Try again.");
+    }
+  };
 
   const findFoods = async (e: FormEvent) => {
     e.preventDefault();
@@ -131,12 +168,12 @@ export function FoodLogger({ initialMealType, focus, popular, initialLines = [] 
         mealType,
         inputMethod: typed.length ? "text" : "search",
         rawText: typed.length ? typed.join("; ").slice(0, 1000) : null,
-        eatenAt: new Date().toISOString(),
+        eatenAt: pastDay ? pastDay.eatenAt[mealType] : new Date().toISOString(),
         items: lines.map((l) => ({ foodId: l.food.id, quantity: l.quantity, unit: l.unit })),
       }),
     }).catch(() => null);
     if (res?.ok) {
-      router.push(`/?saved=${mealId.current}`);
+      router.push(pastDay ? `/?date=${pastDay.date}&saved=${mealId.current}` : `/?saved=${mealId.current}`);
       router.refresh();
       return;
     }
@@ -188,12 +225,10 @@ export function FoodLogger({ initialMealType, focus, popular, initialLines = [] 
             if (food) add(food);
           }}
         />
+        <QuickRow label="Favourites" foods={favourites} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
+        <QuickRow label="Recent" foods={recents.filter((r) => !favouriteIds.has(r.food.id))} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
         {popular.length > 0 && (
-          <div className="flex flex-wrap gap-2" role="group" aria-label="Quick add">
-            {popular.map((f) => (
-              <Chip key={f.id} onClick={() => add(f)}>+ {f.name}</Chip>
-            ))}
-          </div>
+          <QuickRow label="Quick add" foods={popular.map((food) => ({ food, quantity: 1, unit: food.defaultUnit, count: 0 }))} onAdd={(q) => add(q.food)} plain />
         )}
       </div>
 
@@ -214,6 +249,8 @@ export function FoodLogger({ initialMealType, focus, popular, initialLines = [] 
                   editable
                   onChange={editLine}
                   onRemove={(row) => changeLines((list) => list.filter((x) => x.key !== row.id))}
+                  favourite={favouriteIds.has(l.food.id)}
+                  onToggleFavourite={() => toggleFavourite(l)}
                 />
               ))}
             </div>
@@ -236,6 +273,23 @@ export function FoodLogger({ initialMealType, focus, popular, initialLines = [] 
       <Button size="lg" onClick={save} loading={saving} disabled={lines.length === 0 || saving}>
         Save meal
       </Button>
+    </div>
+  );
+}
+
+/** A labelled row of one-tap chips. Recent and favourite chips add your usual portion. */
+function QuickRow({ label, foods, onAdd, plain }: { label: string; foods: QuickFood[]; onAdd: (q: QuickFood) => void; plain?: boolean }) {
+  if (!foods.length) return null;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <p className="text-xs font-medium text-muted">{label}</p>
+      <div className="flex flex-wrap gap-2" role="group" aria-label={label}>
+        {foods.map((q) => (
+          <Chip key={q.food.id} onClick={() => onAdd(q)}>
+            + {plain ? q.food.name : portionText(q.quantity, q.unit, q.food.name)}
+          </Chip>
+        ))}
+      </div>
     </div>
   );
 }

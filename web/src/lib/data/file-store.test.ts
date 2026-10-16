@@ -115,6 +115,18 @@ describe("file store", () => {
     expect(await db.getMealsBetween(B, "2026-10-01", "2026-10-31")).toHaveLength(0);
   });
 
+  it("keeps favourites per user, idempotent, catalogue foods only", async () => {
+    await db.setFavourite(A, "seed-phulka", true);
+    await db.setFavourite(A, "seed-phulka", true);
+    await db.setFavourite(A, "seed-curd", true);
+    await db.setFavourite(A, "seed-curd", false);
+    expect(await db.listFavouriteFoodIds(A)).toEqual(["seed-phulka"]);
+    expect(await db.listFavouriteFoodIds(B)).toEqual([]);
+    await expect(db.setFavourite(A, "not-a-food", true)).rejects.toThrow("isn't in your food list");
+    await db.deleteAccount(A);
+    expect(await db.listFavouriteFoodIds(A)).toEqual([]);
+  });
+
   it("drafts never count toward the day", async () => {
     await db.createDraftMeal(A, draft());
     expect((await db.getDay(A, "2026-10-16")).meals).toHaveLength(0);

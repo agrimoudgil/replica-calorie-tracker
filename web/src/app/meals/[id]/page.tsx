@@ -7,6 +7,7 @@ import { FoodItemRow } from "@/components/ui/food";
 import { db } from "@/lib/data";
 import { mealTotals } from "@/lib/data/meal-math";
 import { requireUserId } from "@/lib/data/session";
+import { localDate } from "@/lib/dates";
 import { MEAL_LABEL } from "@/lib/meal-type";
 
 const fmt = new Intl.NumberFormat("en-IN");
@@ -46,7 +47,7 @@ export default async function MealPage({ params }: PageProps<"/meals/[id]">) {
       <ScreenHeader
         title={MEAL_LABEL[meal.mealType]}
         subtitle={time}
-        back="/"
+        back={meal.localDate === localDate(new Date(), profile?.timezone) ? "/" : `/?date=${meal.localDate}`}
         action={
           <Link href={`/log/review/${meal.id}`} aria-label="Edit meal" className="grid size-11 place-items-center rounded-md hover:bg-surface">
             <Pencil aria-hidden className="size-5" />

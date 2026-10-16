@@ -24,6 +24,7 @@ type State = {
   meals: Record<string, Meal>;
   customFoods: Food[];
   aiUsage: AiUsage[];
+  favourites: Record<string, string[]>;
 };
 
 export function createFileStore(dir: string): DataLayer {
@@ -35,8 +36,9 @@ export function createFileStore(dir: string): DataLayer {
     try {
       state = JSON.parse(fs.readFileSync(file, "utf8")) as State;
     } catch {
-      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [] };
+      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [], favourites: {} };
     }
+    state.favourites ??= {}; // stores written before favourites existed
     return state;
   };
 
@@ -180,6 +182,21 @@ export function createFileStore(dir: string): DataLayer {
       return { date, meals, totals: sumNutrients(meals.flatMap((m) => m.items.map((i) => i.nutrients))) };
     },
 
+    async listFavouriteFoodIds(userId) {
+      return [...(load().favourites[userId] ?? [])];
+    },
+
+    async setFavourite(userId, foodId, favourite) {
+      requireId(userId, "user");
+      if (!foodsFor(userId).some((f) => f.id === foodId)) throw new DataError("not_found", "That food isn't in your food list.");
+      const s = load();
+      const current = new Set(s.favourites[userId] ?? []);
+      if (favourite) current.add(foodId);
+      else current.delete(foodId);
+      s.favourites[userId] = [...current];
+      persist();
+    },
+
     async getMealsBetween(userId, from, to) {
       return Object.values(load().meals)
         .filter((m) => m.userId === userId && m.status === "saved" && m.localDate >= from && m.localDate <= to)
@@ -219,6 +236,7 @@ export function createFileStore(dir: string): DataLayer {
       for (const [id, meal] of Object.entries(s.meals)) if (meal.userId === userId) delete s.meals[id];
       s.customFoods = s.customFoods.filter((f) => f.ownerId !== userId);
       s.aiUsage = s.aiUsage.filter((u) => u.userId !== userId);
+      delete s.favourites[userId];
       persist();
       fs.rmSync(path.join(dir, "photos", userId), { recursive: true, force: true });
     },

@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Plus, Star, Trash2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { IconButton } from "./button";
 import { ConfidenceBadge, HealthScoreBadge, type Confidence } from "./badges";
@@ -85,9 +85,12 @@ type FoodItemRowProps = {
   editable?: boolean;
   onChange?: (item: FoodItem) => void;
   onRemove?: (item: FoodItem) => void;
+  /** Shows a star toggle when given. */
+  favourite?: boolean;
+  onToggleFavourite?: (item: FoodItem) => void;
 };
 
-export function FoodItemRow({ item, editable = false, onChange, onRemove }: FoodItemRowProps) {
+export function FoodItemRow({ item, editable = false, onChange, onRemove, favourite, onToggleFavourite }: FoodItemRowProps) {
   return (
     <div className="flex flex-col gap-2 border-b border-border py-3 last:border-b-0">
       <div className="flex min-h-11 items-start justify-between gap-3">
@@ -102,6 +105,15 @@ export function FoodItemRow({ item, editable = false, onChange, onRemove }: Food
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <span className="text-sm font-semibold tabular-nums">{Math.round(item.kcal)} kcal</span>
+          {onToggleFavourite && (
+            <IconButton
+              label={favourite ? `Remove ${item.name} from favourites` : `Add ${item.name} to favourites`}
+              aria-pressed={Boolean(favourite)}
+              onClick={() => onToggleFavourite(item)}
+            >
+              <Star aria-hidden className={cn("size-4", favourite ? "fill-current text-warning" : "text-muted")} />
+            </IconButton>
+          )}
           {editable && onRemove && (
             <IconButton label={`Remove ${item.name}`} onClick={() => onRemove(item)}>
               <Trash2 aria-hidden className="size-4 text-muted" />
@@ -133,9 +145,11 @@ type MealCardProps = {
   onAdd?: () => void;
   addHref?: string;
   loading?: boolean;
+  /** Shown next to the meal name, e.g. the time when a day has two lunches. */
+  time?: string;
 };
 
-export function MealCard({ type, href = "#", items = [], kcal = 0, score, onAdd, addHref, loading }: MealCardProps) {
+export function MealCard({ type, href = "#", items = [], kcal = 0, score, onAdd, addHref, loading, time }: MealCardProps) {
   const base = "rounded-lg border border-border bg-bg p-4 shadow-card";
   if (loading) {
     return (
@@ -167,7 +181,10 @@ export function MealCard({ type, href = "#", items = [], kcal = 0, score, onAdd,
   return (
     <Link href={href} className={cn(base, "flex flex-col gap-2 transition-colors hover:bg-surface")}>
       <span className="flex items-center justify-between gap-2">
-        <span className="text-base font-semibold">{mealLabel[type]}</span>
+        <span className="text-base font-semibold">
+          {mealLabel[type]}
+          {time && <span className="font-normal text-muted"> · {time}</span>}
+        </span>
         <span className="text-sm font-semibold tabular-nums">{Math.round(kcal)} kcal</span>
       </span>
       <span className="line-clamp-2 text-sm text-muted">{items.join(", ")}</span>

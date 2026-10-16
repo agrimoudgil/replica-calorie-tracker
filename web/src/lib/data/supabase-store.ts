@@ -333,6 +333,28 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       return { date, meals, totals: sumNutrients(meals.flatMap((m) => m.items.map((i) => i.nutrients))) };
     },
 
+    async listFavouriteFoodIds(userId) {
+      const db = await clients.user();
+      const { data, error } = await db.from("favourite_foods").select("food_id").eq("user_id", userId).order("created_at");
+      if (error) throw toDataError(error);
+      return data.map((r) => String(r.food_id));
+    },
+
+    async setFavourite(userId, foodId, favourite) {
+      const db = await clients.user();
+      if (favourite) {
+        // Foreign keys ignore RLS, so check the food is visible to this user (catalogue or their own).
+        const { data: visible, error: readError } = await db.from("foods").select("id").eq("id", foodId).maybeSingle();
+        if (readError) throw toDataError(readError);
+        if (!visible) throw new DataError("not_found", "That food isn't in your food list.");
+        const { error } = await db.from("favourite_foods").upsert({ user_id: userId, food_id: foodId }, { onConflict: "user_id,food_id", ignoreDuplicates: true });
+        if (error) throw toDataError(error);
+      } else {
+        const { error } = await db.from("favourite_foods").delete().eq("user_id", userId).eq("food_id", foodId);
+        if (error) throw toDataError(error);
+      }
+    },
+
     async getMealsBetween(userId, from, to) {
       const db = await clients.user();
       const { data, error } = await db

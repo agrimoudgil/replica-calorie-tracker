@@ -45,6 +45,8 @@ export const saveMealSchema = z.object({
   expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
 });
 
+export const favouriteSchema = z.object({ favourite: z.boolean() });
+
 export const parseMealSchema = z.object({
   text: z.string().trim().min(1, "Type what you ate.").max(500, "Keep it under 500 characters."),
 });

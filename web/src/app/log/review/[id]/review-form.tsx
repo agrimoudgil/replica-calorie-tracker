@@ -33,7 +33,7 @@ const toRow = (i: MealItem): FoodItem => ({
   confidence: i.aiConfidence,
 });
 
-export function ReviewForm({ meal, unitGrams }: { meal: Meal; unitGrams: Record<string, Partial<Record<Unit, number>>> }) {
+export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; unitGrams: Record<string, Partial<Record<Unit, number>>>; dayPath?: string }) {
   const router = useRouter();
   const toast = useToast();
   const [items, setItems] = useState<MealItem[]>(meal.items);
@@ -79,7 +79,7 @@ export function ReviewForm({ meal, unitGrams }: { meal: Meal; unitGrams: Record<
       }),
     }).catch(() => null);
     if (res?.ok) {
-      router.push(`/?saved=${meal.id}`);
+      router.push(`${dayPath}${dayPath.includes("?") ? "&" : "?"}saved=${meal.id}`);
       router.refresh();
       return;
     }
@@ -93,7 +93,7 @@ export function ReviewForm({ meal, unitGrams }: { meal: Meal; unitGrams: Record<
     setBusy("discard");
     const res = await fetch(`/api/meals/${meal.id}`, { method: "DELETE" }).catch(() => null);
     if (res && (res.ok || res.status === 404)) {
-      router.push("/");
+      router.push(dayPath);
       router.refresh();
       return;
     }

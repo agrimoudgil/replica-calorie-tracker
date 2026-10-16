@@ -25,7 +25,7 @@ export function TodayAddButton({ suggested }: { suggested: MealType }) {
 }
 
 /** Shown after a save: confirms it and offers Undo (deletes the meal just saved). */
-export function SavedNotice({ mealId, label }: { mealId: string; label: string }) {
+export function SavedNotice({ mealId, label, returnTo = "/" }: { mealId: string; label: string; returnTo?: string }) {
   const router = useRouter();
   const [state, setState] = useState<"idle" | "undoing" | "error">("idle");
 
@@ -33,7 +33,7 @@ export function SavedNotice({ mealId, label }: { mealId: string; label: string }
     setState("undoing");
     const res = await fetch(`/api/meals/${mealId}`, { method: "DELETE" }).catch(() => null);
     if (!res || (!res.ok && res.status !== 404)) return setState("error");
-    router.replace("/");
+    router.replace(returnTo);
     router.refresh();
   };
 
@@ -44,7 +44,7 @@ export function SavedNotice({ mealId, label }: { mealId: string; label: string }
       <button type="button" onClick={undo} disabled={state === "undoing"} className="h-11 shrink-0 px-2 font-semibold underline underline-offset-2 disabled:opacity-60">
         {state === "undoing" ? "Undoing…" : "Undo"}
       </button>
-      <button type="button" aria-label="Dismiss" onClick={() => router.replace("/")} className="grid size-11 shrink-0 place-items-center">
+      <button type="button" aria-label="Dismiss" onClick={() => router.replace(returnTo)} className="grid size-11 shrink-0 place-items-center">
         <X aria-hidden className="size-4" />
       </button>
     </div>

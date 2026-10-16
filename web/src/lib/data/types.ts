@@ -128,6 +128,10 @@ export interface DataLayer {
   /** Saved meals with items whose local day is between `from` and `to` (inclusive, YYYY-MM-DD). */
   getMealsBetween(userId: string, from: string, to: string): Promise<Meal[]>;
 
+  listFavouriteFoodIds(userId: string): Promise<string[]>;
+  /** Stars or un-stars a food the user can see. Idempotent. */
+  setFavourite(userId: string, foodId: string, favourite: boolean): Promise<void>;
+
   savePhoto(userId: string, mealId: string, bytes: Uint8Array): Promise<string>;
   readPhoto(userId: string, mealId: string): Promise<Uint8Array | null>;
 

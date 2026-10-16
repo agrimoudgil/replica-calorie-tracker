@@ -138,6 +138,27 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     expect(data ?? []).toHaveLength(0);
   });
 
+  it("keeps favourites private and limited to foods the user can see", async () => {
+    await a.store.setFavourite(a.id, "seed-phulka", true);
+    await a.store.setFavourite(a.id, "seed-phulka", true); // idempotent
+    expect(await a.store.listFavouriteFoodIds(a.id)).toEqual(["seed-phulka"]);
+    expect(await b.store.listFavouriteFoodIds(b.id)).toEqual([]);
+    expect(await b.store.listFavouriteFoodIds(a.id)).toEqual([]); // even naming A's id
+    // A's private custom food can't be starred by B.
+    const { data: custom, error } = await a.client.from("foods").insert({ owner_id: a.id, name: "A's secret dish", kcal: 100, source: "user" }).select("id").single();
+    expect(error).toBeNull();
+    await expect(b.store.setFavourite(b.id, custom!.id, true)).rejects.toThrow("isn't in your food list");
+    await a.store.setFavourite(a.id, "seed-phulka", false);
+    expect(await a.store.listFavouriteFoodIds(a.id)).toEqual([]);
+  });
+
+  it("returns meals in a date range for the owner only", async () => {
+    const meal = await a.store.createDraftMeal(a.id, draft({ eatenAt: "2026-10-10T07:30:00.000Z" }));
+    await a.store.saveMeal(a.id, meal.id, { mealType: "lunch", items: [{ id: meal.items[0].id, quantity: 1, unit: "piece" }] });
+    expect((await a.store.getMealsBetween(a.id, "2026-10-10", "2026-10-10")).map((m) => m.id)).toEqual([meal.id]);
+    expect(await b.store.getMealsBetween(b.id, "2026-10-01", "2026-10-31")).toHaveLength(0);
+  });
+
   it("counts AI usage per user", async () => {
     await a.store.recordAiUsage({ userId: a.id, kind: "photo", model: "test", inputTokens: 1, outputTokens: 1, createdAt: new Date().toISOString() });
     const since = new Date(Date.now() - 60_000);
