@@ -16,7 +16,7 @@ export function TodayAddButton({ suggested }: { suggested: MealType }) {
           onPick={(method) => {
             if (method === "photo") router.push(`/log/photo?meal=${suggested}`);
             else if (method === "voice") router.push("/log/voice");
-            else router.push("/log/search");
+            else router.push(`/log/search?mode=${method === "text" ? "type" : "search"}&meal=${suggested}`);
           }}
         />
       </div>

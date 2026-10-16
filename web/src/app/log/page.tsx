@@ -7,8 +7,8 @@ export const metadata = { title: "Log a meal · Replica calorie tracker" };
 const METHODS = [
   { href: "/log/photo", label: "Snap a photo", detail: "Fastest. We work out the items and portions.", icon: Camera },
   { href: "/log/voice", label: "Say it", detail: "“2 roti, dal and a bowl of curd”", icon: Mic },
-  { href: "/log/search", label: "Type it", detail: "Write what you ate in your own words.", icon: Type },
-  { href: "/log/search", label: "Search foods", detail: "Pick from Indian dishes and staples.", icon: Search },
+  { href: "/log/search?mode=type", label: "Type it", detail: "“2 roti, 1 katori dal aur dahi”. Free, no AI.", icon: Type },
+  { href: "/log/search?mode=search", label: "Search foods", detail: "Pick from Indian dishes and staples.", icon: Search },
 ];
 
 /** S03: choose how to log. The add button on Today opens the same choices as a menu. */

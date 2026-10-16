@@ -55,15 +55,35 @@ type SearchFieldProps = {
   options: SearchOption[];
   onPick: (option: SearchOption) => void;
   placeholder?: string;
+  /** false when `options` already come filtered (e.g. from a server search). */
+  filter?: boolean;
+  onQueryChange?: (query: string) => void;
+  loading?: boolean;
+  emptyMessage?: (query: string) => string;
+  autoFocus?: boolean;
 };
 
 /** Combobox: type to filter, arrow keys move, Enter picks, Esc clears. */
-export function SearchField({ label, options, onPick, placeholder }: SearchFieldProps) {
+export function SearchField({
+  label,
+  options,
+  onPick,
+  placeholder,
+  filter = true,
+  onQueryChange,
+  loading = false,
+  emptyMessage = (q) => `No foods match “${q}”. You can add it as a custom food.`,
+  autoFocus,
+}: SearchFieldProps) {
   const id = useId();
-  const [query, setQuery] = useState("");
+  const [query, setQueryState] = useState("");
   const [active, setActive] = useState(0);
+  const setQuery = (value: string) => {
+    setQueryState(value);
+    onQueryChange?.(value);
+  };
   const q = query.trim().toLowerCase();
-  const results = q ? options.filter((o) => o.label.toLowerCase().includes(q)) : [];
+  const results = !q ? [] : filter ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
   const open = q.length > 0;
 
   const pick = (o: SearchOption) => {
@@ -85,6 +105,7 @@ export function SearchField({ label, options, onPick, placeholder }: SearchField
           aria-activedescendant={open && results[active] ? `${id}-${results[active].id}` : undefined}
           value={query}
           placeholder={placeholder}
+          autoFocus={autoFocus}
           onChange={(e) => {
             setQuery(e.target.value);
             setActive(0);
@@ -114,7 +135,7 @@ export function SearchField({ label, options, onPick, placeholder }: SearchField
       {open && (
         <ul id={`${id}-list`} role="listbox" aria-label={`${label} results`} className="absolute top-full z-10 mt-1 w-full overflow-hidden rounded-md border border-border bg-bg shadow-pop">
           {results.length === 0 ? (
-            <li className="px-3 py-3 text-sm text-muted">No foods match “{query}”. You can add it as a custom food.</li>
+            <li className="px-3 py-3 text-sm text-muted">{loading ? "Searching…" : emptyMessage(query.trim())}</li>
           ) : (
             results.map((o, i) => (
               <li

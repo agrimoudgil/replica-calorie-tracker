@@ -45,6 +45,29 @@ export const saveMealSchema = z.object({
   expectedUpdatedAt: z.iso.datetime({ offset: true }).optional(),
 });
 
+export const parseMealSchema = z.object({
+  text: z.string().trim().min(1, "Type what you ate.").max(500, "Keep it under 500 characters."),
+});
+
+/** A meal built from catalogue foods (typed or searched). Nutrients are computed on the server. */
+export const catalogueMealSchema = z.object({
+  id: z.uuid(),
+  mealType: z.enum(MEAL_TYPES),
+  inputMethod: z.enum(["text", "search"]),
+  rawText: z.string().max(1000).nullable().optional(),
+  eatenAt: z.iso.datetime({ offset: true }),
+  items: z
+    .array(
+      z.object({
+        foodId: z.string().min(1).max(100),
+        quantity: z.number().positive("Portions must be more than zero.").max(3000, "That portion is too large."),
+        unit: z.enum(UNITS),
+      }),
+    )
+    .min(1, "Add at least one food.")
+    .max(12, "Up to 12 foods per meal."),
+});
+
 /** The user must tick "I understand" before an account is deleted. */
 export const deleteAccountSchema = z.object({ confirm: z.literal(true, { error: "Confirm that you want to delete everything." }) });
 
