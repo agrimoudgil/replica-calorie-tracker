@@ -6,7 +6,8 @@ import { profileSchema } from "@/lib/api/schemas";
 
 export async function GET() {
   const userId = await currentUserId();
-  const profile = userId ? await db.getProfile(userId) : null;
+  if (!userId) return unauthenticated();
+  const profile = await db.getProfile(userId);
   if (!profile) return fail(404, "not_found", "No profile yet.");
   return NextResponse.json(profile);
 }

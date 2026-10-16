@@ -164,6 +164,7 @@ function toDataError(error: PostgrestError): Error {
   switch (error.code) {
     case "P0002":
       return new DataError("not_found", "Meal not found.");
+    case "PT409":
     case "40001":
       return new DataError("conflict", "This meal changed somewhere else. Reload to see the latest.");
     case "23505":
@@ -285,6 +286,10 @@ export function createSupabaseStore(clients: Clients): DataLayer {
 
     async saveMeal(userId, mealId, input) {
       const meal = await mustGetMeal(userId, mealId);
+      // Fast path for the common case; save_meal re-checks under a row lock for races.
+      if (input.expectedUpdatedAt && input.expectedUpdatedAt !== meal.updatedAt) {
+        throw new DataError("conflict", "This meal changed somewhere else. Reload to see the latest.");
+      }
       const foodIds = [...new Set(meal.items.map((i) => i.foodId).filter((id): id is string => Boolean(id)))];
       const db = await clients.user();
       let foods: Food[] = [];

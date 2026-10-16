@@ -103,6 +103,20 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
 
     expect((await a.store.getDay(a.id, "2026-10-17")).meals.map((m) => m.id)).toEqual([meal.id]);
     expect((await b.store.getDay(b.id, "2026-10-17")).meals).toHaveLength(0);
+  }, 60_000);
+
+  it("refuses a stale save inside the database quickly (race guard)", async () => {
+    const meal = await a.store.createDraftMeal(a.id, draft());
+    const started = Date.now();
+    const { error } = await a.client.rpc("save_meal", {
+      p_meal_id: meal.id,
+      p_meal_type: "dinner",
+      p_health_score: 5,
+      p_items: [{ id: meal.items[0].id, name: "Phulka", quantity: 1, unit: "piece", grams: 35, kcal: 104, protein_g: 3, carb_g: 19, fat_g: 1, fiber_g: 3, source: "ai" }],
+      p_expected_updated_at: "2000-01-01T00:00:00Z",
+    });
+    expect(error?.code).toBe("PT409");
+    expect(Date.now() - started).toBeLessThan(10_000);
   }, 30_000);
 
   it("keeps photos private to their owner", async () => {
