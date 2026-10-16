@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ChevronRight, Lightbulb } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { MealCard } from "@/components/ui/food";
 import { CalorieRing, MacroBar } from "@/components/ui/progress";
@@ -71,6 +73,14 @@ export default async function TodayPage({ searchParams }: PageProps<"/">) {
           );
         })}
       </section>
+
+      <Link href="/insights" className="flex min-h-14 items-center justify-between gap-3 rounded-lg border border-border px-4 text-base hover:bg-surface">
+        <span className="flex items-center gap-3">
+          <Lightbulb aria-hidden className="size-5 text-accent" />
+          Ideas for your next meal
+        </span>
+        <ChevronRight aria-hidden className="size-5 text-muted" />
+      </Link>
 
       <TodayAddButton suggested={suggestMealType(localHour(now, profile.timezone))} />
     </Screen>

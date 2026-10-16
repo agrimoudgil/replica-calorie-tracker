@@ -104,6 +104,17 @@ describe("file store", () => {
     await expect(db.saveMeal(A, meal.id, { mealType: "lunch", items: [] })).rejects.toThrow("at least one");
   });
 
+  it("returns saved meals in a date range, own only", async () => {
+    for (const [i, eatenAt] of ["2026-10-10T07:30:00.000Z", "2026-10-14T07:30:00.000Z", "2026-10-20T07:30:00.000Z"].entries()) {
+      const meal = await db.createDraftMeal(A, draft({ eatenAt }));
+      if (i < 3) await db.saveMeal(A, meal.id, { mealType: "lunch", items: [{ id: meal.items[0].id, quantity: 1, unit: "piece" }] });
+    }
+    await db.createDraftMeal(A, draft({ eatenAt: "2026-10-12T07:30:00.000Z" })); // draft: excluded
+    const inRange = await db.getMealsBetween(A, "2026-10-10", "2026-10-16");
+    expect(inRange.map((m) => m.localDate)).toEqual(["2026-10-10", "2026-10-14"]);
+    expect(await db.getMealsBetween(B, "2026-10-01", "2026-10-31")).toHaveLength(0);
+  });
+
   it("drafts never count toward the day", async () => {
     await db.createDraftMeal(A, draft());
     expect((await db.getDay(A, "2026-10-16")).meals).toHaveLength(0);

@@ -333,6 +333,20 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       return { date, meals, totals: sumNutrients(meals.flatMap((m) => m.items.map((i) => i.nutrients))) };
     },
 
+    async getMealsBetween(userId, from, to) {
+      const db = await clients.user();
+      const { data, error } = await db
+        .from("meals")
+        .select(MEAL_WITH_ITEMS)
+        .eq("user_id", userId)
+        .eq("status", "saved")
+        .gte("local_date", from)
+        .lte("local_date", to)
+        .order("eaten_at");
+      if (error) throw toDataError(error);
+      return data.map(mealFromRow);
+    },
+
     async savePhoto(userId, mealId, bytes) {
       if (!isId(userId) || !isId(mealId)) throw new DataError("invalid", "Bad id.");
       const db = await clients.user();

@@ -27,13 +27,21 @@ const portion = (l: Pick<Line, "food" | "quantity" | "unit">) => {
   return { grams, nutrients: nutrientsForGrams(l.food, grams) };
 };
 
-export function FoodLogger({ initialMealType, focus, popular }: { initialMealType: MealType; focus: "type" | "search"; popular: Food[] }) {
+type FoodLoggerProps = {
+  initialMealType: MealType;
+  focus: "type" | "search";
+  popular: Food[];
+  /** Foods to start with, e.g. from an insights idea. */
+  initialLines?: Array<Omit<Line, "key">>;
+};
+
+export function FoodLogger({ initialMealType, focus, popular, initialLines = [] }: FoodLoggerProps) {
   const router = useRouter();
   const textId = useId();
   const [mealType, setMealType] = useState(initialMealType);
   const [text, setText] = useState("");
   const [typed, setTyped] = useState<string[]>([]);
-  const [lines, setLines] = useState<Line[]>([]);
+  const [lines, setLines] = useState<Line[]>(() => initialLines.map((l, i) => ({ ...l, key: `start-${i}` })));
   const [parsing, setParsing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [results, setResults] = useState<Food[]>([]);

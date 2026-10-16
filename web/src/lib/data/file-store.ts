@@ -180,6 +180,12 @@ export function createFileStore(dir: string): DataLayer {
       return { date, meals, totals: sumNutrients(meals.flatMap((m) => m.items.map((i) => i.nutrients))) };
     },
 
+    async getMealsBetween(userId, from, to) {
+      return Object.values(load().meals)
+        .filter((m) => m.userId === userId && m.status === "saved" && m.localDate >= from && m.localDate <= to)
+        .sort((a, b) => a.eatenAt.localeCompare(b.eatenAt));
+    },
+
     async savePhoto(userId, mealId, bytes) {
       const p = photoPath(userId, mealId);
       fs.mkdirSync(path.dirname(p), { recursive: true });
