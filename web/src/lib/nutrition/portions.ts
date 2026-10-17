@@ -56,6 +56,15 @@ export function sumNutrients(list: Nutrients[]): Nutrients {
   return out;
 }
 
+const OPTIONAL_NUTRIENT_KEYS = ["sugarG", "satFatG", "sodiumMg", "calciumMg", "ironMg"] as const;
+
+/** Like sumNutrients, but an optional nutrient (sugar, minerals...) is left out unless every part reports it. */
+export function sumKnownNutrients(list: Nutrients[]): Nutrients {
+  const out = sumNutrients(list);
+  for (const key of OPTIONAL_NUTRIENT_KEYS) if (list.some((n) => n[key] === undefined)) delete out[key];
+  return out;
+}
+
 /**
  * Removes impossible values from an estimate: no negatives, and no more energy
  * than pure fat (9 kcal per gram) or more macros than the portion weighs.

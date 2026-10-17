@@ -194,6 +194,7 @@ function toDataError(error: PostgrestError): Error {
 }
 
 const MEAL_WITH_ITEMS = "*, meal_items(*)";
+const MEAL_PAGE = 500;
 const photoKey = (userId: string, mealId: string) => `${userId}/${mealId}.jpg`;
 
 export function createSupabaseStore(clients: Clients): DataLayer {
@@ -474,16 +475,24 @@ export function createSupabaseStore(clients: Clients): DataLayer {
 
     async getMealsBetween(userId, from, to) {
       const db = await clients.user();
-      const { data, error } = await db
-        .from("meals")
-        .select(MEAL_WITH_ITEMS)
-        .eq("user_id", userId)
-        .eq("status", "saved")
-        .gte("local_date", from)
-        .lte("local_date", to)
-        .order("eaten_at");
-      if (error) throw toDataError(error);
-      return data.map(mealFromRow);
+      // The API returns at most 1,000 rows per request (Supabase's default), so page through:
+      // a long range, like an all-time export, can hold far more meals than that.
+      const meals: Meal[] = [];
+      for (let start = 0; ; start += MEAL_PAGE) {
+        const { data, error } = await db
+          .from("meals")
+          .select(MEAL_WITH_ITEMS)
+          .eq("user_id", userId)
+          .eq("status", "saved")
+          .gte("local_date", from)
+          .lte("local_date", to)
+          .order("eaten_at")
+          .order("id") // a stable order, so pages never overlap or skip
+          .range(start, start + MEAL_PAGE - 1);
+        if (error) throw toDataError(error);
+        meals.push(...data.map(mealFromRow));
+        if (data.length < MEAL_PAGE) return meals;
+      }
     },
 
     async savePhoto(userId, mealId, bytes) {

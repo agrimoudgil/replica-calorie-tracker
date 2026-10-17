@@ -260,6 +260,25 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     expect(await b.store.getMealsBetween(b.id, "2026-10-01", "2026-10-31")).toHaveLength(0);
   });
 
+  it("reads more meals than one API page holds (an all-time export)", async () => {
+    // 1,050 saved meals across 2020: more than Supabase's default of 1,000 rows per request.
+    const rows = Array.from({ length: 1050 }, (_, n) => {
+      const at = new Date(Date.UTC(2020, 0, 1, 2) + n * 6 * 3_600_000).toISOString();
+      return { user_id: a.id, meal_type: "snack", input_method: "search", eaten_at: at, status: "saved", saved_at: at };
+    });
+    const { error } = await admin().from("meals").insert(rows);
+    expect(error).toBeNull();
+    try {
+      const meals = await a.store.getMealsBetween(a.id, "2020-01-01", "2020-12-31");
+      expect(meals).toHaveLength(1050);
+      expect(new Set(meals.map((m) => m.id)).size).toBe(1050); // pages don't overlap
+      expect(meals.every((m, i) => i === 0 || Date.parse(m.eatenAt) >= Date.parse(meals[i - 1].eatenAt))).toBe(true);
+      expect(await b.store.getMealsBetween(b.id, "2020-01-01", "2020-12-31")).toHaveLength(0);
+    } finally {
+      await admin().from("meals").delete().eq("user_id", a.id).gte("eaten_at", "2020-01-01").lt("eaten_at", "2021-01-02");
+    }
+  }, 60_000);
+
   it("counts AI usage per user", async () => {
     await a.store.recordAiUsage({ userId: a.id, kind: "photo", model: "test", inputTokens: 1, outputTokens: 1, createdAt: new Date().toISOString() });
     const since = new Date(Date.now() - 60_000);

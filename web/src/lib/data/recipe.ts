@@ -1,4 +1,4 @@
-import { GENERIC_UNIT_GRAMS, MAX_ITEM_GRAMS, gramsFor, nutrientsForGrams, round1, scaleNutrients, sumNutrients } from "@/lib/nutrition/portions";
+import { GENERIC_UNIT_GRAMS, MAX_ITEM_GRAMS, gramsFor, nutrientsForGrams, round1, scaleNutrients, sumKnownNutrients } from "@/lib/nutrition/portions";
 import { DIET_TYPES, type Food, type Nutrients, type Unit } from "@/lib/nutrition/types";
 import { DataError, type Recipe, type RecipeInput, type ServingUnit } from "./types";
 
@@ -11,9 +11,6 @@ import { DataError, type Recipe, type RecipeInput, type ServingUnit } from "./ty
 export const SERVING_UNITS = ["katori", "piece", "glass", "tbsp"] as const satisfies readonly ServingUnit[];
 export const MAX_INGREDIENTS = 30;
 export const MAX_SERVINGS = 50;
-
-/** Optional nutrients are known for a recipe only if every ingredient reports them. */
-const OPTIONAL_KEYS = ["sugarG", "satFatG", "sodiumMg", "calciumMg", "ironMg"] as const;
 
 export type IngredientGrams = { foodId: string; grams: number };
 
@@ -40,9 +37,8 @@ export function recipeNumbers(input: Pick<RecipeInput, "servings" | "cookedGrams
     merged.set(food.id, { food, grams: round1((merged.get(food.id)?.grams ?? 0) + grams) });
   }
   const ingredients = [...merged.values()];
-  const parts = ingredients.map((x) => nutrientsForGrams(x.food, x.grams));
-  const total = sumNutrients(parts);
-  for (const key of OPTIONAL_KEYS) if (parts.some((n) => n[key] === undefined)) delete total[key];
+  // Minerals and sugar are known for the recipe only if every ingredient reports them.
+  const total = sumKnownNutrients(ingredients.map((x) => nutrientsForGrams(x.food, x.grams)));
   const rawGrams = round1(ingredients.reduce((sum, x) => sum + x.grams, 0));
   const totalGrams = input.cookedGrams && input.cookedGrams > 0 ? input.cookedGrams : rawGrams;
   const servings = input.servings > 0 ? input.servings : 1;
