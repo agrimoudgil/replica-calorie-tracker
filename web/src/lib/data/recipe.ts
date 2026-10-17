@@ -104,26 +104,11 @@ export function bestPortion(food: Food, grams: number): { quantity: number; unit
   return { quantity: Math.round(grams), unit: "g" };
 }
 
-/** Recipe details with no column of their own, kept as JSON in `foods.source_ref`. */
+/** What a recipe keeps besides its food row (`foods.recipe_servings` and `cooked_grams` in the database). */
 export type RecipeMeta = { servings: number; cookedGrams?: number };
 
 export function recipeMeta(input: Pick<RecipeInput, "servings" | "cookedGrams">): RecipeMeta {
   return { servings: input.servings, ...(input.cookedGrams ? { cookedGrams: input.cookedGrams } : {}) };
-}
-
-export function encodeRecipeMeta(input: Pick<RecipeInput, "servings" | "cookedGrams">): string {
-  return JSON.stringify(recipeMeta(input));
-}
-
-export function decodeRecipeMeta(ref: unknown): RecipeMeta {
-  try {
-    const m = JSON.parse(String(ref)) as Partial<RecipeMeta>;
-    const servings = Number(m.servings);
-    const cooked = Number(m.cookedGrams);
-    return { servings: servings > 0 ? servings : 1, ...(cooked > 0 ? { cookedGrams: cooked } : {}) };
-  } catch {
-    return { servings: 1 };
-  }
 }
 
 /** Deleting a food that a recipe still uses would change the recipe, so it's refused. */

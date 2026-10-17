@@ -218,6 +218,19 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     expect(peek ?? []).toHaveLength(0);
     const sneak = await b.client.from("recipe_ingredients").insert({ recipe_id: recipe.food.id, ingredient_id: "seed-oil", grams: 100 });
     expect(sneak.error).not.toBeNull();
+    // Migration 3: even straight through the API, B's own recipe can't use A's private food,
+    // and ingredients only hang off recipes.
+    const bRecipe = await b.store.createRecipe(b.id, { name: "B's khichdi", servings: 2, servingUnit: "katori", ingredients: [{ foodId: "seed-raw-rice", quantity: 1, unit: "katori" }] });
+    const borrow = await b.client.from("recipe_ingredients").insert({ recipe_id: bRecipe.food.id, ingredient_id: masala.id, grams: 6 });
+    expect(borrow.error?.code).toBe("42501");
+    const bPlain = await b.store.createCustomFood(b.id, { name: "B's plain", unit: "piece", gramsPerUnit: 50, perServing: { kcal: 100, proteinG: 1, carbG: 20, fatG: 1, fiberG: 1 } });
+    const offPlain = await b.client.from("recipe_ingredients").insert({ recipe_id: bPlain.id, ingredient_id: "seed-oil", grams: 5 });
+    expect(offPlain.error?.code).toBe("42501");
+    await b.store.deleteCustomFood(b.id, bRecipe.food.id);
+    await b.store.deleteCustomFood(b.id, bPlain.id);
+    // Servings and cooked weight are real columns now; source_ref stays empty.
+    const { data: stored } = await admin().from("foods").select("recipe_servings, cooked_grams, source_ref").eq("id", recipe.food.id).single();
+    expect(stored).toEqual({ recipe_servings: 4, cooked_grams: 900, source_ref: null });
 
     // Logged as one food; editing the recipe later leaves that meal alone.
     const meal = await a.store.createDraftMeal(a.id, draft());

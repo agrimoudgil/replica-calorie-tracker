@@ -5,7 +5,7 @@ import { SEED_FOODS } from "@/lib/nutrition/foods";
 import type { Food } from "@/lib/nutrition/types";
 import { buildCustomFood } from "./custom-food";
 import { itemFromFood } from "./meal-math";
-import { assembleRecipe, bestPortion, buildRecipe, decodeRecipeMeta, encodeRecipeMeta } from "./recipe";
+import { assembleRecipe, bestPortion, buildRecipe, recipeMeta } from "./recipe";
 import type { RecipeInput } from "./types";
 
 const food = (id: string) => SEED_FOODS.find((f) => f.id === `seed-${id}`)!;
@@ -75,11 +75,10 @@ describe("recipes", () => {
     expect(bestPortion(food("onion"), 37)).toEqual({ quantity: 37, unit: "g" });
   });
 
-  it("stores servings and cooked weight, and reads bad data back safely", () => {
-    expect(decodeRecipeMeta(encodeRecipeMeta({ servings: 4, cookedGrams: 900 }))).toEqual({ servings: 4, cookedGrams: 900 });
-    expect(decodeRecipeMeta(encodeRecipeMeta({ servings: 2.5 }))).toEqual({ servings: 2.5 });
-    expect(decodeRecipeMeta(null)).toEqual({ servings: 1 });
-    expect(decodeRecipeMeta("not json")).toEqual({ servings: 1 });
+  it("keeps servings, and the cooked weight only when given", () => {
+    expect(recipeMeta({ servings: 4, cookedGrams: 900 })).toEqual({ servings: 4, cookedGrams: 900 });
+    expect(recipeMeta({ servings: 2.5 })).toEqual({ servings: 2.5 });
+    expect(recipeMeta({ servings: 2, cookedGrams: 0 })).toEqual({ servings: 2 });
   });
 
   it("assembles a stored recipe biggest ingredient first", () => {

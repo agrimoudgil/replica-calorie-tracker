@@ -8,7 +8,7 @@ import { PHOTO_BUCKET } from "@/lib/supabase/config";
 import { buildCustomFood } from "./custom-food";
 import { rankFoods } from "./food-rank";
 import { applyItemEdits, mealScore } from "./meal-math";
-import { assembleRecipe, buildRecipe, decodeRecipeMeta, encodeRecipeMeta, recipeMeta, usedInRecipe } from "./recipe";
+import { assembleRecipe, buildRecipe, recipeMeta, usedInRecipe, type RecipeMeta } from "./recipe";
 import { DataError, type DataLayer, type Meal, type MealItem, type Profile } from "./types";
 
 /*
@@ -110,6 +110,14 @@ export function foodToRow(f: Food) {
     is_recipe: f.isRecipe ?? false,
   };
 }
+
+function recipeMetaFromRow(r: Row): RecipeMeta {
+  const servings = Number(r.recipe_servings);
+  const cooked = num(r.cooked_grams);
+  return { servings: servings > 0 ? servings : 1, ...(cooked ? { cookedGrams: cooked } : {}) };
+}
+
+const recipeColumns = (input: RecipeMeta) => ({ recipe_servings: input.servings, cooked_grams: input.cookedGrams ?? null });
 
 function itemFromRow(r: Row): MealItem {
   return {
@@ -305,7 +313,7 @@ export function createSupabaseStore(clients: Clients): DataLayer {
         throw usedInRecipe(recipe ? String(recipe.name) : undefined);
       }
       const { data, error } = await db.from("foods").delete().eq("id", foodId).eq("owner_id", userId).select("id");
-      // 23503: a recipe started using it in the meantime (the ingredient key is ON DELETE RESTRICT).
+      // 23503: a recipe started using it in the meantime (the ingredient key, checked at commit).
       if (error) throw error.code === "23503" ? usedInRecipe() : toDataError(error);
       if (!data.length) throw new DataError("not_found", "That food isn't one of yours.");
     },
@@ -320,14 +328,14 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       if (rowsError) throw toDataError(rowsError);
       const ingredients = rows.map((r) => ({ foodId: String(r.ingredient_id), grams: Number(r.grams) }));
       const foods = await visibleFoods(db, ingredients.map((i) => i.foodId));
-      return assembleRecipe(foodFromRow(data), decodeRecipeMeta(data.source_ref), ingredients, foods);
+      return assembleRecipe(foodFromRow(data), recipeMetaFromRow(data), ingredients, foods);
     },
 
     async createRecipe(userId, input) {
       const db = await clients.user();
       const foods = await visibleFoods(db, input.ingredients.map((i) => i.foodId));
       const built = buildRecipe(userId, "", input, foods);
-      const row: Record<string, unknown> = { ...foodToRow(built.food), source_ref: encodeRecipeMeta(input) };
+      const row: Record<string, unknown> = { ...foodToRow(built.food), ...recipeColumns(input) };
       delete row.id; // the database gives it a UUID
       const { data, error } = await db.from("foods").insert(row).select("*").single();
       if (error) throw toDataError(error);
@@ -361,7 +369,7 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       const keep = built.ingredients.map((i) => `"${i.foodId}"`).join(",");
       const { error: dropError } = await db.from("recipe_ingredients").delete().eq("recipe_id", recipeId).not("ingredient_id", "in", `(${keep})`);
       if (dropError) throw toDataError(dropError);
-      const row: Record<string, unknown> = { ...foodToRow(built.food), source_ref: encodeRecipeMeta(input) };
+      const row: Record<string, unknown> = { ...foodToRow(built.food), ...recipeColumns(input) };
       delete row.id;
       delete row.owner_id;
       const { data, error } = await db.from("foods").update(row).eq("id", recipeId).eq("owner_id", userId).select("*").single();
@@ -533,8 +541,8 @@ export function createSupabaseStore(clients: Clients): DataLayer {
         if (removeError) throw new Error("Could not delete photos");
         if (data.length < 1000) break;
       }
-      // Recipes before the rest: an ingredient key is ON DELETE RESTRICT, so a cascade that
-      // happens to reach the person's own ingredient before their recipe would fail.
+      // Recipes first. Migration 3 checks the ingredient key at commit, so the database no
+      // longer cares about the order; this keeps a database without it working too.
       const { error: recipeError } = await admin.from("foods").delete().eq("owner_id", userId).eq("is_recipe", true);
       if (recipeError) throw new Error("Could not delete recipes");
       const { error } = await admin.auth.admin.deleteUser(userId);

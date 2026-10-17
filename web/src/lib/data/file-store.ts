@@ -27,7 +27,7 @@ type State = {
   customFoods: Food[];
   aiUsage: AiUsage[];
   favourites: Record<string, string[]>;
-  /** By recipe id: what the database keeps in source_ref and recipe_ingredients. */
+  /** By recipe id: what the database keeps in the recipe columns of foods and in recipe_ingredients. */
   recipes: Record<string, RecipeMeta & { ingredients: IngredientGrams[] }>;
 };
 
