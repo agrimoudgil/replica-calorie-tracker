@@ -186,7 +186,8 @@ function IdeaCard({ idea, mealType }: { idea: MealIdea; mealType: MealType }) {
         </span>
         <Link
           href={addHref(ideaToQuery(idea), mealType)}
-          aria-label={`Add ${idea.title} to ${MEAL_LABEL[mealType].toLowerCase()}`}
+          // Starts with the visible words, so voice control users can say "Add this" (WCAG 2.5.3; BUG-002).
+          aria-label={`Add this to ${MEAL_LABEL[mealType].toLowerCase()}: ${idea.title}`}
           className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-pill bg-accent-soft px-4 text-sm font-semibold text-on-accent-soft"
         >
           <Plus aria-hidden className="size-4" /> Add this

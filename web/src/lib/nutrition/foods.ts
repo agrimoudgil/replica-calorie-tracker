@@ -110,7 +110,9 @@ export function normalizeFoodName(s: string): string {
   return s
     .toLowerCase()
     .normalize("NFKD")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    // Accents on Latin letters go ("dāl" → "dal"); Hindi vowel signs are marks too, so they stay.
+    .replace(/(\p{Script=Latin})\p{M}+/gu, "$1")
+    .replace(/[^\p{L}\p{M}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

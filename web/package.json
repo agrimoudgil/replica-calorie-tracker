@@ -9,6 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:supabase": "node scripts/test-supabase.mjs",
+    "pretest:e2e": "next build",
+    "test:e2e": "playwright test",
     "db:login": "supabase login",
     "db:link": "supabase link",
     "db:push": "supabase db push",
@@ -27,6 +29,8 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.14.0",
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.19.2",
     "@types/react": "^19",
@@ -38,5 +42,8 @@
     "tsx": "4.23.15",
     "typescript": "^5",
     "vitest": "5.0.3"
+  },
+  "overrides": {
+    "playwright-core": "1.63.0"
   }
 }

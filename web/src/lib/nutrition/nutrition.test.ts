@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { SEED_FOODS, matchFood } from "./foods";
+import { rankFoods } from "@/lib/data/food-rank";
+import { SEED_FOODS, matchFood, normalizeFoodName } from "./foods";
 import { changeUnit, gramsFor, rescaleItem, sanitizeNutrients, sumNutrients } from "./portions";
 import { healthScore } from "./score";
 import { computeTargets } from "./targets";
@@ -95,5 +96,14 @@ describe("matchFood", () => {
     expect(matchFood("Dal Makhani", SEED_FOODS)?.id).toBe("seed-dal-makhani");
     expect(matchFood("homemade dal tadka", SEED_FOODS)?.id).toBe("seed-dal-tadka");
     expect(matchFood("quinoa bowl", SEED_FOODS)).toBeNull();
+  });
+
+  // BUG-004: an accent split the word ("dāl" became "da l") and nothing matched.
+  it("ignores accents on Latin letters but keeps Hindi words whole", () => {
+    expect(normalizeFoodName("dāl")).toBe("dal");
+    expect(normalizeFoodName("Crème brûlée")).toBe("creme brulee");
+    expect(matchFood("dāl", SEED_FOODS)?.id).toBe("seed-dal-tadka");
+    expect(normalizeFoodName("दाल मखनी").split(" ")).toHaveLength(2);
+    expect(rankFoods(SEED_FOODS, "दाल मखनी", 1)[0]?.id).toBe("seed-dal-makhani");
   });
 });
