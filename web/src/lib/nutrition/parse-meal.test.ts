@@ -42,7 +42,8 @@ describe("parseMeal", () => {
   });
 
   it("reports what it could not find instead of guessing", () => {
-    expect(parse("2 roti, a slice of pizza")).toEqual({ items: [["phulka", 2, "piece"]], unmatched: ["a slice of pizza"] });
+    expect(parse("2 roti, a bowl of thai green curry")).toEqual({ items: [["phulka", 2, "piece"]], unmatched: ["a bowl of thai green curry"] });
+    expect(parse("a slice of pizza").items).toEqual([["pizza", 1, "piece"]]); // in the bigger catalogue now
     expect(parse("   ")).toEqual({ items: [], unmatched: [] });
   });
 

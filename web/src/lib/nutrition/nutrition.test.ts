@@ -95,7 +95,7 @@ describe("matchFood", () => {
     expect(matchFood("chaval", SEED_FOODS)?.id).toBe("seed-rice");
     expect(matchFood("Dal Makhani", SEED_FOODS)?.id).toBe("seed-dal-makhani");
     expect(matchFood("homemade dal tadka", SEED_FOODS)?.id).toBe("seed-dal-tadka");
-    expect(matchFood("quinoa bowl", SEED_FOODS)).toBeNull();
+    expect(matchFood("thai green curry", SEED_FOODS)).toBeNull();
   });
 
   // BUG-004: an accent split the word ("dāl" became "da l") and nothing matched.

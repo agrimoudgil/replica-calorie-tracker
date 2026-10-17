@@ -32,7 +32,7 @@ describe("normalizeItems", () => {
   });
 
   it("keeps model numbers for unknown dishes but clamps them", () => {
-    const [item] = normalizeItems([raw({ name: "Quinoa khichdi", grams: 100, kcal: 5000, protein_g: -2 })], SEED_FOODS);
+    const [item] = normalizeItems([raw({ name: "Thai green curry", grams: 100, kcal: 5000, protein_g: -2 })], SEED_FOODS);
     expect(item.foodId).toBeNull();
     expect(item.nutrients.kcal).toBe(900);
     expect(item.nutrients.proteinG).toBe(0);

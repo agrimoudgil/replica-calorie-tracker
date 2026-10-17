@@ -129,8 +129,9 @@ describe("file store", () => {
 
   it("custom foods: private, searchable, usable in meals, deletable without breaking meals", async () => {
     const food = await db.createCustomFood(A, { name: "Mom's thepla", unit: "piece", gramsPerUnit: 40, perServing: { kcal: 120, proteinG: 3, carbG: 16, fatG: 5, fiberG: 2 } });
-    expect((await db.searchFoods(A, "thepla")).map((f) => f.id)).toEqual([food.id]);
-    expect(await db.searchFoods(B, "thepla")).toEqual([]);
+    // The catalogue has a thepla too; only A sees A's.
+    expect((await db.searchFoods(A, "thepla")).map((f) => f.id)).toEqual(expect.arrayContaining([food.id, "seed-thepla"]));
+    expect((await db.searchFoods(B, "thepla")).map((f) => f.id)).toEqual(["seed-thepla"]);
     expect((await db.listCustomFoods(A)).map((f) => f.name)).toEqual(["Mom's thepla"]);
     await expect(db.deleteCustomFood(B, food.id)).rejects.toThrow("isn't one of yours");
 
@@ -151,7 +152,7 @@ describe("file store", () => {
     await db.deleteCustomFood(A, food.id);
     const after = await db.getMeal(A, meal.id);
     expect(after?.items[1]).toMatchObject({ name: "Mom's thepla", foodId: null, nutrients: { kcal: 240 } });
-    expect(await db.searchFoods(A, "thepla")).toEqual([]);
+    expect((await db.searchFoods(A, "thepla")).map((f) => f.id)).toEqual(["seed-thepla"]);
   });
 
   it("recipes: private, log as one food, edit without changing old meals, guard their ingredients", async () => {

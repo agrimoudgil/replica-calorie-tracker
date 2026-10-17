@@ -1,30 +1,18 @@
-import type { DietType, Food, Nutrients, Unit } from "./types";
+import { DISH_ROWS } from "./catalogue/dishes";
+import { INGREDIENT_ROWS, READY_ROWS } from "./catalogue/ingredients";
+import { EGG, JAIN_VEG, JAIN_VEGAN, MEAT, VEG, VEGAN, type DishRow, type Row } from "./catalogue/rows";
+import { nutrientsForGrams, scaleNutrients, sumKnownNutrients } from "./portions";
+import { DIET_TYPES, type Food, type Nutrients } from "./types";
 
 /*
- * Seed catalogue for development: common Indian dishes and staples.
- * Values are rough per-100 g estimates for typical home cooking, written for this
- * project (source "ai", verified false). They are placeholders until the catalogue
- * is rebuilt from USDA FoodData Central ingredients as planned in architecture.md.
+ * The shared food catalogue (about 330 foods), seeded into the database by
+ * scripts/seed.ts. Values are rough per-100 g estimates, source "ai", verified false:
+ * - the first dishes below were estimated directly for typical home cooking;
+ * - raw ingredients and ready-to-eat foods (catalogue/ingredients.ts) follow USDA
+ *   FoodData Central and IFCT 2017;
+ * - the other cooked dishes (catalogue/dishes.ts) are typical home recipes whose
+ *   values and diet tags are worked out from those ingredients, as architecture.md plans.
  */
-
-const VEG: DietType[] = ["vegetarian", "eggetarian", "non_vegetarian"];
-const VEGAN: DietType[] = ["vegan", ...VEG];
-const JAIN_VEGAN: DietType[] = ["jain", ...VEGAN];
-const JAIN_VEG: DietType[] = ["jain", ...VEG];
-const EGG: DietType[] = ["eggetarian", "non_vegetarian"];
-const MEAT: DietType[] = ["non_vegetarian"];
-
-type Row = [
-  id: string,
-  name: string,
-  nameHi: string | undefined,
-  aliases: string[],
-  diet: DietType[],
-  units: Partial<Record<Unit, number>>,
-  defaultUnit: Unit,
-  // kcal, protein, carbs, fat, fibre, sugar, sat fat, sodium mg, calcium mg, iron mg
-  n: [number, number, number, number, number, number, number, number, number, number],
-];
 
 const rows: Row[] = [
   ["phulka", "Phulka", "फुलका", ["roti", "chapati", "chapatti", "fulka"], JAIN_VEGAN, { piece: 35 }, "piece", [297, 9.8, 55, 3.7, 9, 1.5, 0.6, 400, 30, 3.2]],
@@ -33,13 +21,13 @@ const rows: Row[] = [
   ["rice", "Steamed rice", "चावल", ["rice", "chawal", "chaval", "plain rice", "white rice", "bhaat"], JAIN_VEGAN, { katori: 150 }, "katori", [130, 2.7, 28, 0.3, 0.4, 0.1, 0.1, 2, 10, 0.2]],
   ["jeera-rice", "Jeera rice", "जीरा राइस", ["cumin rice"], JAIN_VEG, { katori: 150 }, "katori", [165, 3, 29, 4, 0.6, 0.2, 1.8, 250, 15, 0.6]],
   ["dal-tadka", "Dal tadka", "दाल तड़का", ["dal", "daal", "toor dal", "arhar dal", "yellow dal"], VEG, { katori: 150 }, "katori", [120, 6, 15, 4, 3, 1, 1.5, 350, 25, 1.5]],
-  ["dal-makhani", "Dal makhani", "दाल मखनी", ["maa ki dal", "black dal"], VEG, { katori: 150 }, "katori", [160, 6, 15, 8.5, 4, 1.5, 4.5, 380, 40, 2]],
+  ["dal-makhani", "Dal makhani", "दाल मखनी", ["maa ki dal", "black dal", "dal makhni"], VEG, { katori: 150 }, "katori", [160, 6, 15, 8.5, 4, 1.5, 4.5, 380, 40, 2]],
   ["rajma", "Rajma curry", "राजमा", ["rajma", "rajma masala", "kidney bean curry"], VEGAN, { katori: 150 }, "katori", [130, 6.5, 17, 4, 5, 2, 0.6, 360, 40, 2.2]],
   ["chole", "Chole", "छोले", ["chana", "chana masala", "chickpea curry", "chhole"], VEGAN, { katori: 150 }, "katori", [150, 7, 19, 5, 6, 2.5, 0.7, 380, 45, 2.4]],
   ["palak-paneer", "Palak paneer", "पालक पनीर", ["saag paneer"], VEG, { katori: 150 }, "katori", [165, 8, 6, 12.5, 2.5, 1.5, 6, 380, 220, 2.5]],
   ["paneer-butter-masala", "Paneer butter masala", "पनीर बटर मसाला", ["paneer makhani", "shahi paneer"], VEG, { katori: 150 }, "katori", [230, 8.5, 9, 18, 1.5, 4, 9.5, 420, 200, 1]],
   ["paneer-bhurji", "Paneer bhurji", "पनीर भुर्जी", ["scrambled paneer"], VEG, { katori: 120 }, "katori", [200, 12, 5, 15, 1, 2, 8, 380, 280, 0.8]],
-  ["mixed-sabzi", "Mixed veg sabzi", "मिक्स सब्ज़ी", ["sabzi", "sabji", "mixed vegetable", "veg curry"], VEGAN, { katori: 120 }, "katori", [95, 2.5, 9, 5.5, 3, 3, 0.8, 320, 35, 1]],
+  ["mixed-sabzi", "Mixed veg sabzi", "मिक्स सब्ज़ी", ["sabzi", "sabji", "mixed vegetable", "veg curry", "mix veg"], VEGAN, { katori: 120 }, "katori", [95, 2.5, 9, 5.5, 3, 3, 0.8, 320, 35, 1]],
   ["aloo-gobi", "Aloo gobi", "आलू गोभी", ["gobi aloo", "cauliflower potato"], VEGAN, { katori: 120 }, "katori", [105, 2.5, 12, 5.5, 3, 2.5, 0.8, 330, 25, 0.9]],
   ["bhindi", "Bhindi masala", "भिंडी", ["okra", "bhindi fry", "lady finger"], JAIN_VEGAN, { katori: 100 }, "katori", [110, 2.5, 9, 7.5, 4, 2, 1, 300, 80, 0.9]],
   ["curd", "Curd", "दही", ["dahi", "yogurt", "yoghurt"], JAIN_VEG, { katori: 150 }, "katori", [61, 3.5, 4.7, 3.3, 0, 4.7, 2.1, 46, 121, 0.1]],
@@ -50,7 +38,7 @@ const rows: Row[] = [
   ["masala-dosa", "Masala dosa", "मसाला डोसा", [], VEGAN, { piece: 180 }, "piece", [190, 4, 28, 7, 2, 1.5, 1, 330, 20, 1]],
   ["sambar", "Sambar", "सांबर", ["sambhar"], VEGAN, { katori: 150 }, "katori", [65, 3, 9, 2, 2.5, 2, 0.3, 300, 30, 1]],
   ["coconut-chutney", "Coconut chutney", "नारियल चटनी", ["chutney"], JAIN_VEGAN, { tbsp: 20, katori: 60 }, "tbsp", [230, 3, 9, 21, 5, 3, 17, 250, 15, 1.2]],
-  ["moong-chilla", "Moong dal chilla", "मूंग दाल चीला", ["chilla", "cheela", "besan chilla"], VEGAN, { piece: 70 }, "piece", [160, 9, 20, 5, 4, 1, 0.7, 320, 35, 2]],
+  ["moong-chilla", "Moong dal chilla", "मूंग दाल चीला", ["chilla", "cheela", "moong chilla", "dal chilla", "dal cheela"], VEGAN, { piece: 70 }, "piece", [160, 9, 20, 5, 4, 1, 0.7, 320, 35, 2]],
   ["chai", "Masala chai", "चाय", ["tea", "chai", "milk tea", "cutting chai"], JAIN_VEG, { glass: 150 }, "glass", [50, 1.6, 7.5, 1.5, 0, 7, 1, 25, 60, 0.1]],
   ["banana", "Banana", "केला", ["kela"], VEGAN, { piece: 118 }, "piece", [89, 1.1, 23, 0.3, 2.6, 12, 0.1, 1, 5, 0.3]],
   ["apple", "Apple", "सेब", ["seb"], JAIN_VEGAN, { piece: 180 }, "piece", [52, 0.3, 14, 0.2, 2.4, 10, 0, 1, 6, 0.1]],
@@ -85,14 +73,14 @@ const ingredientRows: Row[] = [
 ];
 
 /** Catalogue foods that are cooking ingredients only: never suggested as a meal. */
-export const INGREDIENT_ONLY_IDS: ReadonlySet<string> = new Set(ingredientRows.map(([id]) => `seed-${id}`));
+export const INGREDIENT_ONLY_IDS: ReadonlySet<string> = new Set([...ingredientRows, ...INGREDIENT_ROWS].map(([id]) => `seed-${id}`));
 
 function toNutrients(n: Row[7]): Nutrients {
   const [kcal, proteinG, carbG, fatG, fiberG, sugarG, satFatG, sodiumMg, calciumMg, ironMg] = n;
   return { kcal, proteinG, carbG, fatG, fiberG, sugarG, satFatG, sodiumMg, calciumMg, ironMg };
 }
 
-export const SEED_FOODS: readonly Food[] = [...rows, ...ingredientRows].map(([id, name, nameHi, aliases, dietTags, unitGrams, defaultUnit, n]) => ({
+const fromRow = ([id, name, nameHi, aliases, dietTags, unitGrams, defaultUnit, n]: Row): Food => ({
   id: `seed-${id}`,
   ownerId: null,
   name,
@@ -104,7 +92,50 @@ export const SEED_FOODS: readonly Food[] = [...rows, ...ingredientRows].map(([id
   per100g: toNutrients(n),
   source: "ai",
   verified: false,
-}));
+});
+
+/**
+ * A dish from its recipe: the ingredients' nutrients spread over the cooked weight, and
+ * the diets every ingredient fits. A dish may use one listed before it (a chutney, say).
+ */
+function fromRecipe([id, name, nameHi, aliases, unitGrams, defaultUnit, recipe, cookedGrams]: DishRow, known: Map<string, Food>): Food {
+  const parts = recipe.map(([ingredient, grams]) => {
+    const food = known.get(`seed-${ingredient}`);
+    if (!food) throw new Error(`Recipe ${id} uses unknown food ${ingredient}`);
+    return { food, nutrients: nutrientsForGrams(food, grams) };
+  });
+  return {
+    id: `seed-${id}`,
+    ownerId: null,
+    name,
+    nameHi,
+    aliases,
+    dietTags: DIET_TYPES.filter((d) => parts.every((p) => p.food.dietTags.includes(d))),
+    unitGrams: { g: 1, ...unitGrams },
+    defaultUnit,
+    per100g: scaleNutrients(sumKnownNutrients(parts.map((p) => p.nutrients)), 100 / cookedGrams),
+    source: "ai",
+    verified: false,
+  };
+}
+
+function buildCatalogue(): Food[] {
+  const foods = [...rows, ...ingredientRows, ...INGREDIENT_ROWS, ...READY_ROWS].map(fromRow);
+  const known = new Map(foods.map((f) => [f.id, f]));
+  for (const dish of DISH_ROWS) {
+    const food = fromRecipe(dish, known);
+    known.set(food.id, food);
+    foods.push(food);
+  }
+  return foods;
+}
+
+export const SEED_FOODS: readonly Food[] = buildCatalogue();
+
+/** The recipe behind each computed dish, for checks and for showing how a number came about. */
+export const DISH_RECIPES: ReadonlyMap<string, { recipe: DishRow[6]; cookedGrams: number }> = new Map(
+  DISH_ROWS.map(([id, , , , , , recipe, cookedGrams]) => [`seed-${id}`, { recipe, cookedGrams }]),
+);
 
 export function normalizeFoodName(s: string): string {
   return s

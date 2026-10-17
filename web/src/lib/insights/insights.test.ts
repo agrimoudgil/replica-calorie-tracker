@@ -70,7 +70,8 @@ describe("weeklyInsights", () => {
         expect(foodsRichIn(n, SEED_FOODS, diet).every((f) => f.dietTags.includes(diet))).toBe(true);
       }
     }
-    expect(foodsRichIn("proteinG", SEED_FOODS, "non_vegetarian")[0].id).toBe("seed-chicken-curry");
+    // Most protein per usual serving: a grilled chicken breast (about 34 g).
+    expect(foodsRichIn("proteinG", SEED_FOODS, "non_vegetarian")[0].id).toBe("seed-grilled-chicken");
     expect(foodsRichIn("proteinG", SEED_FOODS, "vegetarian").map((f) => f.id)).not.toContain("seed-gulab-jamun");
   });
 });
