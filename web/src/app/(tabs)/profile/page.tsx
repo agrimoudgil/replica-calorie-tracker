@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, Download } from "lucide-react";
@@ -5,13 +6,15 @@ import { Screen, ScreenHeader } from "@/components/screen";
 import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
 import { supabaseEnabled } from "@/lib/supabase/config";
+import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { AccountActions } from "./account-actions";
+import { Appearance } from "./appearance";
 
 export const metadata = { title: "Profile · Replica calorie tracker" };
 
 const fmt = new Intl.NumberFormat("en-IN");
 
-/** S13 (partial): targets, edit details, export your data, sign out, delete account. */
+/** S13 (partial): targets, edit details, appearance, export your data, sign out, delete account. */
 export default async function ProfilePage() {
   const userId = await requireUserId();
   const profile = await db.getProfile(userId);
@@ -41,6 +44,7 @@ export default async function ProfilePage() {
           </li>
         ))}
       </ul>
+      <Appearance initial={parseTheme((await cookies()).get(THEME_COOKIE)?.value)} />
       <section aria-labelledby="data-heading" className="flex flex-col gap-3">
         <h2 id="data-heading" className="text-lg font-semibold">Your data</h2>
         <p className="text-sm text-muted">
