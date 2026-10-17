@@ -23,6 +23,7 @@ const ItemSchema = z.object({
   calcium_mg: z.number().nullable(),
   iron_mg: z.number().nullable(),
   confidence: z.enum(["high", "medium", "low"]),
+  box: z.object({ x: z.number(), y: z.number(), w: z.number(), h: z.number() }).nullable(),
 });
 
 const EstimateSchema = z.object({
@@ -38,6 +39,8 @@ List each distinct food or drink you can see as its own item. Use the everyday I
 Portions: estimate the amount shown from visual cues such as plate and bowl size, utensils and hands. Give "quantity" in the household unit people would use: katori (a 150 ml bowl), piece, glass (250 ml), tbsp, or g. Always also give the weight in grams. All nutrient values are for the whole portion shown, not per 100 g. Account for visible oil, ghee and gravy in home-style cooking. Use null for a micronutrient you cannot estimate sensibly.
 
 Confidence: "high" when the dish and portion are clear, "medium" when the dish is clear but the portion is uncertain, "low" when you are unsure what the dish is.
+
+Box: where the item is in the image, as fractions of the image's width and height from its top-left corner: x and y for the item's top-left corner, w and h for its width and height (so x + w and y + h are at most 1). The person taps these spots to choose which foods they ate. Use null if the item has no clear place in the image.
 
 If the image shows no food or drink, set is_food to false and return an empty items list.
 

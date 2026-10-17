@@ -47,6 +47,20 @@ describe("normalizeItems", () => {
     expect(items[0].quantity).toBe(220);
     expect(items).toHaveLength(12);
   });
+
+  it("keeps a box inside the photo, and drops a missing or empty one", () => {
+    const [kept, cut, none, flat] = normalizeItems(
+      [raw({ box: { x: 0.1, y: 0.2, w: 0.3, h: 0.4 } }), raw({ box: { x: 0.8, y: -0.1, w: 0.5, h: 0.5 } }), raw({}), raw({ box: { x: 0.5, y: 0.5, w: 0, h: 0.2 } })],
+      SEED_FOODS,
+    );
+    expect(kept.box).toEqual({ x: 0.1, y: 0.2, w: 0.3, h: 0.4 });
+    expect(cut.box?.x).toBe(0.8);
+    expect(cut.box?.y).toBe(0);
+    expect(cut.box?.w).toBeCloseTo(0.2);
+    expect(cut.box?.h).toBeCloseTo(0.4);
+    expect(none.box).toBeNull();
+    expect(flat.box).toBeNull();
+  });
 });
 
 describe("fake estimator", () => {
@@ -58,5 +72,6 @@ describe("fake estimator", () => {
     expect(a).toEqual(b);
     expect(a.demo).toBe(true);
     expect(a.items.length).toBeGreaterThan(0);
+    expect(a.items.every((i) => i.box !== null)).toBe(true); // sample spots, so the photo picker can be tried
   });
 });

@@ -80,6 +80,8 @@ export type FoodItem = {
   confidence?: Confidence;
   /** Numbers typed by the person: "quick" = a quick add (no portion), "own" = a food with their numbers. */
   entered?: "quick" | "own";
+  /** Its number on the meal photo, when the photo has markers. */
+  marker?: number;
 };
 
 type FoodItemRowProps = {
@@ -99,7 +101,12 @@ export function FoodItemRow({ item, editable = false, onChange, onRemove, favour
   return (
     <div className="flex flex-col gap-2 border-b border-border py-3 last:border-b-0">
       <div className="flex min-h-11 items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-col">
+        {item.marker !== undefined && (
+          <span aria-hidden className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-on-accent">
+            {item.marker}
+          </span>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
           <span className="truncate text-base font-semibold">{item.name}</span>
           {item.nameHi && <span lang="hi" className="text-xs text-muted">{item.nameHi}</span>}
           {(!editable || quick) && (

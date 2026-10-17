@@ -75,7 +75,9 @@ export async function POST(req: Request) {
         aiConfidence: i.confidence,
       })),
     });
-    return NextResponse.json(meal, { status: 201 });
+    // Where each item is in the photo, by item id: the browser keeps these for the review screen.
+    const boxes = Object.fromEntries(meal.items.flatMap((item) => (result.items[item.position]?.box ? [[item.id, result.items[item.position].box]] : [])));
+    return NextResponse.json({ ...meal, boxes }, { status: 201 });
   } catch (err) {
     if (EstimateError.is(err)) {
       return fail(err.code === "unavailable" ? 503 : 422, err.code, err.message);

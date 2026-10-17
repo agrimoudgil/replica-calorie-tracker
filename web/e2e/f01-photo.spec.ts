@@ -26,6 +26,39 @@ test.describe("F01 log a meal by photo", () => {
     await expectAccessible(page);
   });
 
+  test("F01-H2 several foods: tap a number on the photo to leave one out or put it back", async ({ page, account }) => {
+    await page.goto("/log/photo");
+    await pickPhoto(page, await jpeg(page));
+    await expect(page).toHaveURL(/\/log\/review\//);
+    const markers = page.getByRole("group", { name: "Foods on the photo" }).getByRole("button");
+    await expect(markers.first()).toBeVisible();
+    const count = await markers.count();
+    expect(count).toBeGreaterThan(1); // the demo plates have two or three foods
+    const first = markers.first();
+    const name = /^1\. Keep (.+)$/.exec((await first.getAttribute("aria-label")) ?? "")?.[1];
+    expect(name).toBeTruthy();
+    await expect(first).toHaveAttribute("aria-pressed", "true");
+    await expectAccessible(page);
+
+    await first.click();
+    await expect(first).toHaveAttribute("aria-pressed", "false");
+    await expect(page.getByRole("button", { name: `Fix ${name}` })).toHaveCount(0);
+    await first.click();
+    await expect(first).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByRole("button", { name: `Fix ${name}` })).toBeVisible();
+
+    // The markers survive a refresh in this tab; then keep only the first food.
+    await page.reload();
+    await expect(markers).toHaveCount(count);
+    for (let i = 1; i < count; i++) await markers.nth(i).click();
+    await expect(page.getByRole("button", { name: /^Fix / })).toHaveCount(1);
+    await page.getByRole("button", { name: "Save meal" }).click();
+    await expect(page).toHaveURL(/\?saved=/);
+    const meals = await savedMeals(account.id);
+    expect(meals[0].meal_items.map((i) => i.name)).toEqual([name]);
+    expect(await page.evaluate(() => Object.keys(sessionStorage).filter((k) => k.startsWith("rct-photo-boxes:")))).toEqual([]);
+  });
+
   test("F01-E1 a file that isn't a photo is refused", async ({ page, account }) => {
     await page.goto("/log/photo");
     await pickPhoto(page, { name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("not a photo") });

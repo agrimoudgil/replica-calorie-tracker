@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 import { Info, Plus, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,9 @@ import type { ItemEdit, MacroNumbers, Meal, MealItem, QuickAdd } from "@/lib/dat
 import { changeUnit, defaultQuantity, rescaleItem, sumNutrients } from "@/lib/nutrition/portions";
 import { healthScore } from "@/lib/nutrition/score";
 import type { Food, MealType, Unit } from "@/lib/nutrition/types";
+import { markerPosition, photoBoxesKey, readPhotoBoxes } from "@/lib/photo-boxes";
 import { AddItemSheet, FixItemSheet, type Fix } from "./item-sheets";
+import { PhotoPicker, type PhotoMarker } from "./photo-picker";
 
 const MEAL_OPTIONS: Array<{ value: MealType; label: string }> = [
   { value: "breakfast", label: "Breakfast" },
@@ -42,6 +44,15 @@ type Row = {
 };
 
 const macrosOf = (n: MealItem["nutrients"]): MacroNumbers => ({ kcal: n.kcal, proteinG: n.proteinG, carbG: n.carbG, fatG: n.fatG, fiberG: n.fiberG });
+
+const noSubscribe = () => () => {};
+const storedBoxes = (mealId: string) => {
+  try {
+    return sessionStorage.getItem(photoBoxesKey(mealId));
+  } catch {
+    return null;
+  }
+};
 
 const toRow = (r: Row): FoodItem => ({
   id: r.key,
@@ -77,6 +88,16 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
   const [error, setError] = useState<string | null>(null);
   const [fixing, setFixing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  /** Rows removed while editing, by key, so a photo marker or Undo can put them back. */
+  const [leftOut, setLeftOut] = useState<Record<string, Row>>({});
+  const firstOrder = useMemo(() => new Map(meal.items.map((i, n) => [i.id, n])), [meal.items]);
+  const orderOf = (key: string) => firstOrder.get(key) ?? Number.MAX_SAFE_INTEGER;
+  // Boxes from the photo screen, in this tab only (none on the server's first render).
+  const boxesJson = useSyncExternalStore(noSubscribe, () => storedBoxes(meal.id), () => null);
+  const photoBoxes = useMemo(() => {
+    const parsed = meal.status === "draft" && meal.photoPath ? readPhotoBoxes(boxesJson) : null;
+    return parsed && meal.items.filter((i) => parsed.boxes[i.id]).length > 1 ? parsed : null;
+  }, [boxesJson, meal]);
 
   const totals = useMemo(() => sumNutrients(rows.map((r) => r.item.nutrients)), [rows]);
   const score = rows.length ? healthScore(totals) : null;
@@ -130,13 +151,41 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
     toast.show(`${q.name} added`);
   };
 
+  /** Puts a removed row back: the estimate's items in their first order, added foods after them. */
+  const restore = (row: Row) => {
+    setLeftOut((map) => Object.fromEntries(Object.entries(map).filter(([key]) => key !== row.key)));
+    setRows((list) => (list.some((r) => r.key === row.key) ? list : [...list, row].sort((a, b) => orderOf(a.key) - orderOf(b.key))));
+  };
+
   const remove = (row: FoodItem) => {
-    const index = rows.findIndex((r) => r.key === row.id);
-    const removed = rows[index];
+    const removed = rows.find((r) => r.key === row.id);
+    if (!removed) return;
     setRows((list) => list.filter((r) => r.key !== row.id));
-    toast.show(`${removed.item.name} removed`, {
-      action: { label: "Undo", onClick: () => setRows((list) => [...list.slice(0, index), removed, ...list.slice(index)]) },
-    });
+    setLeftOut((map) => ({ ...map, [removed.key]: removed }));
+    toast.show(`${removed.item.name} removed`, { action: { label: "Undo", onClick: () => restore(removed) } });
+  };
+
+  // Tap-to-pick on the photo: numbered markers where the estimate saw each food.
+  const markers: PhotoMarker[] = photoBoxes
+    ? meal.items
+        .filter((i) => photoBoxes.boxes[i.id])
+        .map((i, n) => {
+          const row = rows.find((r) => r.key === i.id) ?? leftOut[i.id];
+          return { key: i.id, n: n + 1, name: row?.item.name ?? i.name, kept: rows.some((r) => r.key === i.id), ...markerPosition(photoBoxes.boxes[i.id], photoBoxes.aspect) };
+        })
+    : [];
+  const markerOf = new Map(markers.map((m) => [m.key, m.n]));
+  const togglePick = (key: string) => {
+    const kept = rows.find((r) => r.key === key);
+    if (kept) remove(toRow(kept));
+    else if (leftOut[key]) restore(leftOut[key]);
+  };
+  const forget = () => {
+    try {
+      sessionStorage.removeItem(photoBoxesKey(meal.id));
+    } catch {
+      // nothing stored
+    }
   };
 
   const save = async () => {
@@ -148,6 +197,7 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
       body: JSON.stringify({ mealType, items: rows.map(toEdit), expectedUpdatedAt: meal.updatedAt }),
     }).catch(() => null);
     if (res?.ok) {
+      forget();
       router.push(`${dayPath}${dayPath.includes("?") ? "&" : "?"}saved=${meal.id}`);
       router.refresh();
       return;
@@ -162,6 +212,7 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
     setBusy("discard");
     const res = await fetch(`/api/meals/${meal.id}`, { method: "DELETE" }).catch(() => null);
     if (res && (res.ok || res.status === 404)) {
+      forget();
       router.push(dayPath);
       router.refresh();
       return;
@@ -181,7 +232,8 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
         </p>
       )}
 
-      {meal.photoPath && (
+      {meal.photoPath && markers.length > 0 && <PhotoPicker src={`/api/photos/${meal.id}`} markers={markers} onToggle={togglePick} />}
+      {meal.photoPath && markers.length === 0 && (
         // eslint-disable-next-line @next/next/no-img-element -- private, per-user image route
         <img src={`/api/photos/${meal.id}`} alt="Your meal photo" className="aspect-[4/3] w-full rounded-lg bg-surface object-cover" />
       )}
@@ -216,7 +268,7 @@ export function ReviewForm({ meal, unitGrams, dayPath = "/" }: { meal: Meal; uni
         ) : (
           <div className="rounded-lg border border-border px-4">
             {rows.map((r) => (
-              <FoodItemRow key={r.key} item={toRow(r)} editable onChange={changePortion} onRemove={remove} onEdit={() => setFixing(r.key)} />
+              <FoodItemRow key={r.key} item={{ ...toRow(r), marker: markerOf.get(r.key) }} editable onChange={changePortion} onRemove={remove} onEdit={() => setFixing(r.key)} />
             ))}
           </div>
         )}

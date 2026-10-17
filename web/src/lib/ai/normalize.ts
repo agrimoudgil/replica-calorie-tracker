@@ -1,6 +1,7 @@
 import { matchFood } from "@/lib/nutrition/foods";
 import { clampGrams, nutrientsForGrams, sanitizeNutrients } from "@/lib/nutrition/portions";
 import { UNITS, type Food, type Nutrients, type Unit } from "@/lib/nutrition/types";
+import { cleanBox } from "@/lib/photo-boxes";
 import type { EstimatedItem } from "./types";
 
 export type RawItem = {
@@ -20,6 +21,7 @@ export type RawItem = {
   calcium_mg: number | null;
   iron_mg: number | null;
   confidence: "high" | "medium" | "low";
+  box?: { x: number; y: number; w: number; h: number } | null;
 };
 
 export const MAX_ITEMS = 12;
@@ -59,6 +61,7 @@ export function normalizeItems(raw: RawItem[], foods: readonly Food[]): Estimate
         grams,
         nutrients: food ? nutrientsForGrams(food, grams) : sanitizeNutrients(modelNutrients, grams),
         confidence: r.confidence,
+        box: cleanBox(r.box),
       };
     });
 }

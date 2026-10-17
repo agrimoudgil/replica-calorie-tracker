@@ -6,6 +6,7 @@ import { SegmentedControl } from "@/components/ui/fields";
 import { PhotoCapture, type CaptureState } from "@/components/ui/media";
 import { resizeToJpeg } from "@/lib/client/resize-image";
 import type { MealType } from "@/lib/nutrition/types";
+import { photoBoxesKey } from "@/lib/photo-boxes";
 
 const MEAL_OPTIONS: Array<{ value: MealType; label: string }> = [
   { value: "breakfast", label: "Breakfast" },
@@ -39,7 +40,7 @@ export function PhotoLogger({ initialMealType }: { initialMealType: MealType }) 
     setState("uploading");
     setProgress(15);
 
-    let jpeg: Blob;
+    let jpeg: Awaited<ReturnType<typeof resizeToJpeg>>;
     try {
       jpeg = await resizeToJpeg(file);
     } catch {
@@ -50,7 +51,7 @@ export function PhotoLogger({ initialMealType }: { initialMealType: MealType }) 
     setProgress(45);
     const mealId = crypto.randomUUID();
     const form = new FormData();
-    form.set("image", jpeg, "meal.jpg");
+    form.set("image", jpeg.blob, "meal.jpg");
     form.set("mealId", mealId);
     form.set("mealType", mealType);
     form.set("eatenAt", new Date().toISOString());
@@ -68,6 +69,15 @@ export function PhotoLogger({ initialMealType }: { initialMealType: MealType }) 
     }
     if (res.ok) {
       setProgress(100);
+      // Where each food is in the photo, for tap-to-pick on the review screen (this tab only).
+      const boxes = (await res.json().catch(() => null))?.boxes;
+      if (boxes && Object.keys(boxes).length > 1) {
+        try {
+          sessionStorage.setItem(photoBoxesKey(mealId), JSON.stringify({ aspect: jpeg.width / jpeg.height, boxes }));
+        } catch {
+          // Storage full or blocked: the review screen shows the plain list.
+        }
+      }
       router.push(`/log/review/${mealId}`);
       return;
     }

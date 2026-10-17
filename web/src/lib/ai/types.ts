@@ -1,4 +1,5 @@
 import type { DietType, MealType, Nutrients, Unit } from "@/lib/nutrition/types";
+import type { Box } from "@/lib/photo-boxes";
 
 export type EstimateContext = {
   mealType: MealType;
@@ -15,6 +16,8 @@ export type EstimatedItem = {
   /** For the whole portion. */
   nutrients: Nutrients;
   confidence: "high" | "medium" | "low";
+  /** Where it is in the photo, when the estimator could tell. */
+  box: Box | null;
 };
 
 export type EstimateResult = {
