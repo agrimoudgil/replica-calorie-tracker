@@ -33,7 +33,7 @@ test.describe("F03 log by typing or search", () => {
     await page.goto("/log/search?mode=search&meal=breakfast");
     await expect(search(page)).toBeFocused();
     await page.keyboard.type("poha");
-    await expect(page.getByRole("option", { name: /^Poha/ })).toBeVisible();
+    await expect(page.getByRole("option", { name: /^Poha \d/ })).toBeVisible();
     await page.keyboard.press("Enter");
     await expect(page.getByText("Poha", { exact: true })).toBeVisible();
     // Tab until Save meal has focus: it must be reachable without a mouse.
@@ -55,7 +55,7 @@ test.describe("F03 log by typing or search", () => {
 
   test("F03-E2 a dish not in the database is named, not guessed", async ({ page, account }) => {
     await page.goto("/log/search?mode=type");
-    await typeBox(page).fill("quinoa bowl");
+    await typeBox(page).fill("thai green curry");
     await page.getByRole("button", { name: "Find foods" }).click();
     await expect(page.getByText(/Couldn't find/)).toBeVisible();
     await expect(page.getByText("Nothing added yet")).toBeVisible();
@@ -82,7 +82,7 @@ test.describe("F03 log by typing or search", () => {
 
   test("F03-E5 a double click on Save saves one meal", async ({ page, account }) => {
     await page.goto("/log/search?mode=search");
-    await addBySearch(page, "poha", /^Poha/);
+    await addBySearch(page, "poha", /^Poha \d/);
     await page.getByRole("button", { name: "Save meal" }).dblclick();
     await expect(page).toHaveURL(/\?saved=/);
     expect(await savedMeals(account.id)).toHaveLength(1);
@@ -91,7 +91,7 @@ test.describe("F03 log by typing or search", () => {
   test("F03-E6 offline save keeps the foods; back online it saves once", async ({ page, context, account, expectedConsole }) => {
     expectedConsole.push(/ERR_INTERNET_DISCONNECTED/);
     await page.goto("/log/search?mode=search");
-    await addBySearch(page, "poha", /^Poha/);
+    await addBySearch(page, "poha", /^Poha \d/);
     await context.setOffline(true);
     await page.getByRole("button", { name: "Save meal" }).click();
     await expect(page.getByRole("alert").filter({ hasText: "offline" })).toBeVisible();
@@ -108,7 +108,7 @@ test.describe("F03 log by typing or search", () => {
       await route.continue();
     });
     await page.goto("/log/search?mode=search");
-    await addBySearch(page, "poha", /^Poha/);
+    await addBySearch(page, "poha", /^Poha \d/);
     const save = page.getByRole("button", { name: "Save meal" });
     await save.click();
     await expect(save).toBeDisabled();
@@ -119,7 +119,7 @@ test.describe("F03 log by typing or search", () => {
 
   test("F03-E8 per-gram entry scales the calories by weight", async ({ page, account }) => {
     await page.goto("/log/search?mode=search");
-    await addBySearch(page, "curd", /^Curd/);
+    await addBySearch(page, "curd", /^Curd \d/);
     const portion = page.getByRole("group", { name: "Portion of Curd" });
     await portion.getByLabel("Unit").selectOption("g");
     await portion.getByLabel("Quantity").fill("250");
@@ -135,7 +135,7 @@ test.describe("F03 log by typing or search", () => {
     await page.goto(`/?date=${yesterday}`);
     await page.getByRole("link", { name: /Add a meal to this day/ }).click();
     await expect(page).toHaveURL(new RegExp(`date=${yesterday}`));
-    await addBySearch(page, "poha", /^Poha/);
+    await addBySearch(page, "poha", /^Poha \d/);
     await page.getByRole("button", { name: "Save meal" }).click();
     await expect(page).toHaveURL(new RegExp(`date=${yesterday}.*saved=`));
     expect((await savedMeals(account.id))[0].local_date).toBe(yesterday);

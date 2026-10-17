@@ -16,6 +16,14 @@ export function suggestMealType(hour: number): MealType {
   return "dinner";
 }
 
+/** How the day's calories are split across meals, for the per-meal budgets on Today. */
+export const MEAL_SHARE: Record<MealType, number> = { breakfast: 0.25, lunch: 0.3, snack: 0.15, dinner: 0.3 };
+
+/** Each meal's calorie budget, rounded to 10 kcal (1,600 kcal → 400 / 480 / 240 / 480). */
+export function mealBudgets(dailyKcal: number): Record<MealType, number> {
+  return Object.fromEntries(MEAL_TYPES.map((t) => [t, Math.round((dailyKcal * MEAL_SHARE[t]) / 10) * 10])) as Record<MealType, number>;
+}
+
 export function parseMealType(value: unknown): MealType | null {
   return typeof value === "string" && (MEAL_TYPES as readonly string[]).includes(value) ? (value as MealType) : null;
 }

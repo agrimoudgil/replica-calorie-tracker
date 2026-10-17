@@ -1,22 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ChevronRight, Lightbulb } from "lucide-react";
+import { Camera, ChevronRight, Lightbulb } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
-import { MealCard } from "@/components/ui/food";
 import { CalorieRing, MacroBar, NutrientBar } from "@/components/ui/progress";
 import { db } from "@/lib/data";
-import { mealScore } from "@/lib/data/meal-math";
 import { requireUserId } from "@/lib/data/session";
 import { isIsoDate, localDate, localHour } from "@/lib/dates";
 import { dailyNutrientRows, lastNDates, type NutrientRow } from "@/lib/insights/reference";
-import { MEAL_LABEL, suggestMealType } from "@/lib/meal-type";
+import { MEAL_LABEL, mealBudgets, suggestMealType } from "@/lib/meal-type";
 import { MEAL_TYPES } from "@/lib/nutrition/types";
 import { DayNav, longDate } from "./day-nav";
+import { MealSection } from "./meal-section";
 import { SavedNotice, TodayAddButton } from "./today-actions";
 
 const fmt = new Intl.NumberFormat("en-IN");
 
-/** S02 Today, and any past day via ?date=YYYY-MM-DD: calories, macros, nutrients and meals. */
+/** S02 Today, and any past day via ?date=YYYY-MM-DD: calories, the day's meals as a food diary, macros and nutrients. */
 export default async function DayPage({ searchParams }: PageProps<"/">) {
   const userId = await requireUserId();
   const profile = await db.getProfile(userId);
@@ -36,6 +35,8 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
   const t = profile.targets;
   const savedMeal = typeof saved === "string" ? day.meals.find((m) => m.id === saved) : undefined;
   const time = new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit", timeZone: tz });
+  const suggested = suggestMealType(localHour(now, tz));
+  const budgets = mealBudgets(t.kcal);
 
   const items = day.meals.flatMap((m) => m.items);
   const coverage = (key: NutrientRow["key"]) => (items.length ? items.filter((i) => i.nutrients[key] !== undefined).length / items.length : 1);
@@ -77,6 +78,38 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
           <span className="font-semibold text-fg tabular-nums">{fmt.format(Math.round(day.totals.kcal))}</span> eaten of{" "}
           <span className="tabular-nums">{fmt.format(t.kcal)}</span> kcal
         </p>
+        {isToday && (
+          // One tap to the camera, as the food card on the original's Home.
+          <Link
+            href={`/log/photo?meal=${suggested}`}
+            className="inline-flex h-11 items-center gap-2 rounded-pill bg-accent px-5 text-sm font-semibold text-on-accent hover:brightness-110"
+          >
+            <Camera aria-hidden className="size-4" /> Snap a meal
+          </Link>
+        )}
+      </section>
+
+      {/* The day as a food diary: each meal with its foods and its share of the budget. */}
+      <section aria-labelledby="meals-heading" className="flex flex-col gap-3">
+        <h2 id="meals-heading" className="text-lg font-semibold">Meals</h2>
+        {MEAL_TYPES.map((type) => (
+          <MealSection
+            key={type}
+            type={type}
+            meals={day.meals.filter((m) => m.mealType === type)}
+            budget={budgets[type]}
+            addHref={isToday ? `/log/search?mode=search&meal=${type}` : `/log/search?mode=search&meal=${type}&date=${selected}`}
+            time={time}
+          />
+        ))}
+        {!isToday && (
+          <Link
+            href={`/log/search?mode=type&date=${selected}`}
+            className="inline-flex h-11 items-center justify-center rounded-md border border-border text-sm font-semibold hover:bg-surface"
+          >
+            Add a meal to this day
+          </Link>
+        )}
       </section>
 
       <section aria-labelledby="macros-heading" className="flex flex-col gap-4">
@@ -103,34 +136,6 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
         </details>
       </section>
 
-      <section aria-labelledby="meals-heading" className="flex flex-col gap-3">
-        <h2 id="meals-heading" className="text-lg font-semibold">Meals</h2>
-        {MEAL_TYPES.flatMap((type) => {
-          const meals = day.meals.filter((m) => m.mealType === type);
-          const addHref = isToday ? `/log/photo?meal=${type}` : `/log/search?mode=search&meal=${type}&date=${selected}`;
-          if (meals.length === 0) return [<MealCard key={type} type={type} addHref={addHref} />];
-          return meals.map((m) => (
-            <MealCard
-              key={m.id}
-              type={type}
-              time={meals.length > 1 ? time.format(new Date(m.eatenAt)) : undefined}
-              href={`/meals/${m.id}`}
-              items={m.items.map((i) => i.name)}
-              kcal={m.items.reduce((s, i) => s + i.nutrients.kcal, 0)}
-              score={mealScore(m.items)}
-            />
-          ));
-        })}
-        {!isToday && (
-          <Link
-            href={`/log/search?mode=type&date=${selected}`}
-            className="inline-flex h-11 items-center justify-center rounded-md border border-border text-sm font-semibold hover:bg-surface"
-          >
-            Add a meal to this day
-          </Link>
-        )}
-      </section>
-
       {isToday && (
         <>
           <Link href="/insights" className="flex min-h-14 items-center justify-between gap-3 rounded-lg border border-border px-4 text-base hover:bg-surface">
@@ -140,7 +145,7 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
             </span>
             <ChevronRight aria-hidden className="size-5 text-muted" />
           </Link>
-          <TodayAddButton suggested={suggestMealType(localHour(now, tz))} />
+          <TodayAddButton suggested={suggested} />
         </>
       )}
     </Screen>

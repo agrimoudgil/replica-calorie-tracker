@@ -10,7 +10,7 @@ test.describe("Fixing items, recipes and meal detail", () => {
     await page.getByRole("button", { name: "Fix Mystery curry" }).click();
     const fix = page.getByRole("dialog", { name: "Fix Mystery curry" });
     await fix.getByRole("combobox", { name: /Swap it/ }).fill("dal makhani");
-    await fix.getByRole("option", { name: /Dal makhani/ }).click();
+    await fix.getByRole("option", { name: /^Dal makhani \d/ }).click();
     await expect(fix.getByLabel("Calories", { exact: true })).toHaveValue("240");
     await expectAccessible(page);
     await fix.getByRole("button", { name: "Apply" }).click();
@@ -40,7 +40,7 @@ test.describe("Fixing items, recipes and meal detail", () => {
     await expect(page).toHaveURL(/\/recipes\/new/);
     await page.getByLabel("Recipe name").fill("Test dal");
     await page.getByLabel("It makes").fill("4");
-    for (const [q, option] of [["toor", /Toor dal \(raw\)/], ["onion", /^Onion/], ["tomato", /^Tomato/], ["cooking oil", /^Cooking oil/]] as const) {
+    for (const [q, option] of [["toor", /Toor dal \(raw\)/], ["onion", /^Onion \d/], ["tomato", /^Tomato \d/], ["cooking oil", /^Cooking oil/]] as const) {
       await page.getByRole("combobox", { name: "Add an ingredient" }).fill(q);
       await page.getByRole("option", { name: option }).click();
     }
@@ -78,7 +78,7 @@ test.describe("Fixing items, recipes and meal detail", () => {
   test("S08-H1 meal detail shows nutrients; Edit → Delete removes it from Today", async ({ page, account }) => {
     const id = await insertMeal(account.id, { meal_type: "lunch", eaten_at: lunchtime(istDate(0)), health_score: 7 });
     await page.goto("/");
-    await page.locator(`a[href="/meals/${id}"]`).click();
+    await page.locator(`a[href="/meals/${id}"]`).first().click(); // each food on Today opens its meal
     await expect(page).toHaveURL(new RegExp(`/meals/${id}`));
     await expect(page.getByRole("heading", { name: "Nutrients" })).toBeVisible();
     await expect(page.getByRole("row", { name: /Iron/ })).toContainText("4.5 mg");
@@ -93,7 +93,7 @@ test.describe("Fixing items, recipes and meal detail", () => {
   test("S08-E1 Undo right after saving removes the meal", async ({ page, account }) => {
     await page.goto("/log/search?mode=search&meal=snack");
     await page.getByRole("combobox", { name: "Or search the food list" }).fill("banana");
-    await page.getByRole("option", { name: /^Banana/ }).click();
+    await page.getByRole("option", { name: /^Banana \d/ }).click();
     await page.getByRole("button", { name: "Save meal" }).click();
     await expect(page.getByText(/Snack saved · /)).toBeVisible();
     await page.getByRole("button", { name: "Undo" }).click();
