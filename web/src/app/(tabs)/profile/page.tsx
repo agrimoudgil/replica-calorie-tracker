@@ -33,6 +33,7 @@ export default async function ProfilePage() {
       <ul className="flex flex-col rounded-lg border border-border">
         {[
           { href: "/onboarding", label: "Edit body details and goal" },
+          { href: "/profile/goals", label: "Goals and budgets" },
           { href: "/profile/foods", label: "My foods and recipes" },
           { href: "/profile/auto-snap", label: "Auto-log from gallery" },
         ].map((l) => (

@@ -2,7 +2,7 @@ import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import { isId } from "@/lib/ids";
 import { sniffImage } from "@/lib/images";
 import { sumNutrients } from "@/lib/nutrition/portions";
-import { ageOn, computeTargets } from "@/lib/nutrition/targets";
+import { suggestedTargets, type Targets } from "@/lib/nutrition/targets";
 import type { Food, Nutrients } from "@/lib/nutrition/types";
 import { PHOTO_BUCKET } from "@/lib/supabase/config";
 import { buildCustomFood } from "./custom-food";
@@ -53,6 +53,14 @@ function nutrientsToRow(n: Nutrients) {
   };
 }
 
+const targetColumns = (t: Targets) => ({
+  daily_kcal_target: t.kcal,
+  protein_g_target: t.proteinG,
+  carb_g_target: t.carbG,
+  fat_g_target: t.fatG,
+  fiber_g_target: t.fiberG,
+});
+
 function profileFromRow(r: Row): Profile {
   return {
     id: String(r.id),
@@ -71,6 +79,7 @@ function profileFromRow(r: Row): Profile {
       fatG: Number(r.fat_g_target),
       fiberG: Number(r.fiber_g_target),
     },
+    targetsCustom: r.targets_custom === true, // undefined before migration 4
     timezone: String(r.timezone),
     onboardedAt: String(r.onboarded_at),
     updatedAt: String(r.updated_at),
@@ -233,15 +242,11 @@ export function createSupabaseStore(clients: Clients): DataLayer {
     },
 
     async upsertProfile(userId, input) {
-      const t = computeTargets({
-        sex: input.sex,
-        age: ageOn(input.birthYear, new Date()),
-        heightCm: input.heightCm,
-        weightKg: input.weightKg,
-        activity: input.activityLevel,
-        goal: input.goal,
-      });
       const db = await clients.user();
+      // select("*"): reading targets_custom by name would fail before migration 4.
+      const { data: existing, error: readError } = await db.from("profiles").select("*").eq("id", userId).maybeSingle();
+      if (readError) throw toDataError(readError);
+      const keepTargets = existing?.targets_custom === true;
       const { data, error } = await db
         .from("profiles")
         .upsert(
@@ -255,17 +260,32 @@ export function createSupabaseStore(clients: Clients): DataLayer {
             activity_level: input.activityLevel,
             goal: input.goal,
             diet_type: input.dietType,
-            daily_kcal_target: t.kcal,
-            protein_g_target: t.proteinG,
-            carb_g_target: t.carbG,
-            fat_g_target: t.fatG,
-            fiber_g_target: t.fiberG,
+            // The person's own targets stay; otherwise they follow the body details.
+            ...(keepTargets ? {} : targetColumns(suggestedTargets(input, new Date()))),
             ...(input.timezone ? { timezone: input.timezone } : {}),
           },
           { onConflict: "id" },
         )
         .select("*")
         .single();
+      if (error) throw toDataError(error);
+      return profileFromRow(data);
+    },
+
+    async setTargets(userId, targets) {
+      const db = await clients.user();
+      const { data: existing, error: readError } = await db.from("profiles").select("*").eq("id", userId).maybeSingle();
+      if (readError) throw toDataError(readError);
+      if (!existing) throw new DataError("not_found", "Set up your profile first.");
+      const next = targets ?? suggestedTargets(profileFromRow(existing), new Date());
+      const { data, error } = await db
+        .from("profiles")
+        .update({ ...targetColumns(next), targets_custom: targets !== null })
+        .eq("id", userId)
+        .select("*")
+        .single();
+      // 42703: the targets_custom column isn't there yet.
+      if (error?.code === "42703") throw new DataError("conflict", "Saving your own targets needs database migration 4 (see backend.md).");
       if (error) throw toDataError(error);
       return profileFromRow(data);
     },

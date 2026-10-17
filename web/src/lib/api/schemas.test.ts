@@ -1,6 +1,16 @@
 import { randomUUID } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { profileSchema, saveMealSchema } from "./schemas";
+import { profileSchema, saveMealSchema, targetsSchema } from "./schemas";
+
+describe("targetsSchema", () => {
+  it("accepts whole numbers in sensible ranges only", () => {
+    const own = { kcal: 1500, proteinG: 100, carbG: 150, fatG: 50, fiberG: 30 };
+    expect(targetsSchema.safeParse(own).success).toBe(true);
+    expect(targetsSchema.safeParse({ ...own, kcal: 800 }).success).toBe(false);
+    expect(targetsSchema.safeParse({ ...own, kcal: 1500.5 }).success).toBe(false);
+    expect(targetsSchema.safeParse({ ...own, fiberG: undefined }).success).toBe(false);
+  });
+});
 
 describe("saveMealSchema", () => {
   const item = (quantity: number, unit = "g") => ({ id: randomUUID(), quantity, unit });

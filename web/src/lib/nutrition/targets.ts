@@ -44,3 +44,14 @@ export function computeTargets(input: {
   const fiberG = Math.max(25, Math.round((kcal / 1000) * 14));
   return { kcal, proteinG, carbG, fatG, fiberG };
 }
+
+/** The targets worked out from a profile's body details and goal, as of `now`. */
+export function suggestedTargets(
+  p: { sex: Sex; birthYear: number; heightCm: number; weightKg: number; activityLevel: ActivityLevel; goal: Goal },
+  now: Date,
+): Targets {
+  return computeTargets({ sex: p.sex, age: ageOn(p.birthYear, now), heightCm: p.heightCm, weightKg: p.weightKg, activity: p.activityLevel, goal: p.goal });
+}
+
+/** Calories that protein, carbs and fat add up to (4, 4 and 9 kcal per gram). */
+export const macroKcal = (t: Pick<Targets, "proteinG" | "carbG" | "fatG">) => t.proteinG * 4 + t.carbG * 4 + t.fatG * 9;

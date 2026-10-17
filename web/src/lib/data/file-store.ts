@@ -6,7 +6,7 @@ import { isId } from "@/lib/ids";
 import { SEED_FOODS } from "@/lib/nutrition/foods";
 import { rankFoods } from "./food-rank";
 import { sumNutrients } from "@/lib/nutrition/portions";
-import { computeTargets, ageOn } from "@/lib/nutrition/targets";
+import { suggestedTargets } from "@/lib/nutrition/targets";
 import type { Food } from "@/lib/nutrition/types";
 import { buildCustomFood } from "./custom-food";
 import { applyItemEdits, mealScore } from "./meal-math";
@@ -76,7 +76,8 @@ export function createFileStore(dir: string): DataLayer {
 
   return {
     async getProfile(userId) {
-      return load().profiles[userId] ?? null;
+      const p = load().profiles[userId];
+      return p ? { ...p, targetsCustom: p.targetsCustom === true } : null; // older stores lack the flag
     },
 
     async upsertProfile(userId, input) {
@@ -84,19 +85,31 @@ export function createFileStore(dir: string): DataLayer {
       const s = load();
       const now = new Date();
       const existing = s.profiles[userId];
+      const custom = existing?.targetsCustom === true;
       const profile: Profile = {
         ...input,
         id: userId,
         timezone: input.timezone ?? existing?.timezone ?? "Asia/Kolkata",
-        targets: computeTargets({
-          sex: input.sex,
-          age: ageOn(input.birthYear, now),
-          heightCm: input.heightCm,
-          weightKg: input.weightKg,
-          activity: input.activityLevel,
-          goal: input.goal,
-        }),
+        // The person's own targets stay; otherwise they follow the body details.
+        targets: custom ? existing.targets : suggestedTargets(input, now),
+        targetsCustom: custom,
         onboardedAt: existing?.onboardedAt ?? now.toISOString(),
+        updatedAt: now.toISOString(),
+      };
+      s.profiles[userId] = profile;
+      persist();
+      return profile;
+    },
+
+    async setTargets(userId, targets) {
+      const s = load();
+      const existing = s.profiles[userId];
+      if (!existing) throw new DataError("not_found", "Set up your profile first.");
+      const now = new Date();
+      const profile: Profile = {
+        ...existing,
+        targets: targets ?? suggestedTargets(existing, now),
+        targetsCustom: targets !== null,
         updatedAt: now.toISOString(),
       };
       s.profiles[userId] = profile;

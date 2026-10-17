@@ -106,6 +106,15 @@ export const customFoodSchema = z.object({
   perServing: macroNumbersSchema,
 });
 
+/** The person's own daily targets (Goals & budgets). Whole numbers in sensible ranges. */
+export const targetsSchema = z.object({
+  kcal: z.number({ error: "Enter your calories." }).int("Use a whole number.").min(1000, "Calories: at least 1,000 a day.").max(6000, "Calories: at most 6,000 a day."),
+  proteinG: z.number({ error: "Enter protein." }).int("Use a whole number.").min(20, "Protein: 20 to 400 g.").max(400, "Protein: 20 to 400 g."),
+  carbG: z.number({ error: "Enter carbs." }).int("Use a whole number.").min(20, "Carbs: 20 to 800 g.").max(800, "Carbs: 20 to 800 g."),
+  fatG: z.number({ error: "Enter fat." }).int("Use a whole number.").min(15, "Fat: 15 to 300 g.").max(300, "Fat: 15 to 300 g."),
+  fiberG: z.number({ error: "Enter fibre." }).int("Use a whole number.").min(10, "Fibre: 10 to 100 g.").max(100, "Fibre: 10 to 100 g."),
+});
+
 /** A recipe: ingredients and how many servings the pot makes. Nutrients are computed on the server. */
 export const recipeSchema = z.object({
   name: z.string().trim().min(1, "Give the recipe a name.").max(120, "Keep the name under 120 characters."),

@@ -1,6 +1,8 @@
 import type { DietType, Food, MealType, Nutrients, Unit } from "@/lib/nutrition/types";
 import type { ActivityLevel, Goal, Sex, Targets } from "@/lib/nutrition/targets";
 
+export type { Targets };
+
 export type Profile = {
   id: string;
   displayName: string | null;
@@ -12,12 +14,14 @@ export type Profile = {
   goal: Goal;
   dietType: DietType;
   targets: Targets;
+  /** true: the person set the targets themselves (Goals & budgets); body details don't change them. */
+  targetsCustom: boolean;
   timezone: string;
   onboardedAt: string;
   updatedAt: string;
 };
 
-export type ProfileInput = Omit<Profile, "id" | "targets" | "timezone" | "onboardedAt" | "updatedAt"> & {
+export type ProfileInput = Omit<Profile, "id" | "targets" | "targetsCustom" | "timezone" | "onboardedAt" | "updatedAt"> & {
   timezone?: string;
 };
 
@@ -166,7 +170,10 @@ export class DataError extends Error {
  */
 export interface DataLayer {
   getProfile(userId: string): Promise<Profile | null>;
+  /** Saves body details. Targets are recomputed from them unless the person set their own. */
   upsertProfile(userId: string, input: ProfileInput): Promise<Profile>;
+  /** The person's own targets, or null to go back to the ones worked out from body details. */
+  setTargets(userId: string, targets: Targets | null): Promise<Profile>;
 
   listFoods(userId: string): Promise<Food[]>;
   searchFoods(userId: string, query: string, limit?: number): Promise<Food[]>;

@@ -190,6 +190,21 @@ describe("file store", () => {
     expect((await db.getMeal(A, meal.id))?.items[0]).toMatchObject({ foodId: null, nutrients: { kcal } });
   });
 
+  it("keeps your own targets when body details change, until you go back to suggested", async () => {
+    const suggested = (await db.getProfile(A))!.targets;
+    expect((await db.getProfile(A))!.targetsCustom).toBe(false);
+    const own = { kcal: 1500, proteinG: 100, carbG: 150, fatG: 50, fiberG: 30 };
+    expect(await db.setTargets(A, own)).toMatchObject({ targets: own, targetsCustom: true });
+    const heavier = await db.upsertProfile(A, { ...profile, weightKg: 80 });
+    expect(heavier.targets).toEqual(own); // unchanged
+    const back = await db.setTargets(A, null);
+    expect(back.targetsCustom).toBe(false);
+    expect(back.targets.kcal).toBeGreaterThan(suggested.kcal); // worked out again, for 80 kg
+    expect((await db.upsertProfile(A, profile)).targets).toEqual(suggested); // and follows body details again
+    expect((await db.getProfile(B))!.targetsCustom).toBe(false);
+    await expect(db.setTargets(randomUUID(), own)).rejects.toThrow("Set up your profile first");
+  });
+
   it("drafts never count toward the day", async () => {
     await db.createDraftMeal(A, draft());
     expect((await db.getDay(A, "2026-10-16")).meals).toHaveLength(0);

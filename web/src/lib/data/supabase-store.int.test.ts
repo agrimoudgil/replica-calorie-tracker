@@ -279,6 +279,19 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     }
   }, 60_000);
 
+  it("keeps your own targets live (needs migration 4)", async (ctx) => {
+    const { error: probe } = await admin().from("profiles").select("targets_custom").limit(1);
+    if (probe?.code === "42703") ctx.skip(); // column not there yet: run migration 4
+    const own = { kcal: 1500, proteinG: 100, carbG: 150, fatG: 50, fiberG: 30 };
+    expect(await a.store.setTargets(a.id, own)).toMatchObject({ targets: own, targetsCustom: true });
+    expect((await a.store.upsertProfile(a.id, { ...profile, weightKg: 80 })).targets).toEqual(own);
+    expect((await b.store.getProfile(b.id))?.targetsCustom).toBe(false);
+    const back = await a.store.setTargets(a.id, null);
+    expect(back.targetsCustom).toBe(false);
+    expect(back.targets.kcal).not.toBe(1500);
+    await a.store.upsertProfile(a.id, profile);
+  });
+
   it("counts AI usage per user", async () => {
     await a.store.recordAiUsage({ userId: a.id, kind: "photo", model: "test", inputTokens: 1, outputTokens: 1, createdAt: new Date().toISOString() });
     const since = new Date(Date.now() - 60_000);

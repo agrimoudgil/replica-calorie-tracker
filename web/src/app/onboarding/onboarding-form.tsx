@@ -149,6 +149,10 @@ export function OnboardingForm({ initial }: { initial: Profile | null }) {
         {errors.consent && <p id="consent-error" className="text-xs text-danger">{errors.consent}</p>}
       </div>
 
+      {initial?.targetsCustom && (
+        <p className="rounded-md bg-surface px-3 py-2 text-sm">You set your own targets in Goals and budgets, so saving these details won&apos;t change them.</p>
+      )}
+
       {formError && <p role="alert" className="text-sm text-danger">{formError}</p>}
 
       <Button type="submit" size="lg" loading={busy}>
