@@ -3,7 +3,8 @@ import { defineConfig } from "@playwright/test";
 
 /*
  * End-to-end tests against the production build and the LIVE Supabase project in
- * .env.local: npm run test:e2e (it builds first). Each test makes its own throwaway
+ * .env.local: npm run build, then npm run test:e2e (it serves the last build, or reuses a
+ * server already on the port, so build first after changes). Each test makes its own throwaway
  * example.com user and deletes it afterwards. Runs in the installed Microsoft Edge,
  * so no browser download is needed. Plan and results: replica/test-plan.md.
  */
