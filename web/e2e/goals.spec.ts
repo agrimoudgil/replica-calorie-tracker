@@ -51,7 +51,7 @@ test.describe("S13 Goals and budgets, saved", () => {
     // Saving body details again keeps your own targets.
     await page.goto("/onboarding");
     await expect(page.getByText("won't change them")).toBeVisible();
-    await page.getByLabel("Weight").fill("70");
+    await page.getByLabel("Weight", { exact: true }).fill("70");
     await page.getByRole("button", { name: "Save changes" }).click();
     await expect(page).toHaveURL(/\/$/);
     expect(await target(account.id)).toMatchObject({ daily_kcal_target: 1600, targets_custom: true });

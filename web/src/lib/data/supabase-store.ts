@@ -246,28 +246,24 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       // select("*"): reading targets_custom by name would fail before migration 4.
       const { data: existing, error: readError } = await db.from("profiles").select("*").eq("id", userId).maybeSingle();
       if (readError) throw toDataError(readError);
-      const keepTargets = existing?.targets_custom === true;
-      const { data, error } = await db
-        .from("profiles")
-        .upsert(
-          {
-            id: userId,
-            display_name: input.displayName,
-            sex: input.sex,
-            birth_year: input.birthYear,
-            height_cm: input.heightCm,
-            weight_kg: input.weightKg,
-            activity_level: input.activityLevel,
-            goal: input.goal,
-            diet_type: input.dietType,
-            // The person's own targets stay; otherwise they follow the body details.
-            ...(keepTargets ? {} : targetColumns(suggestedTargets(input, new Date()))),
-            ...(input.timezone ? { timezone: input.timezone } : {}),
-          },
-          { onConflict: "id" },
-        )
-        .select("*")
-        .single();
+      const fields = {
+        display_name: input.displayName,
+        sex: input.sex,
+        birth_year: input.birthYear,
+        height_cm: input.heightCm,
+        weight_kg: input.weightKg,
+        activity_level: input.activityLevel,
+        goal: input.goal,
+        diet_type: input.dietType,
+        // The person's own targets stay; otherwise they follow the body details.
+        ...(existing?.targets_custom === true ? {} : targetColumns(suggestedTargets(input, new Date()))),
+        ...(input.timezone ? { timezone: input.timezone } : {}),
+      };
+      // An existing profile is updated, not upserted: Postgres checks NOT NULL on the row an
+      // upsert would insert before it sees the conflict, so leaving out own targets would fail.
+      const { data, error } = existing
+        ? await db.from("profiles").update(fields).eq("id", userId).select("*").single()
+        : await db.from("profiles").upsert({ id: userId, ...fields }, { onConflict: "id" }).select("*").single();
       if (error) throw toDataError(error);
       return profileFromRow(data);
     },
