@@ -19,7 +19,6 @@ Thumbs.db
 # your own meal photos for AI trials (private, never committed)
 test-photos/
 
-# screenshots of the original app (reference only: never shipped or committed),
-# and the layout diffs made from them
-replica/screens/
-replica/diffs/
+# research, plans and logs (with the review sheet and the screenshots of the original
+# app): kept on this computer only, never in the public repository
+replica/
