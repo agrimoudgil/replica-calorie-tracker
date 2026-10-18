@@ -6,13 +6,15 @@ import { CircleCheck, X } from "lucide-react";
 import { AddButton } from "@/components/ui/nav";
 import type { MealType } from "@/lib/nutrition/types";
 
-export function TodayAddButton({ suggested }: { suggested: MealType }) {
+/** `photo`: whether photo logging is switched on (PHOTO_LOGGING). */
+export function TodayAddButton({ suggested, photo }: { suggested: MealType; photo: boolean }) {
   const router = useRouter();
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-[calc(var(--tab-bar-h)+env(safe-area-inset-bottom)+16px)] z-30">
       <div className="mx-auto flex max-w-[var(--content-max)] justify-end px-4">
         <AddButton
           className="pointer-events-auto"
+          hide={photo ? [] : ["photo"]}
           onPick={(method) => {
             if (method === "photo") router.push(`/log/photo?meal=${suggested}`);
             else if (method === "voice") router.push("/log/voice");

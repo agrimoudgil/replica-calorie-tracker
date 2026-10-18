@@ -7,6 +7,15 @@ type Env = Record<string, string | undefined>;
 
 const set = (value: string | undefined) => value?.trim() || undefined;
 
+/**
+ * Photo logging (photo → AI estimate) is off unless PHOTO_LOGGING=on. Off, the app
+ * offers no photo screens and the estimate route refuses, so no AI is ever called,
+ * even with a key present: the public test runs at no cost.
+ */
+export function photoLogging(env: Env): boolean {
+  return set(env.PHOTO_LOGGING)?.toLowerCase() === "on";
+}
+
 /** claude | demo, as asked; otherwise Claude when a key is present. */
 export function estimatorMode(env: Env): "claude" | "demo" {
   const mode = set(env.MEAL_ESTIMATOR);

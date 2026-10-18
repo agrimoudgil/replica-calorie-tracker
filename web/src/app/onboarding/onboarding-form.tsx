@@ -129,7 +129,7 @@ export function OnboardingForm({ initial }: { initial: Profile | null }) {
             <option key={d.value} value={d.value}>{d.label}</option>
           ))}
         </select>
-        <p className="text-xs text-muted">Helps us tell paneer from chicken in photos and suggest meals you eat.</p>
+        <p className="text-xs text-muted">Helps us suggest meals and foods that fit how you eat.</p>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -143,7 +143,7 @@ export function OnboardingForm({ initial }: { initial: Profile | null }) {
             className="mt-0.5 size-5 shrink-0 accent-[var(--accent)]"
           />
           <span>
-            I agree that my body details, meals and meal photos are stored to give me estimates and insights. Estimates are for general wellness, not medical advice. I can delete everything at any time.
+            I agree that my body details and meals (and any meal photos) are stored to give me estimates and insights. Estimates are for general wellness, not medical advice. I can delete everything at any time.
           </span>
         </label>
         {errors.consent && <p id="consent-error" className="text-xs text-danger">{errors.consent}</p>}

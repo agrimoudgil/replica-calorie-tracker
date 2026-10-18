@@ -13,7 +13,7 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
   const { error } = await searchParams;
   return (
     <Screen className="justify-center">
-      <ScreenHeader title="Track meals in seconds" subtitle="Snap your plate, see calories and macros. Free, no paywall." />
+      <ScreenHeader title="Track meals in seconds" subtitle="Type or search what you ate, see calories and macros. Free, no paywall." />
       <SignInForm
         linkError={error === "link"}
         googleEnabled={process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN === "on"}

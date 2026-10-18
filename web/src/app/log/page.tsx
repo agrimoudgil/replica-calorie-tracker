@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Camera, Mic, Search, Type } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
+import { PHOTO_LOGGING } from "@/lib/ai";
 
 export const metadata = { title: "Log a meal · Replica calorie tracker" };
 
@@ -17,7 +18,7 @@ export default function LogPage() {
     <Screen>
       <ScreenHeader title="Log a meal" back="/" />
       <ul className="flex flex-col gap-2">
-        {METHODS.map(({ href, label, detail, icon: Icon }) => (
+        {METHODS.filter((m) => PHOTO_LOGGING || m.href !== "/log/photo").map(({ href, label, detail, icon: Icon }) => (
           <li key={label}>
             <Link href={href} className="flex min-h-16 items-center gap-4 rounded-lg border border-border p-4 hover:bg-surface">
               <Icon aria-hidden className="size-6 shrink-0 text-accent" />

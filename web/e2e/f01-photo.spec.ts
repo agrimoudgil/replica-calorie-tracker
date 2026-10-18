@@ -1,8 +1,44 @@
-import { admin, expect, expectAccessible, jpeg, pickPhoto, savedMeals, test } from "./support";
+import { admin, expect, expectAccessible, jpeg, PHOTO_ON, pickPhoto, savedMeals, test } from "./support";
 
 const DAILY_LIMIT = Number(process.env.DAILY_ESTIMATE_LIMIT || 15);
 
+// Photo logging is off by default (no AI, no cost). Run these with PHOTO_LOGGING=on.
+test.describe("F01 photo logging switched off", () => {
+  test.skip(PHOTO_ON, "photo logging is on");
+
+  test("F01-OFF no photo option anywhere; the photo screen and its API say it's off", async ({ page, account }) => {
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: "Snap a meal" })).toHaveCount(0);
+    await page.getByRole("button", { name: "Log a meal" }).click();
+    await expect(page.getByRole("menuitem")).toHaveText(["Say it", "Type it", "Search foods"]);
+    await page.keyboard.press("Escape");
+    await page.getByRole("link", { name: "Type what you ate" }).click();
+    await expect(page).toHaveURL(/\/log\/search\?mode=type&meal=/);
+
+    await page.goto("/log");
+    await expect(page.getByRole("link", { name: /Snap a photo/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Type it/ })).toBeVisible();
+    await page.goto("/profile");
+    await expect(page.getByRole("link", { name: "Auto-log from gallery" })).toHaveCount(0);
+
+    await page.goto("/log/photo?meal=lunch");
+    await expect(page.getByText("Photo logging is off for now")).toBeVisible();
+    await expectAccessible(page);
+    await page.getByRole("link", { name: "Type what you ate" }).click();
+    await expect(page).toHaveURL(/\/log\/search\?mode=type&meal=lunch/);
+
+    // The API refuses before reading the upload, so no estimate (and no AI) can run.
+    const res = await page.request.post("/api/estimate/photo", { multipart: { mealId: crypto.randomUUID(), mealType: "lunch", eatenAt: new Date().toISOString() } });
+    expect(res.status()).toBe(404);
+    expect((await res.json()).error).toBe("off");
+    const { count } = await admin.from("meals").select("id", { count: "exact", head: true }).eq("user_id", account.id);
+    expect(count).toBe(0);
+  });
+});
+
 test.describe("F01 log a meal by photo", () => {
+  test.skip(!PHOTO_ON, "photo logging is off (PHOTO_LOGGING); F01-OFF covers that");
+
   test("F01-H1 + → Snap a photo → review → Save: on Today, photo kept", async ({ page, account }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Log a meal" }).click();
@@ -150,7 +186,7 @@ test("F02-P1 voice logging is clearly marked as coming later", async ({ page, ac
   await page.goto("/log");
   await page.getByRole("link", { name: /Say it/ }).click();
   await expect(page).toHaveURL(/\/log\/voice/);
-  await expect(page.getByText(/Voice logging comes after/)).toBeVisible();
+  await expect(page.getByText(/Voice logging comes later/)).toBeVisible();
   await expectAccessible(page);
   expect(account.id).toBeTruthy();
 });

@@ -1,4 +1,7 @@
-import { DAL, PHULKA, expect, expectAccessible, insertMeal, istDate, lunchtime, test } from "./support";
+import { DAL, PHOTO_ON, PHULKA, expect, expectAccessible, insertMeal, istDate, lunchtime, test } from "./support";
+
+// The one-tap button on today's calorie card: the camera with photo logging on, else typing.
+const QUICK = PHOTO_ON ? { name: "Snap a meal", url: /\/log\/photo\?meal=/ } : { name: "Type what you ate", url: /\/log\/search\?mode=type&meal=/ };
 
 // Top-five #4: Today as a food diary (the test user's target is 1,760 kcal).
 test.describe("S02 Today as a food diary", () => {
@@ -22,14 +25,14 @@ test.describe("S02 Today as a food diary", () => {
     await page.getByRole("link", { name: "Add to breakfast" }).click();
     await expect(page).toHaveURL(/\/log\/search\?mode=search&meal=breakfast/);
     await page.goto("/");
-    await page.getByRole("link", { name: "Snap a meal" }).click();
-    await expect(page).toHaveURL(/\/log\/photo\?meal=/);
+    await page.getByRole("link", { name: QUICK.name }).click();
+    await expect(page).toHaveURL(QUICK.url);
   });
 
   test("S02-E1 on a past day, + adds to that day", async ({ page, account }) => {
     const yesterday = istDate(-1);
     await page.goto(`/?date=${yesterday}`);
-    await expect(page.getByRole("link", { name: "Snap a meal" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: QUICK.name })).toHaveCount(0);
     await page.getByRole("link", { name: "Add to dinner" }).click();
     await expect(page).toHaveURL(new RegExp(`meal=dinner&date=${yesterday}`));
     expect(account.id).toBeTruthy();

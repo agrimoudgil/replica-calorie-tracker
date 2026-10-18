@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Camera, ChevronRight, Lightbulb } from "lucide-react";
+import { Camera, ChevronRight, Lightbulb, Type } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { CalorieRing, MacroBar, NutrientBar } from "@/components/ui/progress";
+import { PHOTO_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
 import { isIsoDate, localDate, localHour } from "@/lib/dates";
@@ -79,12 +80,14 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
           <span className="tabular-nums">{fmt.format(t.kcal)}</span> kcal
         </p>
         {isToday && (
-          // One tap to the camera, as the food card on the original's Home.
+          // One tap to log, as the food card on the original's Home: the camera when photo
+          // logging is on, otherwise typing (free, no AI).
           <Link
-            href={`/log/photo?meal=${suggested}`}
+            href={PHOTO_LOGGING ? `/log/photo?meal=${suggested}` : `/log/search?mode=type&meal=${suggested}`}
             className="inline-flex h-11 items-center gap-2 rounded-pill bg-accent px-5 text-sm font-semibold text-on-accent hover:brightness-110"
           >
-            <Camera aria-hidden className="size-4" /> Snap a meal
+            {PHOTO_LOGGING ? <Camera aria-hidden className="size-4" /> : <Type aria-hidden className="size-4" />}
+            {PHOTO_LOGGING ? "Snap a meal" : "Type what you ate"}
           </Link>
         )}
       </section>
@@ -145,7 +148,7 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
             </span>
             <ChevronRight aria-hidden className="size-5 text-muted" />
           </Link>
-          <TodayAddButton suggested={suggested} />
+          <TodayAddButton suggested={suggested} photo={PHOTO_LOGGING} />
         </>
       )}
     </Screen>

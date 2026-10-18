@@ -1,9 +1,12 @@
 import "server-only";
 import { SEED_FOODS } from "@/lib/nutrition/foods";
 import { createClaudeEstimator } from "./claude";
-import { dailyEstimateLimit, estimatorMode, mealModel } from "./config";
+import { dailyEstimateLimit, estimatorMode, mealModel, photoLogging } from "./config";
 import { createFakeEstimator } from "./fake";
 import type { MealEstimator } from "./types";
+
+/** Photo logging on (PHOTO_LOGGING=on) or off (the default: no photo screens, no AI). */
+export const PHOTO_LOGGING = photoLogging(process.env);
 
 /** Model for meal estimates (architecture.md: one environment variable to switch). */
 export const MEAL_MODEL = mealModel(process.env);
@@ -14,9 +17,10 @@ export const DAILY_ESTIMATE_LIMIT = dailyEstimateLimit(process.env);
 /**
  * MEAL_ESTIMATOR=claude uses the Claude API (needs ANTHROPIC_API_KEY on the server);
  * MEAL_ESTIMATOR=demo never calls an AI. Unset or empty: Claude when a key is present.
+ * With photo logging off, never Claude.
  */
 function pick(): MealEstimator {
-  return estimatorMode(process.env) === "claude"
+  return PHOTO_LOGGING && estimatorMode(process.env) === "claude"
     ? createClaudeEstimator({ model: MEAL_MODEL, foods: async () => [...SEED_FOODS] })
     : createFakeEstimator();
 }

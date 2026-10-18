@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, Download } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
+import { PHOTO_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
 import { supabaseEnabled } from "@/lib/supabase/config";
@@ -35,7 +36,8 @@ export default async function ProfilePage() {
           { href: "/onboarding", label: "Edit body details and goal" },
           { href: "/profile/goals", label: "Goals and budgets" },
           { href: "/profile/foods", label: "My foods and recipes" },
-          { href: "/profile/auto-snap", label: "Auto-log from gallery" },
+          // A photo feature: listed only while photo logging is on.
+          ...(PHOTO_LOGGING ? [{ href: "/profile/auto-snap", label: "Auto-log from gallery" }] : []),
         ].map((l) => (
           <li key={l.href} className="border-b border-border last:border-b-0">
             <Link href={l.href} className="flex min-h-14 items-center justify-between px-4 text-base hover:bg-surface">

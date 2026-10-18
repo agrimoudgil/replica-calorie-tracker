@@ -44,8 +44,8 @@ const logMethods = [
 ] as const;
 export type LogMethod = (typeof logMethods)[number]["key"];
 
-/** Floating add button with a menu of log methods. Esc closes and returns focus. */
-export function AddButton({ onPick, className }: { onPick: (method: LogMethod) => void; className?: string }) {
+/** Floating add button with a menu of log methods (less any in `hide`). Esc closes and returns focus. */
+export function AddButton({ onPick, hide = [], className }: { onPick: (method: LogMethod) => void; hide?: readonly LogMethod[]; className?: string }) {
   const [open, setOpen] = useState(false);
   const menuId = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -68,7 +68,7 @@ export function AddButton({ onPick, className }: { onPick: (method: LogMethod) =
     <div className={cn("relative flex flex-col items-end gap-3", className)}>
       {open && (
         <ul id={menuId} ref={menuRef} role="menu" aria-label="Log a meal" className="flex flex-col gap-1 rounded-lg border border-border bg-bg p-2 shadow-pop">
-          {logMethods.map(({ key, label, icon: Icon }) => (
+          {logMethods.filter(({ key }) => !hide.includes(key)).map(({ key, label, icon: Icon }) => (
             <li key={key} role="none">
               <button
                 type="button"

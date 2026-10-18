@@ -264,7 +264,7 @@ function Demo() {
       </Section>
 
       <Section title="Empty and loading">
-        <EmptyState icon={<Utensils />} title="No meals yet today" body="Snap your plate or say what you ate. It takes about ten seconds." action={<Button>Log a meal</Button>} />
+        <EmptyState icon={<Utensils />} title="No meals yet today" body="Type or search what you ate. It takes about ten seconds." action={<Button>Log a meal</Button>} />
         <EmptyState icon={<Salad />} title="Not enough data yet" body="Log meals on three days to see your first weekly insight." />
         <div className="flex flex-col gap-2" aria-busy="true" aria-label="Loading">
           <Skeleton shape="ring" className="self-center" />

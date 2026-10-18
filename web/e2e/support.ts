@@ -18,6 +18,9 @@ if (!url || !publishable || !secret) throw new Error("The e2e tests need the Sup
 
 export const admin = createClient(url, secret, { auth: { persistSession: false, autoRefreshToken: false } });
 
+/** Photo logging switched on for the server under test (PHOTO_LOGGING=on; off by default). */
+export const PHOTO_ON = process.env.PHOTO_LOGGING?.trim().toLowerCase() === "on";
+
 export type Account = { id: string; email: string; password: string };
 
 export const PROFILE_ROW = {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/data";
 import { currentUserId } from "@/lib/data/session";
-import { DAILY_ESTIMATE_LIMIT, EstimateError, estimator } from "@/lib/ai";
+import { DAILY_ESTIMATE_LIMIT, EstimateError, PHOTO_LOGGING, estimator } from "@/lib/ai";
 import { fail, fromError, invalid, unauthenticated } from "@/lib/api/http";
 import { photoFieldsSchema } from "@/lib/api/schemas";
 import { sniffImage } from "@/lib/images";
@@ -10,6 +10,8 @@ const MAX_BYTES = 2 * 1024 * 1024;
 
 /** F01: photo → AI estimate → draft meal for review. Safe to retry with the same mealId. */
 export async function POST(req: Request) {
+  // Switched off (the default): refuse before reading anything, so no AI is ever called.
+  if (!PHOTO_LOGGING) return fail(404, "off", "Photo logging is switched off.");
   const userId = await currentUserId();
   if (!userId) return unauthenticated();
   const profile = await db.getProfile(userId);

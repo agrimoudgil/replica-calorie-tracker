@@ -18,7 +18,7 @@ const devanagari = Noto_Sans_Devanagari({
 
 export const metadata: Metadata = {
   title: "Replica calorie tracker",
-  description: "Snap or say what you ate. Calories, macros and insights, free.",
+  description: "Log Indian meals in seconds. Calories, macros and insights, free.",
 };
 
 export const viewport: Viewport = {
