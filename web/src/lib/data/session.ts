@@ -25,6 +25,17 @@ export async function currentUserId(): Promise<string | null> {
   return value && isId(value) ? value : null;
 }
 
+/**
+ * True for someone who started with just an email (a Supabase anonymous account): no
+ * password and no verified email, so this browser's session is their only way in.
+ */
+export async function isGuest(): Promise<boolean> {
+  if (!supabaseEnabled) return false;
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  return data?.claims?.is_anonymous === true;
+}
+
 /** For pages: the user id, or a redirect to sign in. */
 export async function requireUserId(): Promise<string> {
   const id = await currentUserId();

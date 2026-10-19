@@ -32,8 +32,17 @@ export default function PrivacyPage() {
       <Section id="what" title="What we store">
         <ul className={list}>
           <li>
-            <strong>Your sign-in:</strong> your email address. If you sign in with Google, also the name and profile picture Google shares with us. Our sign-in
-            provider keeps a security record of sign-ins (when, and technical details such as your IP address and browser).
+            <strong>The email you start with:</strong> when you start with just your email, we keep the address you type, without checking it, to see how
+            many people are interested in {SITE.name}. It isn&apos;t used to sign you in, and we don&apos;t send you emails. Your account is kept in this
+            browser, so we also store a sign-in session there.
+          </li>
+          <li>
+            <strong>If you sign in with an email link or Google instead:</strong> your email address, and for Google also the name and profile picture Google
+            shares with us.
+          </li>
+          <li>
+            <strong>Security records:</strong> our sign-in provider keeps a record of sign-ins (when, and technical details such as your IP address and
+            browser).
           </li>
           <li>
             <strong>Your profile:</strong> the name you choose (optional), sex, birth year, height, weight, activity level, goal, how you eat (for example
@@ -54,6 +63,7 @@ export default function PrivacyPage() {
         <ul className={list}>
           <li>To work out your daily targets, add up your meals, and show your insights and meal ideas.</li>
           <li>To keep your account secure and your data separate from everyone else&apos;s.</li>
+          <li>To count how many people try {SITE.name}, from the emails people start with.</li>
         </ul>
         <p>
           Your body details and what you eat can say things about your health. We use them only for the above, with your consent, which you give when you set
@@ -72,8 +82,9 @@ export default function PrivacyPage() {
 
       <Section id="keep" title="How long we keep it">
         <p>
-          Until you delete your account. Deleting it removes your profile, meals, foods, recipes and sign-in from our database straight away. Our providers
-          may keep security logs for a short time after that.
+          Until you delete your account. Deleting it removes your profile, meals, foods, recipes, the email you started with and your sign-in from our
+          database straight away. Our providers may keep security logs for a short time after that. If you started with just your email, delete your
+          account before signing out: without a password, you can&apos;t sign back in to delete it later.
         </p>
       </Section>
 

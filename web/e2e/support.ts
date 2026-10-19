@@ -68,12 +68,31 @@ export async function sweepTestUsers(since: string): Promise<string[]> {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
     if (error) throw error;
     for (const u of data.users) {
-      const match = /^rct-e2e-([a-z0-9]+)-/.exec(u.email ?? "");
+      // Email-only starts are anonymous accounts: their address is in the metadata.
+      const match = /^rct-e2e-([a-z0-9]+)-/.exec(u.email || String(u.user_metadata?.signup_email ?? ""));
       if (!match || Date.parse(u.created_at) < Date.parse(since)) continue;
       leaked.push(match[1]);
       await deleteAccount(u.id);
     }
     if (data.users.length < 1000) return leaked;
+  }
+}
+
+/** Whether the Supabase project allows starting with just an email (anonymous sign-ins). */
+export async function guestStartsEnabled(): Promise<boolean> {
+  const probe = createClient(url, publishable, { auth: { persistSession: false, autoRefreshToken: false } });
+  const { data, error } = await probe.auth.signInAnonymously();
+  if (data.user) await deleteAccount(data.user.id);
+  return !error;
+}
+
+/** The account a guest test started, found by the email it typed. */
+export async function findGuest(signupEmail: string) {
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw error;
+    const found = data.users.find((u) => u.user_metadata?.signup_email === signupEmail);
+    if (found || data.users.length < 1000) return found ?? null;
   }
 }
 

@@ -26,6 +26,15 @@ test.describe("F04 first-time setup", () => {
     await expectAccessible(page);
   });
 
+  test("F04-E6 under 18 can't sign up", async ({ page, account }) => {
+    await page.goto("/onboarding");
+    await fillValid(page);
+    await page.getByLabel("Birth year", { exact: true }).fill(String(new Date().getFullYear() - 16));
+    await page.getByRole("button", { name: "Work out my target" }).click();
+    await expect(page.getByText("Oswald is for people aged 18 and over.")).toBeVisible();
+    expect(await profileOf(account.id)).toBeNull();
+  });
+
   test("F04-E1 an empty form shows every error and saves nothing", async ({ page, account }) => {
     await page.goto("/onboarding");
     await page.getByRole("button", { name: "Work out my target" }).click();

@@ -6,9 +6,11 @@ import { LogOut, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/overlays";
 
-export function AccountActions({ realAccounts }: { realAccounts: boolean }) {
+/** `guest`: started with just an email, so signing out loses the way back (it asks first). */
+export function AccountActions({ realAccounts, guest = false }: { realAccounts: boolean; guest?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [understood, setUnderstood] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,12 +36,21 @@ export function AccountActions({ realAccounts }: { realAccounts: boolean }) {
   return (
     <section aria-labelledby="account-heading" className="flex flex-col gap-3">
       <h2 id="account-heading" className="text-lg font-semibold">Account</h2>
-      <form action="/auth/sign-out" method="post">
-        <Button type="submit" variant="secondary" className="w-full" icon={<LogOut aria-hidden className="size-4" />}>
-          Sign out
-        </Button>
-      </form>
-      {realAccounts && (
+      {guest ? (
+        <>
+          <p className="text-sm text-muted">You started with just your email, so this browser is your way back to your meals. There&apos;s no password to sign in again with.</p>
+          <Button variant="secondary" className="w-full" icon={<LogOut aria-hidden className="size-4" />} onClick={() => setLeaving(true)}>
+            Sign out
+          </Button>
+        </>
+      ) : (
+        <form action="/auth/sign-out" method="post">
+          <Button type="submit" variant="secondary" className="w-full" icon={<LogOut aria-hidden className="size-4" />}>
+            Sign out
+          </Button>
+        </form>
+      )}
+      {realAccounts && !guest && (
         <form action="/auth/sign-out" method="post">
           <input type="hidden" name="scope" value="global" />
           <Button type="submit" variant="ghost" className="w-full">Sign out on all devices</Button>
@@ -63,6 +74,19 @@ export function AccountActions({ realAccounts }: { realAccounts: boolean }) {
             Delete everything
           </Button>
           <Button variant="ghost" onClick={() => setOpen(false)} disabled={busy}>Keep my account</Button>
+        </div>
+      </BottomSheet>
+
+      <BottomSheet open={leaving} onClose={() => setLeaving(false)} title="Sign out for good?">
+        <div className="flex flex-col gap-4 pb-2">
+          <p className="text-base">
+            Without a password, signing out means you can&apos;t get back to these meals, even with the same email. If you&apos;re done with Oswald, delete
+            your account instead so nothing is left behind.
+          </p>
+          <Button size="lg" onClick={() => setLeaving(false)}>Stay signed in</Button>
+          <form action="/auth/sign-out" method="post">
+            <Button type="submit" variant="ghost" className="w-full">Sign out anyway</Button>
+          </form>
         </div>
       </BottomSheet>
     </section>

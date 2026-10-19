@@ -5,7 +5,7 @@ import { ChevronRight, Download } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { PHOTO_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
-import { requireUserId } from "@/lib/data/session";
+import { isGuest, requireUserId } from "@/lib/data/session";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { AccountActions } from "./account-actions";
@@ -72,7 +72,7 @@ export default async function ProfilePage() {
           ))}
         </ul>
       </section>
-      <AccountActions realAccounts={supabaseEnabled} />
+      <AccountActions realAccounts={supabaseEnabled} guest={await isGuest()} />
     </Screen>
   );
 }

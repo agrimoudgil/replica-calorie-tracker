@@ -1,4 +1,46 @@
-import { admin, createAccount, deleteAccount, expect, expectAccessible, insertMeal, istDate, lunchtime, signIn, test } from "./support";
+import { admin, createAccount, deleteAccount, expect, expectAccessible, findGuest, guestStartsEnabled, insertMeal, istDate, lunchtime, signIn, test } from "./support";
+
+// Starting with just an email needs anonymous sign-ins switched on in Supabase; skips until then.
+test.describe("AUTH start with just an email", () => {
+  test.beforeAll(async () => {
+    test.skip(!(await guestStartsEnabled()), "anonymous sign-ins are off in Supabase");
+  });
+
+  test("AUTH-H3 type an email, Start, set up, and use the app; the email is kept unverified", async ({ page }) => {
+    const signupEmail = `rct-e2e-authh3-${crypto.randomUUID()}@example.com`;
+    let userId: string | undefined;
+    try {
+      await page.goto("/sign-in");
+      await page.getByLabel("Your email").fill(signupEmail.toUpperCase());
+      await page.getByRole("button", { name: "Start using Oswald" }).click();
+      await expect(page).toHaveURL(/\/onboarding/);
+      const user = await findGuest(signupEmail); // stored lower-case
+      userId = user?.id;
+      expect(user?.is_anonymous).toBe(true);
+      expect(user?.email ?? "").toBe(""); // not a sign-in address: nothing to verify or send to
+
+      await page.getByLabel("Birth year", { exact: true }).fill("1994");
+      await page.getByLabel("Height", { exact: true }).fill("160");
+      await page.getByLabel("Weight", { exact: true }).fill("60");
+      await page.getByLabel(/I agree that my body details/).check();
+      await page.getByRole("button", { name: "Work out my target" }).click();
+      await expect(page).toHaveURL(/\/$/);
+      await expect(page.getByRole("region", { name: "Lunch" })).toBeVisible();
+
+      await page.goto("/profile");
+      await expect(page.getByText("You started with just your email")).toBeVisible();
+      await expect(page.getByRole("button", { name: "Sign out on all devices" })).toHaveCount(0);
+      await page.getByRole("button", { name: "Sign out", exact: true }).click();
+      await expect(page.getByRole("dialog", { name: "Sign out for good?" })).toBeVisible();
+      await expectAccessible(page);
+      await page.getByRole("button", { name: "Stay signed in" }).click();
+      await expect(page).toHaveURL(/\/profile/);
+    } finally {
+      if (!userId) userId = (await findGuest(signupEmail))?.id;
+      if (userId) await deleteAccount(userId);
+    }
+  });
+});
 
 test.describe("AUTH sign-in and sign-out", () => {
   test("AUTH-H1 asking for a sign-in link shows Check your email (email stubbed)", async ({ page }) => {
@@ -10,7 +52,8 @@ test.describe("AUTH sign-in and sign-out", () => {
     });
     await page.goto("/sign-in");
     await expectAccessible(page);
-    await page.getByLabel("Email").fill("someone@example.com");
+    await page.getByText("Have an account with an email link? Sign in").click();
+    await page.getByLabel("Email for a sign-in link").fill("someone@example.com");
     await page.getByRole("button", { name: "Email me a sign-in link" }).click();
     await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
     await expect(page.getByText("someone@example.com")).toBeVisible();
@@ -53,10 +96,24 @@ test.describe("AUTH sign-in and sign-out", () => {
       return route.abort();
     });
     await page.goto("/sign-in");
-    await page.getByLabel("Email").fill("not-an-email");
+    await page.getByText("Have an account with an email link? Sign in").click();
+    await page.getByLabel("Email for a sign-in link").fill("not-an-email");
     await page.getByRole("button", { name: "Email me a sign-in link" }).click();
     await expect(page.getByRole("alert").filter({ hasText: "Enter a valid email address." })).toBeVisible();
     expect(sent).toBe(0);
+  });
+
+  test("AUTH-E5 Start with a bad email is caught before any account is made", async ({ page }) => {
+    let started = 0;
+    await page.route("**/auth/v1/signup**", (route) => {
+      started++;
+      return route.abort();
+    });
+    await page.goto("/sign-in");
+    await page.getByLabel("Your email").fill("not-an-email");
+    await page.getByRole("button", { name: "Start using Oswald" }).click();
+    await expect(page.getByRole("alert").filter({ hasText: "Enter a valid email address." })).toBeVisible();
+    expect(started).toBe(0);
   });
 
   test("AUTH-E2 an expired link says so", async ({ page }) => {
