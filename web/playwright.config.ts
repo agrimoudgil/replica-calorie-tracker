@@ -7,10 +7,14 @@ import { defineConfig } from "@playwright/test";
  * server already on the port, so build first after changes). Each test makes its own throwaway
  * example.com user and deletes it afterwards. Runs in the installed Microsoft Edge,
  * so no browser download is needed. Plan and results: replica/test-plan.md.
+ *
+ * E2E_BASE_URL=https://… runs the same tests against a deployed site instead (no local
+ * server). It must use the same Supabase project as .env.local, and the same PHOTO_LOGGING.
  */
 if (fs.existsSync(".env.local")) process.loadEnvFile(".env.local");
 
 const PORT = 3211;
+const deployed = process.env.E2E_BASE_URL?.trim().replace(/\/+$/, "") || undefined;
 
 export default defineConfig({
   testDir: "e2e",
@@ -22,7 +26,7 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   reporter: [["list"], ["html", { open: "never", outputFolder: "e2e-report" }]],
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: deployed ?? `http://localhost:${PORT}`,
     channel: "msedge",
     viewport: { width: 390, height: 844 },
     locale: "en-IN",
@@ -30,10 +34,12 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  webServer: {
-    command: `npx next start -p ${PORT}`,
-    url: `http://localhost:${PORT}/sign-in`,
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  webServer: deployed
+    ? undefined
+    : {
+        command: `npx next start -p ${PORT}`,
+        url: `http://localhost:${PORT}/sign-in`,
+        reuseExistingServer: true,
+        timeout: 60_000,
+      },
 });
