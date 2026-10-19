@@ -4,7 +4,7 @@ import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
 import { MyFoods } from "./my-foods";
 
-export const metadata = { title: "My foods and recipes · Replica calorie tracker" };
+export const metadata = { title: "My foods and recipes" };
 
 /** S13: the person's own foods and recipes: see, create, log and delete. */
 export default async function MyFoodsPage() {

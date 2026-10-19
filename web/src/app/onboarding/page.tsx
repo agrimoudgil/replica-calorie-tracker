@@ -4,7 +4,7 @@ import { currentUserId, requireUserId } from "@/lib/data/session";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { OnboardingForm } from "./onboarding-form";
 
-export const metadata = { title: "Set up · Replica calorie tracker" };
+export const metadata = { title: "Set up" };
 
 /** S01: body details, goal and diet → daily calorie and macro targets. */
 export default async function OnboardingPage() {

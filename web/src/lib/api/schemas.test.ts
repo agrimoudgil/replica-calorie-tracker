@@ -46,9 +46,10 @@ describe("profileSchema", () => {
     expect(r.success && r.data.displayName).toBe(null);
   });
 
-  it("requires consent and an age of at least 13", () => {
+  it("requires consent and an age of at least 18", () => {
     expect(profileSchema(now).safeParse({ ...valid, consent: false }).success).toBe(false);
-    expect(profileSchema(now).safeParse({ ...valid, birthYear: 2015 }).success).toBe(false);
-    expect(profileSchema(now).safeParse({ ...valid, birthYear: 2013 }).success).toBe(true);
+    expect(profileSchema(now).safeParse({ ...valid, birthYear: 2013 }).success).toBe(false);
+    expect(profileSchema(now).safeParse({ ...valid, birthYear: 2009 }).success).toBe(false);
+    expect(profileSchema(now).safeParse({ ...valid, birthYear: 2008 }).success).toBe(true);
   });
 });

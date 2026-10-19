@@ -6,7 +6,7 @@ import { localDate } from "@/lib/dates";
 import type { Unit } from "@/lib/nutrition/types";
 import { ReviewForm } from "./review-form";
 
-export const metadata = { title: "Check your meal · Replica calorie tracker" };
+export const metadata = { title: "Check your meal" };
 
 /** S05: check the estimate, fix portions, remove wrong items, save. */
 export default async function ReviewPage({ params }: PageProps<"/log/review/[id]">) {

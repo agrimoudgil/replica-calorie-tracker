@@ -19,6 +19,22 @@ test.describe("AUTH sign-in and sign-out", () => {
     await expectAccessible(page);
   });
 
+  test("AUTH-P1 the privacy policy opens from sign-in, without an account", async ({ page }) => {
+    await page.goto("/sign-in");
+    await expect(page).toHaveTitle("Sign in · Oswald");
+    await page.getByRole("link", { name: "Privacy policy" }).click();
+    await expect(page).toHaveURL(/\/privacy$/);
+    await expect(page).toHaveTitle("Privacy policy · Oswald");
+    for (const heading of ["What we store", "Who helps us run it", "Your choices and rights", "Age"]) {
+      await expect(page.getByRole("heading", { name: heading })).toBeVisible();
+    }
+    await expect(page.getByText(/for people aged 18 and over/)).toBeVisible();
+    // Who runs it and how to reach them are filled in, never placeholders.
+    await expect(page.getByText(/OPERATOR_NAME|CONTACT_EMAIL/)).toHaveCount(0);
+    await expect(page.locator('a[href^="mailto:"]').first()).toBeVisible();
+    await expectAccessible(page);
+  });
+
   test("AUTH-E1 a bad email address is caught before anything is sent", async ({ page }) => {
     let sent = 0;
     await page.route("**/auth/v1/otp**", (route) => {

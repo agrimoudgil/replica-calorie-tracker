@@ -20,6 +20,8 @@ async function screens(userId: string) {
     "/onboarding",
     "/coach",
     "/progress",
+    "/profile/goals",
+    "/privacy",
   ];
 }
 

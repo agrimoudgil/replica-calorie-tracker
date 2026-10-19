@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { SegmentedControl, TextField } from "@/components/ui/fields";
@@ -147,6 +148,9 @@ export function OnboardingForm({ initial }: { initial: Profile | null }) {
           </span>
         </label>
         {errors.consent && <p id="consent-error" className="text-xs text-danger">{errors.consent}</p>}
+        <Link href="/privacy" className="self-start text-xs font-semibold underline underline-offset-2">
+          Read the privacy policy
+        </Link>
       </div>
 
       {initial?.targetsCustom && (

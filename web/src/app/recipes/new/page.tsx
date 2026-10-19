@@ -7,7 +7,7 @@ import { parseMealType } from "@/lib/meal-type";
 import { logHref, type LogTarget } from "@/lib/log-link";
 import { RecipeEditor } from "../recipe-editor";
 
-export const metadata = { title: "New recipe · Replica calorie tracker" };
+export const metadata = { title: "New recipe" };
 
 /** S13b: a new recipe. Opened from Add food (?from=log), saving goes back there with one serving in the meal. */
 export default async function NewRecipePage({ searchParams }: PageProps<"/recipes/new">) {

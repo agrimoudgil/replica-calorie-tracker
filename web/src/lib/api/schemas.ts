@@ -17,7 +17,8 @@ export function profileSchema(now = new Date()) {
       .number({ error: "Enter the year you were born." })
       .int()
       .min(year - 100, "Enter a real birth year.")
-      .max(year - 13, "You need to be at least 13 to use this app."),
+      // 18+: India's DPDP Act needs a parent's verified consent for anyone younger.
+      .max(year - 18, "Oswald is for people aged 18 and over."),
     heightCm: z.number({ error: "Enter your height." }).min(100, "Enter a height between 100 and 250 cm.").max(250, "Enter a height between 100 and 250 cm."),
     weightKg: z.number({ error: "Enter your weight." }).min(25, "Enter a weight between 25 and 300 kg.").max(300, "Enter a weight between 25 and 300 kg."),
     activityLevel: z.enum(["sedentary", "light", "moderate", "active", "very_active"]),

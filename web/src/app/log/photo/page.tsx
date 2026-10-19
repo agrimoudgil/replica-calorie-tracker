@@ -10,7 +10,7 @@ import { localHour } from "@/lib/dates";
 import { parseMealType, suggestMealType } from "@/lib/meal-type";
 import { PhotoLogger } from "./photo-logger";
 
-export const metadata = { title: "Snap a meal · Replica calorie tracker" };
+export const metadata = { title: "Snap a meal" };
 
 /** S04: take or pick a photo of the meal. */
 export default async function PhotoPage({ searchParams }: PageProps<"/log/photo">) {

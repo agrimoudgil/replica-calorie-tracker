@@ -4,7 +4,7 @@ import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
 import { RecipeEditor } from "../recipe-editor";
 
-export const metadata = { title: "Edit recipe · Replica calorie tracker" };
+export const metadata = { title: "Edit recipe" };
 
 /** S13b: change, log or delete one of the person's recipes. */
 export default async function EditRecipePage({ params }: PageProps<"/recipes/[id]">) {

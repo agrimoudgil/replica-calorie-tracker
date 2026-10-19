@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_Devanagari } from "next/font/google";
 import { cookies } from "next/headers";
 import { ToastProvider } from "@/components/ui/overlays";
+import { SITE } from "@/lib/site";
 import { THEME_COOKIE, parseTheme, themeAttribute } from "@/lib/theme";
 import "./globals.css";
 
@@ -17,7 +18,7 @@ const devanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Replica calorie tracker",
+  title: { default: SITE.name, template: `%s · ${SITE.name}` },
   description: "Log Indian meals in seconds. Calories, macros and insights, free.",
 };
 

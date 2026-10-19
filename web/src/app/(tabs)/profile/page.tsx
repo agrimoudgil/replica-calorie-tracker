@@ -11,7 +11,7 @@ import { THEME_COOKIE, parseTheme } from "@/lib/theme";
 import { AccountActions } from "./account-actions";
 import { Appearance } from "./appearance";
 
-export const metadata = { title: "Profile · Replica calorie tracker" };
+export const metadata = { title: "Profile" };
 
 const fmt = new Intl.NumberFormat("en-IN");
 
@@ -38,6 +38,7 @@ export default async function ProfilePage() {
           { href: "/profile/foods", label: "My foods and recipes" },
           // A photo feature: listed only while photo logging is on.
           ...(PHOTO_LOGGING ? [{ href: "/profile/auto-snap", label: "Auto-log from gallery" }] : []),
+          { href: "/privacy", label: "Privacy policy" },
         ].map((l) => (
           <li key={l.href} className="border-b border-border last:border-b-0">
             <Link href={l.href} className="flex min-h-14 items-center justify-between px-4 text-base hover:bg-surface">

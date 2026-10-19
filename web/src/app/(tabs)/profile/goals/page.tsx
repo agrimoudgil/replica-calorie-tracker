@@ -5,7 +5,7 @@ import { requireUserId } from "@/lib/data/session";
 import { suggestedTargets } from "@/lib/nutrition/targets";
 import { GoalsForm } from "./goals-form";
 
-export const metadata = { title: "Goals and budgets · Replica calorie tracker" };
+export const metadata = { title: "Goals and budgets" };
 
 /** S13: set your own daily targets, see the meal budgets they give, or go back to the suggested ones. */
 export default async function GoalsPage() {

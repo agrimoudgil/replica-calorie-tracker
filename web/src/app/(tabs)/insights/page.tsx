@@ -16,7 +16,7 @@ import type { Food, MealType } from "@/lib/nutrition/types";
 import { cn } from "@/lib/cn";
 import { portionText } from "@/lib/format";
 
-export const metadata = { title: "Insights · Replica calorie tracker" };
+export const metadata = { title: "Insights" };
 
 const fmt = new Intl.NumberFormat("en-IN");
 const weekday = new Intl.DateTimeFormat("en-IN", { weekday: "short", timeZone: "UTC" });

@@ -3,7 +3,7 @@ import { Camera, Mic, Search, Type } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { PHOTO_LOGGING } from "@/lib/ai";
 
-export const metadata = { title: "Log a meal · Replica calorie tracker" };
+export const metadata = { title: "Log a meal" };
 
 const METHODS = [
   { href: "/log/photo", label: "Snap a photo", detail: "Fastest. We work out the items and portions.", icon: Camera },

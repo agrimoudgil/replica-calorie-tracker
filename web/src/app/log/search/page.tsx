@@ -8,7 +8,7 @@ import { MEAL_TYPES, UNITS, type Food, type MealType, type Unit } from "@/lib/nu
 import { recentFoods, type QuickFood } from "@/lib/recents";
 import { FoodLogger } from "./food-logger";
 
-export const metadata = { title: "Add food · Replica calorie tracker" };
+export const metadata = { title: "Add food" };
 
 // Shown only to people with no recent or favourite foods yet.
 const POPULAR = ["seed-phulka", "seed-dal-tadka", "seed-rice", "seed-chai", "seed-poha", "seed-curd", "seed-idli", "seed-banana"];
