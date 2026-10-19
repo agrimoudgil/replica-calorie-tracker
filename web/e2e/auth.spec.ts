@@ -35,6 +35,17 @@ test.describe("AUTH sign-in and sign-out", () => {
     await expectAccessible(page);
   });
 
+  test("AUTH-E4 a sign-in that comes back with an error says why", async ({ page }) => {
+    await page.goto("/auth/callback?error=server_error&error_code=unexpected_failure&error_description=Unable+to+exchange+external+code");
+    await expect(page).toHaveURL(/\/sign-in\?error=link&reason=google_exchange_failed/);
+    await expect(page.getByRole("alert").filter({ hasText: "couldn't confirm it with Google" })).toBeVisible();
+    await page.goto("/auth/callback?error=access_denied");
+    await expect(page.getByRole("alert").filter({ hasText: "Sign-in was cancelled" })).toBeVisible();
+    await page.goto("/sign-in?error=link&reason=%3Cimg%20src%3Dx%3E");
+    await expect(page.getByRole("alert").filter({ hasText: "Sign-in didn't finish (imgsrcx)" })).toBeVisible();
+    await expectAccessible(page);
+  });
+
   test("AUTH-E1 a bad email address is caught before anything is sent", async ({ page }) => {
     let sent = 0;
     await page.route("**/auth/v1/otp**", (route) => {

@@ -4,15 +4,17 @@ import { useEffect, useState, type FormEvent } from "react";
 import { MailCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/fields";
+import { signInFailureMessage } from "@/lib/sign-in-failure";
 import { createClient } from "@/lib/supabase/browser";
 
 const RESEND_SECONDS = 60;
 
-export function SignInForm({ linkError, googleEnabled }: { linkError: boolean; googleEnabled: boolean }) {
+/** `failure`: why the last sign-in didn't finish (a code from the auth routes), or null. */
+export function SignInForm({ failure, googleEnabled }: { failure: string | null; googleEnabled: boolean }) {
   const [email, setEmail] = useState("");
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [busy, setBusy] = useState<"email" | "google" | null>(null);
-  const [error, setError] = useState<string | null>(linkError ? "That sign-in link has expired or was already used. Send a new one." : null);
+  const [error, setError] = useState<string | null>(failure ? signInFailureMessage(failure) : null);
   const [wait, setWait] = useState(0);
 
   useEffect(() => {

@@ -11,12 +11,12 @@ export const metadata = { title: "Sign in" };
 export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   if (!supabaseEnabled) redirect("/onboarding");
   if (await currentUserId()) redirect("/");
-  const { error } = await searchParams;
+  const { error, reason } = await searchParams;
   return (
     <Screen className="justify-center">
       <ScreenHeader title="Track meals in seconds" subtitle="Type or search what you ate, see calories and macros. Free, no paywall." />
       <SignInForm
-        linkError={error === "link"}
+        failure={error === "link" ? (typeof reason === "string" && reason ? reason : "link") : null}
         googleEnabled={process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN === "on"}
       />
       <p className="text-xs text-muted">
