@@ -23,9 +23,16 @@ export default function OpengraphImage() {
           <img src={ring} width={104} height={104} alt="" />
           <div style={{ fontSize: 64, fontWeight: 700 }}>{SITE.name}</div>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ fontSize: 76, fontWeight: 700, lineHeight: 1.1 }}>Count calories the way India eats.</div>
-          <div style={{ fontSize: 36, opacity: 0.88 }}>Type “2 roti, 1 katori dal”. Free, no paywall, no ads.</div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* Lines broken on purpose, so no word is left alone on a line. */}
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 80, fontWeight: 700, lineHeight: 1.1 }}>
+            <span>Track what you eat.</span>
+            <span>That&apos;s it.</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", fontSize: 36, opacity: 0.88 }}>
+            <span>Free calorie tracker for Indian meals.</span>
+            <span>No paywall, no sales calls.</span>
+          </div>
         </div>
       </div>
     ),
