@@ -37,7 +37,7 @@ export function TabBar({ current }: { current: string }) {
 }
 
 const logMethods = [
-  { key: "photo", label: "Snap a photo", icon: Camera },
+  { key: "photo", label: "Take a photo", icon: Camera },
   { key: "voice", label: "Say it", icon: Mic },
   { key: "text", label: "Type it", icon: Type },
   { key: "search", label: "Search foods", icon: Search },

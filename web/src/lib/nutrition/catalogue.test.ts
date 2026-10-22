@@ -95,7 +95,7 @@ describe("seed catalogue", () => {
     ];
     const missing = common.filter((name) => !matchFood(name, SEED_FOODS) && rankFoods(SEED_FOODS, name, 1).length === 0);
     expect(missing).toEqual([]);
-    // Search for "dal" lists many dal dishes (the original showed 21).
+    // Search for "dal" lists many dal dishes (at least 20 of the common ones).
     expect(rankFoods(SEED_FOODS, "dal", 50).length).toBeGreaterThanOrEqual(20);
   });
 

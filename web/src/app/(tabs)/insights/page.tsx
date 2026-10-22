@@ -115,7 +115,7 @@ export default async function InsightsPage() {
       {week.enoughData && week.average && (
         <>
           <section aria-labelledby="gaps-heading" className="flex flex-col gap-3">
-            <h2 id="gaps-heading" className="text-lg font-semibold">Watch out for</h2>
+            <h2 id="gaps-heading" className="text-lg font-semibold">Worth a look</h2>
             {week.gaps.length === 0 ? (
               <p className="rounded-lg bg-surface p-4 text-sm">Nothing stands out this week. Nice balance.</p>
             ) : (

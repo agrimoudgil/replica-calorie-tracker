@@ -37,7 +37,7 @@ export default async function ProfilePage() {
           { href: "/profile/goals", label: "Goals and budgets" },
           { href: "/profile/foods", label: "My foods and recipes" },
           // A photo feature: listed only while photo logging is on.
-          ...(PHOTO_LOGGING ? [{ href: "/profile/auto-snap", label: "Auto-log from gallery" }] : []),
+          ...(PHOTO_LOGGING ? [{ href: "/profile/gallery", label: "Auto-log from gallery" }] : []),
           { href: "/privacy", label: "Privacy policy" },
         ].map((l) => (
           <li key={l.href} className="border-b border-border last:border-b-0">

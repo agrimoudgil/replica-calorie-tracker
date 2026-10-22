@@ -83,14 +83,14 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
           <span className="tabular-nums">{fmt.format(t.kcal)}</span> kcal
         </p>
         {isToday && (
-          // One tap to log, as the food card on the original's Home: the camera when photo
+          // One tap to log: the camera when photo
           // logging is on, otherwise typing (free, no AI).
           <Link
             href={PHOTO_LOGGING ? `/log/photo?meal=${suggested}` : `/log/search?mode=type&meal=${suggested}`}
             className="inline-flex h-11 items-center gap-2 rounded-pill bg-accent px-5 text-sm font-semibold text-on-accent hover:brightness-110"
           >
             {PHOTO_LOGGING ? <Camera aria-hidden className="size-4" /> : <Type aria-hidden className="size-4" />}
-            {PHOTO_LOGGING ? "Snap a meal" : "Type what you ate"}
+            {PHOTO_LOGGING ? "Take a photo" : "Type what you ate"}
           </Link>
         )}
       </section>

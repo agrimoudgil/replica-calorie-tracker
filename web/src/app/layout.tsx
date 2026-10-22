@@ -19,13 +19,22 @@ const devanagari = Noto_Sans_Devanagari({
 
 export const metadata: Metadata = {
   title: { default: SITE.name, template: `%s · ${SITE.name}` },
-  description: "Log Indian meals in seconds. Calories, macros and insights, free.",
+  description: "Count calories the way India eats. Type what you ate and see calories and every macro. Free, with no paywall and no ads.",
+  // Lets shared links (and the share image) resolve to the live address.
+  metadataBase: new URL("https://oswald-calorie-tracker.vercel.app"),
+  openGraph: { siteName: SITE.name, type: "website", images: [SITE.shareImage] },
+  twitter: { card: "summary_large_image", images: [SITE.shareImage] },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // The phone browser's bar matches the page ("Neel" bg tokens, light and dark).
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f1016" },
+  ],
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

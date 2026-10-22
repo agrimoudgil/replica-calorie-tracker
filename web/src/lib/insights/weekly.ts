@@ -99,7 +99,7 @@ export function weeklyInsights(input: {
     });
   } else if (average.kcal < t.kcal * 0.7) {
     gaps.push({
-      id: "calories_low", severity: "medium", title: "Far below your calorie target",
+      id: "calories_low", severity: "medium", title: "Well under your calorie target",
       detail: `Logged meals average ${fmt.format(round(average.kcal))} kcal against ${fmt.format(t.kcal)}. If some meals or snacks aren't logged, these numbers will look low.`,
       foods: [],
     });

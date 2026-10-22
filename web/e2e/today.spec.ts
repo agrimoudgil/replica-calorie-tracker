@@ -1,7 +1,7 @@
 import { DAL, PHOTO_ON, PHULKA, expect, expectAccessible, insertMeal, istDate, lunchtime, test } from "./support";
 
 // The one-tap button on today's calorie card: the camera with photo logging on, else typing.
-const QUICK = PHOTO_ON ? { name: "Snap a meal", url: /\/log\/photo\?meal=/ } : { name: "Type what you ate", url: /\/log\/search\?mode=type&meal=/ };
+const QUICK = PHOTO_ON ? { name: "Take a photo", url: /\/log\/photo\?meal=/ } : { name: "Type what you ate", url: /\/log\/search\?mode=type&meal=/ };
 
 // Top-five #4: Today as a food diary (the test user's target is 1,760 kcal).
 test.describe("S02 Today as a food diary", () => {

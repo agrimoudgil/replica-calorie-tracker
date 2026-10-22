@@ -15,7 +15,11 @@ export const metadata: Metadata = {
   openGraph: {
     title: `${SITE.name}: free calorie tracker for Indian meals`,
     description: "Type what you ate the way you'd say it. Calories and every macro, free.",
+    siteName: SITE.name,
+    type: "website",
+    images: [SITE.shareImage],
   },
+  twitter: { card: "summary_large_image", images: [SITE.shareImage] },
 };
 
 const cta = "inline-flex h-12 items-center justify-center rounded-pill bg-accent px-6 text-base font-semibold text-on-accent hover:brightness-110";

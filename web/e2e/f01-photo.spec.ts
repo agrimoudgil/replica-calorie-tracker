@@ -8,7 +8,7 @@ test.describe("F01 photo logging switched off", () => {
 
   test("F01-OFF no photo option anywhere; the photo screen and its API say it's off", async ({ page, account }) => {
     await page.goto("/");
-    await expect(page.getByRole("link", { name: "Snap a meal" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Take a photo" })).toHaveCount(0);
     await page.getByRole("button", { name: "Log a meal" }).click();
     await expect(page.getByRole("menuitem")).toHaveText(["Say it", "Type it", "Search foods"]);
     await page.keyboard.press("Escape");
@@ -16,7 +16,7 @@ test.describe("F01 photo logging switched off", () => {
     await expect(page).toHaveURL(/\/log\/search\?mode=type&meal=/);
 
     await page.goto("/log");
-    await expect(page.getByRole("link", { name: /Snap a photo/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: /Take a photo/ })).toHaveCount(0);
     await expect(page.getByRole("link", { name: /Type it/ })).toBeVisible();
     await page.goto("/profile");
     await expect(page.getByRole("link", { name: "Auto-log from gallery" })).toHaveCount(0);
@@ -39,10 +39,10 @@ test.describe("F01 photo logging switched off", () => {
 test.describe("F01 log a meal by photo", () => {
   test.skip(!PHOTO_ON, "photo logging is off (PHOTO_LOGGING); F01-OFF covers that");
 
-  test("F01-H1 + → Snap a photo → review → Save: on Today, photo kept", async ({ page, account }) => {
+  test("F01-H1 + → Take a photo → review → Save: on Today, photo kept", async ({ page, account }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Log a meal" }).click();
-    await page.getByRole("menuitem", { name: "Snap a photo" }).click();
+    await page.getByRole("menuitem", { name: "Take a photo" }).click();
     await expect(page).toHaveURL(/\/log\/photo/);
     await expectAccessible(page);
     await page.getByRole("group", { name: "Which meal?" }).locator("label", { hasText: "Lunch" }).click();

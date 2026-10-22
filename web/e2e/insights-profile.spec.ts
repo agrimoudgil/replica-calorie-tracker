@@ -18,7 +18,7 @@ test.describe("F05 review the week", () => {
     await expect(page.getByRole("heading", { name: "This week" })).toBeVisible();
     await expect(page.getByText("Calories per day").first()).toBeVisible();
     await expect(page.getByRole("heading", { name: "Daily average vs target" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: /^(Watch out for|Going well)$/ }).first()).toBeVisible();
+    await expect(page.getByRole("heading", { name: /^(Worth a look|Going well)$/ }).first()).toBeVisible();
     await expect(page.getByRole("heading", { name: /^Ideas for / })).toBeVisible();
     await expectAccessible(page);
   });
@@ -63,13 +63,13 @@ test.describe("Profile, history and placeholders", () => {
     await page.emulateMedia({ colorScheme: "dark" });
     await page.goto("/profile");
     const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-    expect(await bg()).toBe("rgb(15, 17, 21)");
+    expect(await bg()).toBe("rgb(15, 16, 22)");
     await page.getByRole("group", { name: "Appearance" }).locator("label", { hasText: "Light" }).click();
     expect(await bg()).toBe("rgb(255, 255, 255)");
     await page.reload();
     expect(await bg()).toBe("rgb(255, 255, 255)");
     await page.getByRole("group", { name: "Appearance" }).locator("label", { hasText: "Auto" }).click();
-    expect(await bg()).toBe("rgb(15, 17, 21)");
+    expect(await bg()).toBe("rgb(15, 16, 22)");
     expect(account.id).toBeTruthy();
   });
 
@@ -102,7 +102,7 @@ test.describe("Profile, history and placeholders", () => {
   });
 
   test("F06-P1 gallery auto-log and Progress are clearly marked as coming later", async ({ page, account }) => {
-    await page.goto("/profile/auto-snap");
+    await page.goto("/profile/gallery");
     await expect(page.getByText(/needs the phone app/)).toBeVisible();
     await expectAccessible(page);
     await page.goto("/progress");

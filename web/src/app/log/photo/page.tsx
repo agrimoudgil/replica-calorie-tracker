@@ -10,7 +10,7 @@ import { localHour } from "@/lib/dates";
 import { parseMealType, suggestMealType } from "@/lib/meal-type";
 import { PhotoLogger } from "./photo-logger";
 
-export const metadata = { title: "Snap a meal" };
+export const metadata = { title: "Photo of your meal" };
 
 /** S04: take or pick a photo of the meal. */
 export default async function PhotoPage({ searchParams }: PageProps<"/log/photo">) {
@@ -23,7 +23,7 @@ export default async function PhotoPage({ searchParams }: PageProps<"/log/photo"
     // Switched off (an old link or bookmark): say so, and offer the free way to log.
     return (
       <Screen>
-        <ScreenHeader title="Snap your meal" back="/" />
+        <ScreenHeader title="Photo of your meal" back="/" />
         <EmptyState
           icon={<CameraOff />}
           title="Photo logging is off for now"
@@ -39,7 +39,7 @@ export default async function PhotoPage({ searchParams }: PageProps<"/log/photo"
   }
   return (
     <Screen>
-      <ScreenHeader title="Snap your meal" subtitle="Fit the whole plate in the frame." back="/" />
+      <ScreenHeader title="Photo of your meal" subtitle="Fit the whole plate in the frame." back="/" />
       <PhotoLogger initialMealType={initial} />
     </Screen>
   );

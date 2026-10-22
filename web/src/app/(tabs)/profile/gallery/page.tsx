@@ -1,6 +1,6 @@
 import { ComingSoon } from "@/components/screen";
 
-export default function AutoSnapPage() {
+export default function GalleryLogPage() {
   return (
     <ComingSoon
       screen="S14"
