@@ -25,6 +25,9 @@ async function screens(userId: string) {
   ];
 }
 
+// 17 screens in one test: against the live site this takes about a minute, so allow more.
+test.describe.configure({ timeout: 150_000 });
+
 for (const scheme of ["light", "dark"] as const) {
   test(`AX-1 every screen passes axe (WCAG 2.1 AA) in ${scheme} mode`, async ({ page, account }) => {
     await page.emulateMedia({ colorScheme: scheme });
