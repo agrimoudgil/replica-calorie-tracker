@@ -5,7 +5,8 @@ import { Screen, ScreenHeader } from "@/components/screen";
 import { CalorieRing, MacroBar, NutrientBar } from "@/components/ui/progress";
 import { PHOTO_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
-import { requireUserId } from "@/lib/data/session";
+import { currentUserId } from "@/lib/data/session";
+import { supabaseEnabled } from "@/lib/supabase/config";
 import { isIsoDate, localDate, localHour } from "@/lib/dates";
 import { dailyNutrientRows, lastNDates, type NutrientRow } from "@/lib/insights/reference";
 import { MEAL_LABEL, mealBudgets, suggestMealType } from "@/lib/meal-type";
@@ -18,7 +19,9 @@ const fmt = new Intl.NumberFormat("en-IN");
 
 /** S02 Today, and any past day via ?date=YYYY-MM-DD: calories, the day's meals as a food diary, macros and nutrients. */
 export default async function DayPage({ searchParams }: PageProps<"/">) {
-  const userId = await requireUserId();
+  // The main address: visitors who aren't signed in see what Oswald is first.
+  const userId = await currentUserId();
+  if (!userId) redirect(supabaseEnabled ? "/welcome" : "/onboarding");
   const profile = await db.getProfile(userId);
   if (!profile) redirect("/onboarding");
 

@@ -83,7 +83,7 @@ test.describe("Profile, history and placeholders", () => {
     await sheet.getByRole("button", { name: "Delete everything" }).click();
     await expect(page).not.toHaveURL(/\/profile/);
     await page.goto("/");
-    await expect(page).toHaveURL(/\/sign-in/);
+    await expect(page).toHaveURL(/\/welcome/); // signed out: the landing page
     const { data } = await admin.auth.admin.getUserById(account.id);
     expect(data.user).toBeNull();
     const { count } = await admin.from("meals").select("id", { count: "exact", head: true }).eq("user_id", account.id);

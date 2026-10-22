@@ -7,14 +7,14 @@ import { SignInForm } from "./sign-in-form";
 
 export const metadata = { title: "Sign in" };
 
-/** Email link or Google. No passwords to remember or leak. */
+/** Start with just an email (or an email link, or Google). No passwords to remember or leak. */
 export default async function SignInPage({ searchParams }: PageProps<"/sign-in">) {
   if (!supabaseEnabled) redirect("/onboarding");
   if (await currentUserId()) redirect("/");
   const { error, reason } = await searchParams;
   return (
     <Screen className="justify-center">
-      <ScreenHeader title="Track meals in seconds" subtitle="Type or search what you ate, see calories and macros. Free, no paywall." />
+      <ScreenHeader title="Start using Oswald" subtitle="Type or search what you ate, see calories and macros. Free, no paywall." back="/welcome" />
       <SignInForm
         failure={error === "link" ? (typeof reason === "string" && reason ? reason : "link") : null}
         googleEnabled={process.env.NEXT_PUBLIC_GOOGLE_SIGN_IN === "on"}

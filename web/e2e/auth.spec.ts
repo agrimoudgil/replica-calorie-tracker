@@ -128,13 +128,17 @@ test.describe("AUTH sign-in and sign-out", () => {
     await context.clearCookies();
     await context.addCookies(cookies.map((c) => (c.name.startsWith("sb-") ? { ...c, value: "garbage" } : c)));
     await page.goto("/");
+    await expect(page).toHaveURL(/\/welcome/);
+    await page.goto("/profile");
     await expect(page).toHaveURL(/\/sign-in/);
     expect(account.id).toBeTruthy();
   });
 
   test("AUTH-N1 signed out: pages go to sign-in and APIs answer 401", async ({ page }) => {
     const someId = crypto.randomUUID();
-    for (const path of ["/", "/log/photo", "/log/search", "/insights", "/profile", "/profile/foods", `/meals/${someId}`, `/log/review/${someId}`, "/recipes/new"]) {
+    await page.goto("/");
+    await expect(page).toHaveURL(/\/welcome/); // the main address shows the landing page
+    for (const path of ["/log/photo", "/log/search", "/insights", "/profile", "/profile/foods", `/meals/${someId}`, `/log/review/${someId}`, "/recipes/new"]) {
       await page.goto(path);
       await expect(page, path).toHaveURL(/\/sign-in/);
     }
@@ -184,7 +188,7 @@ test.describe("AUTH sign-in and sign-out", () => {
     await page.getByRole("button", { name: "Sign out", exact: true }).click();
     await expect(page).toHaveURL(/\/sign-in/);
     await page.goto("/");
-    await expect(page).toHaveURL(/\/sign-in/);
+    await expect(page).toHaveURL(/\/welcome/);
     expect(account.id).toBeTruthy();
   });
 });
