@@ -6,11 +6,14 @@ test.describe("AUTH start with just an email", () => {
     test.skip(!(await guestStartsEnabled()), "anonymous sign-ins are off in Supabase");
   });
 
-  test("AUTH-H3 type an email, Start, set up, and use the app; the email is kept unverified", async ({ page }) => {
+  test("AUTH-H3 landing page, Try, type an email, Start, set up, and use the app; the email is kept unverified", async ({ page }) => {
     const signupEmail = `rct-e2e-authh3-${crypto.randomUUID()}@example.com`;
     let userId: string | undefined;
     try {
-      await page.goto("/sign-in");
+      await page.goto("/"); // a visitor's way in: the main address shows the landing page
+      await expect(page).toHaveURL(/\/welcome$/);
+      await page.getByRole("link", { name: "Try Oswald free" }).first().click();
+      await expect(page).toHaveURL(/\/sign-in$/);
       await page.getByLabel("Your email").fill(signupEmail.toUpperCase());
       await page.getByRole("button", { name: "Start using Oswald" }).click();
       await expect(page).toHaveURL(/\/onboarding/);
