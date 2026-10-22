@@ -21,10 +21,15 @@ export default async function SignInPage({ searchParams }: PageProps<"/sign-in">
       />
       <p className="text-xs text-muted">
         By continuing you agree that your meals are stored to give you estimates. Estimates are for general wellness, not
-        medical advice. For people aged 18 and over.{" "}
+        medical advice. For people aged 18 and over. You agree to the{" "}
+        <Link href="/terms" className="font-semibold text-fg underline underline-offset-2">
+          Terms of use
+        </Link>{" "}
+        and the{" "}
         <Link href="/privacy" className="font-semibold text-fg underline underline-offset-2">
           Privacy policy
         </Link>
+        .
       </p>
     </Screen>
   );

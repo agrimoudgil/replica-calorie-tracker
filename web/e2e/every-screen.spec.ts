@@ -22,6 +22,7 @@ async function screens(userId: string) {
     "/progress",
     "/profile/goals",
     "/privacy",
+    "/terms",
   ];
 }
 

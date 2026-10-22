@@ -39,6 +39,7 @@ export default async function ProfilePage() {
           // A photo feature: listed only while photo logging is on.
           ...(PHOTO_LOGGING ? [{ href: "/profile/gallery", label: "Auto-log from gallery" }] : []),
           { href: "/privacy", label: "Privacy policy" },
+          { href: "/terms", label: "Terms of use" },
         ].map((l) => (
           <li key={l.href} className="border-b border-border last:border-b-0">
             <Link href={l.href} className="flex min-h-14 items-center justify-between px-4 text-base hover:bg-surface">

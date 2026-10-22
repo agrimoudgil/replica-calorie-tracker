@@ -25,6 +25,7 @@ export const metadata: Metadata = {
     images: [SITE.shareImage],
   },
   twitter: { card: "summary_large_image", images: [SITE.shareImage] },
+  alternates: { canonical: "/welcome" },
 };
 
 const cta = "inline-flex h-12 items-center justify-center rounded-pill bg-accent px-6 text-base font-semibold text-on-accent hover:brightness-110";
@@ -273,9 +274,14 @@ export default async function WelcomePage() {
           <span>
             {SITE.name} is run by {SITE.operator}.
           </span>
-          <Link href="/privacy" className="font-semibold text-fg underline underline-offset-2">
-            Privacy policy
-          </Link>
+          <span className="flex gap-4">
+            <Link href="/privacy" className="font-semibold text-fg underline underline-offset-2">
+              Privacy policy
+            </Link>
+            <Link href="/terms" className="font-semibold text-fg underline underline-offset-2">
+              Terms of use
+            </Link>
+          </span>
         </div>
       </footer>
     </div>

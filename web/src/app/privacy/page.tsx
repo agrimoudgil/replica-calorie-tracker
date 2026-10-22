@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { SITE } from "@/lib/site";
 
-export const metadata = { title: "Privacy policy" };
+export const metadata = { title: "Privacy policy", alternates: { canonical: "/privacy" } };
 
 const mail = <a href={`mailto:${SITE.contactEmail}`} className="font-semibold text-accent underline underline-offset-2">{SITE.contactEmail}</a>;
 
@@ -129,7 +129,11 @@ export default function PrivacyPage() {
       </Section>
 
       <p className="text-sm text-muted">
-        {SITE.name} is run by {SITE.operator}. Contact: {mail}.
+        {SITE.name} is run by {SITE.operator}. Contact: {mail}. See also the{" "}
+        <Link href="/terms" className="font-semibold text-accent underline underline-offset-2">
+          terms of use
+        </Link>
+        .
       </p>
       <Link href="/" className="inline-flex h-11 items-center justify-center rounded-md border border-border text-sm font-semibold hover:bg-surface">
         Back to {SITE.name}
