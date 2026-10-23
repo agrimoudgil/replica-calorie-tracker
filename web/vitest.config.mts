@@ -6,7 +6,13 @@ import { defineConfig } from "vitest/config";
 const live = process.env.SUPABASE_LIVE_TESTS === "1";
 
 export default defineConfig({
-  resolve: { alias: { "@": path.resolve(import.meta.dirname, "src") } },
+  resolve: {
+    alias: {
+      "@": path.resolve(import.meta.dirname, "src"),
+      // Server-only modules are plain functions under test.
+      "server-only": path.resolve(import.meta.dirname, "node_modules/server-only/empty.js"),
+    },
+  },
   test: {
     environment: "node",
     include: live ? ["src/**/*.int.test.ts"] : ["src/**/*.test.ts"],

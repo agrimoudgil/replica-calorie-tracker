@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { expect, expectAccessible, istDate, savedMeals, test } from "./support";
+import { admin, expect, expectAccessible, istDate, savedMeals, test } from "./support";
 
 const typeBox = (page: Page) => page.getByLabel("Type what you ate");
 const search = (page: Page) => page.getByRole("combobox", { name: "Or search the food list" });
@@ -139,5 +139,80 @@ test.describe("F03 log by typing or search", () => {
     await page.getByRole("button", { name: "Save meal" }).click();
     await expect(page).toHaveURL(new RegExp(`date=${yesterday}.*saved=`));
     expect((await savedMeals(account.id))[0].local_date).toBe(yesterday);
+  });
+
+  test("F03-H3 world foods: Indian foods come first, then USDA; a Big Mac logs by the piece", async ({ page, account }) => {
+    await page.goto("/log/search?mode=search");
+    await search(page).fill("rice");
+    const options = page.getByRole("option");
+    await expect(options.filter({ hasText: "USDA" }).first()).toBeVisible();
+    await expect(options.first()).not.toContainText("USDA");
+
+    await addBySearch(page, "big mac", /^McDONALD'S, BIG MAC \d.*USDA/);
+    await expect(page.getByText("McDONALD'S, BIG MAC", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Save meal" }).click();
+    await expect(page).toHaveURL(/\?saved=/);
+    const [item] = (await savedMeals(account.id))[0].meal_items;
+    expect([item.food_id, item.name, Number(item.quantity), item.unit, Number(item.grams)]).toEqual(["usda-170720", "McDONALD'S, BIG MAC", 1, "piece", 219]);
+    expect(Number(item.kcal)).toBeCloseTo(562.8, 0); // 257 kcal per 100 g
+  });
+
+  test("F03-H4 a barcode lookup fills in a food to check, save as your own, and log", async ({ page, account }) => {
+    // Stubbed, so the test doesn't depend on Open Food Facts being up.
+    await page.route("**/api/foods/barcode?code=3017620422003", (route) =>
+      route.fulfill({
+        json: {
+          product: {
+            code: "3017620422003",
+            name: "Nutella",
+            brand: "Ferrero",
+            per100g: { kcal: 539, proteinG: 6.3, carbG: 57.5, fatG: 30.9, fiberG: 0, sugarG: 56.3 },
+            servingGrams: 15,
+            url: "https://world.openfoodfacts.org/product/3017620422003",
+          },
+        },
+      }),
+    );
+    await page.goto("/log/search?mode=search");
+    await page.getByRole("button", { name: "Packaged food? Look up its barcode" }).click();
+    const sheet = page.getByRole("dialog", { name: "Look up a barcode" });
+    await sheet.getByLabel("Barcode number").fill("123");
+    await sheet.getByRole("button", { name: "Look it up" }).click();
+    await expect(sheet.getByRole("alert")).toContainText("8 to 14 digits");
+    await sheet.getByLabel("Barcode number").fill("3017620 422003");
+    await sheet.getByRole("button", { name: "Look it up" }).click();
+    await expect(sheet.getByRole("heading", { name: /Nutella/ })).toBeVisible();
+    await expect(sheet.getByRole("link", { name: "Open Food Facts" })).toHaveAttribute("href", "https://world.openfoodfacts.org/product/3017620422003");
+    await expectAccessible(page);
+    await sheet.getByRole("button", { name: "Check and save as my food" }).click();
+
+    const form = page.getByRole("dialog", { name: "Check and save as your food" });
+    await expect(form.getByLabel("Food name")).toHaveValue("Nutella (Ferrero)");
+    await expect(form.getByLabel("One serving is")).toHaveValue("piece");
+    await expect(form.getByLabel("Weighs about")).toHaveValue("15");
+    await form.getByRole("button", { name: "Save food" }).click();
+    await expect(page.getByText("Nutella (Ferrero)", { exact: true })).toBeVisible();
+    await page.getByRole("button", { name: "Save meal" }).click();
+    await expect(page).toHaveURL(/\?saved=/);
+    const [item] = (await savedMeals(account.id))[0].meal_items;
+    // 539 kcal per 100 g x 15 g = 80.85, and calories are whole numbers on the form.
+    expect([item.name, Number(item.quantity), item.unit, Number(item.grams), Number(item.kcal)]).toEqual(["Nutella (Ferrero)", 1, "piece", 15, 81]);
+    const { data: own } = await admin.from("foods").select("owner_id, source").eq("id", item.food_id).single();
+    expect(own).toEqual({ owner_id: account.id, source: "user" }); // private to them, never a shared copy
+  });
+
+  test("F03-E10 barcode lookups are for signed-in people with a real barcode; unknown ones point to creating the food", async ({ page, account, expectedConsole }) => {
+    expectedConsole.push(/404/);
+    expect((await page.request.get("/api/foods/barcode?code=abc")).status()).toBe(400);
+    await page.route("**/api/foods/barcode?code=*", (route) =>
+      route.fulfill({ status: 404, json: { error: "not_found", message: "No food with that barcode in Open Food Facts yet. You can create it as your own food." } }),
+    );
+    await page.goto("/log/search?mode=search");
+    await page.getByRole("button", { name: "Packaged food? Look up its barcode" }).click();
+    const sheet = page.getByRole("dialog", { name: "Look up a barcode" });
+    await sheet.getByLabel("Barcode number").fill("00000000");
+    await sheet.getByRole("button", { name: "Look it up" }).click();
+    await expect(sheet.getByRole("alert")).toContainText("create it as your own food");
+    expect(account.id).toBeTruthy();
   });
 });

@@ -58,7 +58,8 @@ export function FoodSearchField({
       options={results.map((f) => ({
         id: f.id,
         label: f.isRecipe ? `${f.name} (your recipe)` : f.ownerId ? `${f.name} (yours)` : f.name,
-        detail: `${fmt.format(Math.round(nutrientsForGrams(f, gramsFor(f, f.defaultUnit, 1)).kcal))} kcal / ${f.defaultUnit}`,
+        // Per 100 g for foods counted in grams; world foods name their source (USDA).
+        detail: `${fmt.format(Math.round(nutrientsForGrams(f, gramsFor(f, f.defaultUnit, f.defaultUnit === "g" ? 100 : 1)).kcal))} kcal / ${f.defaultUnit === "g" ? "100 g" : f.defaultUnit}${f.source === "usda" ? " · USDA" : ""}`,
       }))}
       onPick={(o) => {
         const food = results.find((f) => f.id === o.id);

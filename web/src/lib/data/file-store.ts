@@ -4,7 +4,8 @@ import { randomUUID } from "node:crypto";
 import { localDate } from "@/lib/dates";
 import { isId } from "@/lib/ids";
 import { SEED_FOODS } from "@/lib/nutrition/foods";
-import { rankFoods } from "./food-rank";
+import { mergeSearch, rankFoods, rankWorldFoods } from "./food-rank";
+import { worldFoods } from "@/lib/nutrition/world";
 import { sumNutrients } from "@/lib/nutrition/portions";
 import { suggestedTargets } from "@/lib/nutrition/targets";
 import type { Food } from "@/lib/nutrition/types";
@@ -63,10 +64,13 @@ export function createFileStore(dir: string): DataLayer {
     return meal && meal.userId === userId ? meal : null;
   };
 
+  /** The catalogue and the person's own foods (like listFoods in the database). */
   const foodsFor = (userId: string): Food[] => [
     ...SEED_FOODS,
     ...load().customFoods.filter((f) => f.ownerId === userId),
   ];
+  /** Everything the person can look up by id, world foods included. */
+  const knownFoods = (userId: string): Food[] => [...foodsFor(userId), ...worldFoods()];
 
   const photoPath = (userId: string, mealId: string) => {
     requireId(userId, "user");
@@ -121,8 +125,13 @@ export function createFileStore(dir: string): DataLayer {
       return foodsFor(userId);
     },
 
+    async getFoods(userId, ids) {
+      const wanted = new Set(ids);
+      return knownFoods(userId).filter((f) => wanted.has(f.id));
+    },
+
     async searchFoods(userId, query, limit = 20) {
-      return rankFoods(foodsFor(userId), query, limit);
+      return mergeSearch(rankFoods(foodsFor(userId), query, limit), rankWorldFoods(worldFoods(), query, limit), limit);
     },
 
     async listCustomFoods(userId) {
@@ -156,28 +165,28 @@ export function createFileStore(dir: string): DataLayer {
     async getRecipe(userId, recipeId) {
       const food = load().customFoods.find((f) => f.id === recipeId && f.ownerId === userId && f.isRecipe);
       const stored = food && load().recipes[food.id];
-      return food && stored ? assembleRecipe(food, stored, stored.ingredients, foodsFor(userId)) : null;
+      return food && stored ? assembleRecipe(food, stored, stored.ingredients, knownFoods(userId)) : null;
     },
 
     async createRecipe(userId, input) {
       requireId(userId, "user");
-      const built = buildRecipe(userId, randomUUID(), input, foodsFor(userId));
+      const built = buildRecipe(userId, randomUUID(), input, knownFoods(userId));
       const s = load();
       s.customFoods.push(built.food);
       s.recipes[built.food.id] = { ...recipeMeta(input), ingredients: built.ingredients };
       persist();
-      return assembleRecipe(built.food, s.recipes[built.food.id], built.ingredients, foodsFor(userId));
+      return assembleRecipe(built.food, s.recipes[built.food.id], built.ingredients, knownFoods(userId));
     },
 
     async updateRecipe(userId, recipeId, input) {
       const s = load();
       const index = s.customFoods.findIndex((f) => f.id === recipeId && f.ownerId === userId && f.isRecipe);
       if (index < 0) throw new DataError("not_found", "That recipe isn't one of yours.");
-      const built = buildRecipe(userId, recipeId, input, foodsFor(userId));
+      const built = buildRecipe(userId, recipeId, input, knownFoods(userId));
       s.customFoods[index] = built.food;
       s.recipes[recipeId] = { ...recipeMeta(input), ingredients: built.ingredients };
       persist();
-      return assembleRecipe(built.food, s.recipes[recipeId], built.ingredients, foodsFor(userId));
+      return assembleRecipe(built.food, s.recipes[recipeId], built.ingredients, knownFoods(userId));
     },
 
     async createDraftMeal(userId, draft) {
@@ -224,7 +233,7 @@ export function createFileStore(dir: string): DataLayer {
       if (input.expectedUpdatedAt && input.expectedUpdatedAt !== meal.updatedAt) {
         throw new DataError("conflict", "This meal changed somewhere else. Reload to see the latest.");
       }
-      const items = applyItemEdits(meal, input.items, foodsFor(userId));
+      const items = applyItemEdits(meal, input.items, knownFoods(userId));
       const now = new Date().toISOString();
       const saved: Meal = {
         ...meal,
@@ -261,7 +270,7 @@ export function createFileStore(dir: string): DataLayer {
 
     async setFavourite(userId, foodId, favourite) {
       requireId(userId, "user");
-      if (!foodsFor(userId).some((f) => f.id === foodId)) throw new DataError("not_found", "That food isn't in your food list.");
+      if (!knownFoods(userId).some((f) => f.id === foodId)) throw new DataError("not_found", "That food isn't in your food list.");
       const s = load();
       const current = new Set(s.favourites[userId] ?? []);
       if (favourite) current.add(foodId);

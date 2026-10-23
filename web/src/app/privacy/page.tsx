@@ -78,6 +78,10 @@ export default function PrivacyPage() {
           <li><strong>Vercel:</strong> hosts the app. Our server runs in Mumbai; like any website, requests pass through Vercel&apos;s network on the way.</li>
           <li><strong>Google:</strong> only if you choose to sign in with Google.</li>
         </ul>
+        <p>
+          When you look up a packaged food&apos;s barcode, our server asks Open Food Facts, a free, open food database, for that one number. It sends only
+          the barcode, nothing about you.
+        </p>
       </Section>
 
       <Section id="keep" title="How long we keep it">

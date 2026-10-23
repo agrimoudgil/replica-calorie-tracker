@@ -17,7 +17,8 @@ export async function POST(req: Request) {
   if (!parsed.success) return invalid(parsed.error);
   const input = parsed.data;
   try {
-    const items = catalogueItems(input.items, await db.listFoods(userId));
+    const foodIds = input.items.flatMap((i) => ("foodId" in i ? [i.foodId] : []));
+    const items = catalogueItems(input.items, await db.getFoods(userId, foodIds));
     const draft = await db.createDraftMeal(userId, {
       id: input.id,
       mealType: input.mealType,

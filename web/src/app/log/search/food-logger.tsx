@@ -3,8 +3,8 @@
 import { useId, useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronRight, Utensils } from "lucide-react";
-import { CustomFoodForm } from "@/components/custom-food-form";
+import { ChevronRight, ScanBarcode, Utensils } from "lucide-react";
+import { CustomFoodForm, type CustomFoodStart } from "@/components/custom-food-form";
 import { FoodSearchField } from "@/components/food-search";
 import { QuickAddForm } from "@/components/macro-inputs";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { healthScore } from "@/lib/nutrition/score";
 import type { Food, MealType, Unit } from "@/lib/nutrition/types";
 import { portionText } from "@/lib/format";
 import type { QuickFood } from "@/lib/recents";
+import { BarcodeLookup } from "./barcode-lookup";
 
 const MEAL_OPTIONS: Array<{ value: MealType; label: string }> = [
   { value: "breakfast", label: "Breakfast" },
@@ -66,6 +67,9 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  /** Starting values for "Create your own food" (from a barcode), if any. */
+  const [start, setStart] = useState<CustomFoodStart | undefined>(undefined);
+  const [scanning, setScanning] = useState(false);
   const mealId = useRef<string | null>(null);
 
   const totals = useMemo(
@@ -214,6 +218,7 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
 
       <div className="flex flex-col gap-3">
         <FoodSearchField label="Or search the food list" autoFocus={focus === "search"} onPick={(f) => add(f)} />
+        <p className="-mt-1 text-xs text-muted">Indian foods first, then foods from around the world (USDA FoodData Central).</p>
         <QuickRow label="Favourites" foods={favourites} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
         <QuickRow label="Your recipes" foods={recipes.filter((r) => !favouriteIds.has(r.food.id))} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
         <QuickRow label="Recent" foods={recents.filter((r) => !favouriteIds.has(r.food.id))} onAdd={(q) => add(q.food, q.quantity, q.unit)} />
@@ -221,7 +226,19 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
           <QuickRow label="Popular" foods={popular.map((food) => ({ food, quantity: 1, unit: food.defaultUnit, count: 0 }))} onAdd={(q) => add(q.food)} plain />
         )}
         <div className="flex flex-wrap gap-2">
-          <Button variant="ghost" size="sm" onClick={() => setCreating(true)}>Can&apos;t find it? Create your own food</Button>
+          <Button variant="ghost" size="sm" icon={<ScanBarcode aria-hidden className="size-4" />} onClick={() => setScanning(true)}>
+            Packaged food? Look up its barcode
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setStart(undefined);
+              setCreating(true);
+            }}
+          >
+            Can&apos;t find it? Create your own food
+          </Button>
           {/* Carries the foods already picked, so they're still here after the recipe is saved. */}
           <Link
             href={`/recipes/new?${new URLSearchParams({
@@ -248,10 +265,24 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
         </div>
       </details>
 
-      <BottomSheet open={creating} onClose={() => setCreating(false)} title="Create your own food" full>
+      <BottomSheet open={scanning} onClose={() => setScanning(false)} title="Look up a barcode" full>
+        {/* Mounted only while open, so the camera is never left running. */}
+        {scanning && (
+          <BarcodeLookup
+            onUse={(s) => {
+              setScanning(false);
+              setStart(s);
+              setCreating(true);
+            }}
+          />
+        )}
+      </BottomSheet>
+
+      <BottomSheet open={creating} onClose={() => setCreating(false)} title={start ? "Check and save as your food" : "Create your own food"} full>
         {/* Mounted only while open, so it starts empty every time. */}
         {creating && (
           <CustomFoodForm
+            start={start}
             onCancel={() => setCreating(false)}
             onCreated={(food) => {
               setCreating(false);

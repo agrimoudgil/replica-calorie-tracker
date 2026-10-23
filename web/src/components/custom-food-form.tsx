@@ -4,6 +4,7 @@ import { useId, useState, type FormEvent } from "react";
 import { MacroInputs, fromDraft, toDraft, type MacroDraft } from "@/components/macro-inputs";
 import { Button } from "@/components/ui/button";
 import { TextField } from "@/components/ui/fields";
+import type { MacroNumbers } from "@/lib/data/types";
 import type { Food, Unit } from "@/lib/nutrition/types";
 
 const SERVINGS: Array<{ value: Unit; label: string; hint: string }> = [
@@ -15,13 +16,26 @@ const SERVINGS: Array<{ value: Unit; label: string; hint: string }> = [
 ];
 const TYPICAL_GRAMS: Record<Unit, string> = { piece: "", katori: "150", glass: "250", tbsp: "15", g: "100" };
 
+/** Starting values, e.g. from a barcode lookup: one serving's unit, weight and numbers. */
+export type CustomFoodStart = { name: string; unit: Unit; gramsPerUnit: number; perServing: Partial<MacroNumbers> };
+
 /** Create your own food from one serving's nutrition (e.g. from a pack label or a home recipe). */
-export function CustomFoodForm({ initialName = "", onCreated, onCancel }: { initialName?: string; onCreated: (food: Food) => void; onCancel?: () => void }) {
+export function CustomFoodForm({
+  initialName = "",
+  start,
+  onCreated,
+  onCancel,
+}: {
+  initialName?: string;
+  start?: CustomFoodStart;
+  onCreated: (food: Food) => void;
+  onCancel?: () => void;
+}) {
   const unitId = useId();
-  const [name, setName] = useState(initialName);
-  const [unit, setUnit] = useState<Unit>("piece");
-  const [grams, setGrams] = useState("");
-  const [numbers, setNumbers] = useState<MacroDraft>(toDraft({}));
+  const [name, setName] = useState(start?.name ?? initialName);
+  const [unit, setUnit] = useState<Unit>(start?.unit ?? "piece");
+  const [grams, setGrams] = useState(start && start.unit !== "g" ? String(start.gramsPerUnit) : "");
+  const [numbers, setNumbers] = useState<MacroDraft>(toDraft(start?.perServing ?? {}));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
 

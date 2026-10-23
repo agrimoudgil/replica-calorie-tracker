@@ -17,8 +17,8 @@ export default async function ReviewPage({ params }: PageProps<"/log/review/[id]
   // After saving or deleting, go back to the day this meal belongs to.
   const dayPath = meal.localDate === localDate(new Date(), profile?.timezone) ? "/" : `/?date=${meal.localDate}`;
 
-  // Unit weights of the catalogue foods in this meal, for live portion changes.
-  const foods = await db.listFoods(userId);
+  // Unit weights of the foods in this meal (world foods included), for live portion changes.
+  const foods = await db.getFoods(userId, meal.items.flatMap((i) => (i.foodId ? [i.foodId] : [])));
   const unitGrams: Record<string, Partial<Record<Unit, number>>> = {};
   for (const item of meal.items) {
     const food = item.foodId ? foods.find((f) => f.id === item.foodId) : undefined;

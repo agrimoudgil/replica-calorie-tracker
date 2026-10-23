@@ -26,11 +26,18 @@ export default async function AddFoodPage({ searchParams }: PageProps<"/log/sear
   const { meal, mode, items, date } = await searchParams;
   const pastDate = typeof date === "string" && isIsoDate(date) && date < today ? date : null;
 
-  const [foods, recentMeals, favouriteIds] = await Promise.all([
+  const [catalogue, recentMeals, favouriteIds] = await Promise.all([
     db.listFoods(userId),
     db.getMealsBetween(userId, addDays(today, -30), today),
     db.listFavouriteFoodIds(userId),
   ]);
+  // World foods aren't in the catalogue list: fetch the ones in recent meals, favourites or the link.
+  const known = new Set(catalogue.map((f) => f.id));
+  const linked = typeof items === "string" ? items.split(",").map((part) => part.split(":")[0]) : [];
+  const extraIds = [...new Set([...recentMeals.flatMap((m) => m.items.map((i) => i.foodId)), ...favouriteIds, ...linked])].filter(
+    (id): id is string => Boolean(id) && !known.has(id!),
+  );
+  const foods = extraIds.length ? [...catalogue, ...(await db.getFoods(userId, extraIds.slice(0, 200)))] : catalogue;
   const recents = recentFoods(recentMeals, foods, 12);
   const favourites: QuickFood[] = favouriteIds.flatMap((id) => {
     const usual = recents.find((r) => r.food.id === id);

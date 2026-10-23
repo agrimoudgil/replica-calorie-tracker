@@ -6,7 +6,7 @@ import { suggestedTargets, type Targets } from "@/lib/nutrition/targets";
 import type { Food, Nutrients } from "@/lib/nutrition/types";
 import { PHOTO_BUCKET } from "@/lib/supabase/config";
 import { buildCustomFood } from "./custom-food";
-import { rankFoods } from "./food-rank";
+import { mergeSearch, rankFoods, rankWorldFoods, searchWords } from "./food-rank";
 import { applyItemEdits, mealScore } from "./meal-math";
 import { assembleRecipe, buildRecipe, recipeMeta, usedInRecipe, type RecipeMeta } from "./recipe";
 import { DataError, type DataLayer, type Meal, type MealItem, type Profile } from "./types";
@@ -287,20 +287,31 @@ export function createSupabaseStore(clients: Clients): DataLayer {
     },
 
     async listFoods() {
+      // Never the 7,700 world foods: a page holds at most 1,000 rows, and they'd push the catalogue out.
       const db = await clients.user();
-      const { data, error } = await db.from("foods").select("*").order("name");
+      const { data, error } = await db.from("foods").select("*").neq("source", "usda").order("name");
       if (error) throw toDataError(error);
       return data.map(foodFromRow);
+    },
+
+    async getFoods(_userId, ids) {
+      return visibleFoods(await clients.user(), [...ids]);
     },
 
     async searchFoods(_userId, query, limit = 20) {
       const q = query.trim().toLowerCase();
       if (!q) return [];
-      const escaped = q.replace(/[\\%_]/g, (m) => `\\${m}`);
+      const like = (s: string) => `%${s.replace(/[\\%_]/g, (m) => `\\${m}`)}%`;
       const db = await clients.user();
-      const { data, error } = await db.from("foods").select("*").ilike("search_text", `%${escaped}%`).limit(50);
-      if (error) throw toDataError(error);
-      return rankFoods(data.map(foodFromRow), query, limit);
+      // Oswald's foods and the person's own: the phrase anywhere in a name, Hindi name or alias.
+      const own = db.from("foods").select("*").neq("source", "usda").ilike("search_text", like(q)).limit(50);
+      // World foods: every word, in any order ("white rice" finds "Rice, white, …").
+      let world = db.from("foods").select("*").eq("source", "usda");
+      for (const word of searchWords(q).slice(0, 5)) world = world.ilike("search_text", like(word));
+      const [mine, others] = await Promise.all([own, world.limit(100)]);
+      if (mine.error) throw toDataError(mine.error);
+      if (others.error) throw toDataError(others.error);
+      return mergeSearch(rankFoods(mine.data.map(foodFromRow), query, limit), rankWorldFoods(others.data.map(foodFromRow), query, limit), limit);
     },
 
     async listCustomFoods(userId) {

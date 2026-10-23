@@ -175,7 +175,11 @@ export interface DataLayer {
   /** The person's own targets, or null to go back to the ones worked out from body details. */
   setTargets(userId: string, targets: Targets | null): Promise<Profile>;
 
+  /** The catalogue and the person's own foods: what typing a meal and meal ideas use. Not the world foods. */
   listFoods(userId: string): Promise<Food[]>;
+  /** Any foods by id the person can see, world foods included (for saving, review and recents). */
+  getFoods(userId: string, ids: readonly string[]): Promise<Food[]>;
+  /** Oswald's foods and the person's own first, then world foods. */
   searchFoods(userId: string, query: string, limit?: number): Promise<Food[]>;
   /** The person's own foods and recipes only (not the shared catalogue). */
   listCustomFoods(userId: string): Promise<Food[]>;

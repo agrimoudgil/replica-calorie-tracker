@@ -1,6 +1,6 @@
 /*
  * Seeds the Supabase database.
- *   npm run db:seed          → the shared food catalogue (safe to run again; it upserts)
+ *   npm run db:seed          → the shared food catalogue and the world foods (safe to run again; it upserts)
  *   npm run db:seed -- --demo → also a fake demo user with a week of meals
  * Needs NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY in web/.env.local.
  * The demo user uses an example.com address: no real person.
@@ -9,6 +9,7 @@ import { createClient } from "@supabase/supabase-js";
 import { foodToRow } from "@/lib/data/supabase-store";
 import { mealScore } from "@/lib/data/meal-math";
 import { SEED_FOODS } from "@/lib/nutrition/foods";
+import { WORLD_SOURCE, worldFoods } from "@/lib/nutrition/world";
 import { gramsFor, nutrientsForGrams } from "@/lib/nutrition/portions";
 import { computeTargets } from "@/lib/nutrition/targets";
 import type { MealType, Unit } from "@/lib/nutrition/types";
@@ -26,6 +27,16 @@ async function seedFoods() {
   const { error } = await admin.from("foods").upsert(SEED_FOODS.map(foodToRow), { onConflict: "id" });
   if (error) throw new Error(`foods: ${error.message}`);
   console.log(`Catalogue: ${SEED_FOODS.length} foods upserted.`);
+}
+
+/** World foods from USDA FoodData Central, in batches (a request carries a few hundred rows comfortably). */
+async function seedWorldFoods() {
+  const foods = worldFoods();
+  for (let i = 0; i < foods.length; i += 500) {
+    const { error } = await admin.from("foods").upsert(foods.slice(i, i + 500).map(foodToRow), { onConflict: "id" });
+    if (error) throw new Error(`world foods (from ${i}): ${error.message}`);
+  }
+  console.log(`World foods: ${foods.length} upserted (${WORLD_SOURCE}).`);
 }
 
 const DEMO_EMAIL = "demo.user@example.com";
@@ -94,6 +105,7 @@ async function seedDemo() {
 
 async function main() {
   await seedFoods();
+  await seedWorldFoods();
   if (process.argv.includes("--demo")) await seedDemo();
 }
 
