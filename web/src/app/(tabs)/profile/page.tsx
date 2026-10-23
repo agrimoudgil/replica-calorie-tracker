@@ -59,6 +59,7 @@ export default async function ProfilePage() {
           {[
             { file: "meals", label: "Every food you logged", detail: "One row per food, with all its nutrients" },
             { file: "days", label: "Daily totals", detail: "One row per day. A mineral is blank on days when a food had no value for it." },
+            { file: "checkins", label: "Recovery check-ins", detail: "One row per day: sleep, energy and soreness" },
           ].map((d) => (
             <li key={d.file} className="border-b border-border last:border-b-0">
               {/* A plain link: the route sends the file as a download. */}

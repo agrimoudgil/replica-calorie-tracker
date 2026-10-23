@@ -53,6 +53,9 @@ export default function PrivacyPage() {
             recipes you create; and your favourites.
           </li>
           <li>
+            <strong>Recovery check-ins, if you make them:</strong> the hours you slept, and how your energy and muscle soreness feel that day.
+          </li>
+          <li>
             <strong>Photos:</strong> photo logging is switched off, so we don&apos;t collect meal photos. If we switch it on, we&apos;ll update this page first.
           </li>
         </ul>
@@ -62,11 +65,12 @@ export default function PrivacyPage() {
       <Section id="why" title="Why we use it">
         <ul className={list}>
           <li>To work out your daily targets, add up your meals, and show your insights and meal ideas.</li>
+          <li>To show your check-ins next to what you ate, and the patterns between them.</li>
           <li>To keep your account secure and your data separate from everyone else&apos;s.</li>
           <li>To count how many people try {SITE.name}, from the emails people start with.</li>
         </ul>
         <p>
-          Your body details and what you eat can say things about your health. We use them only for the above, with your consent, which you give when you set
+          Your body details, what you eat, and how you sleep and feel can say things about your health. We use them only for the above, with your consent, which you give when you set
           up your profile. {SITE.name}&apos;s numbers are estimates for general wellness, not medical advice.
         </p>
       </Section>
@@ -86,7 +90,7 @@ export default function PrivacyPage() {
 
       <Section id="keep" title="How long we keep it">
         <p>
-          Until you delete your account. Deleting it removes your profile, meals, foods, recipes, the email you started with and your sign-in from our
+          Until you delete your account. Deleting it removes your profile, meals, foods, recipes, check-ins, the email you started with and your sign-in from our
           database straight away. Our providers may keep security logs for a short time after that. If you started with just your email, delete your
           account before signing out: without a password, you can&apos;t sign back in to delete it later.
         </p>

@@ -292,6 +292,36 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     await a.store.upsertProfile(a.id, profile);
   });
 
+  it("keeps recovery check-ins private, in range and gone with the account (needs migration 5)", async (ctx) => {
+    const { error: probe } = await admin().from("checkins").select("user_id").limit(1);
+    if (probe) ctx.skip(); // table not there yet: run migration 5
+    await a.store.saveCheckIn(a.id, "2026-10-20", { sleepHours: 6, energy: 2, soreness: 3 });
+    const saved = await a.store.saveCheckIn(a.id, "2026-10-20", { sleepHours: 7.5, energy: 4, soreness: 2 });
+    expect(saved).toMatchObject({ date: "2026-10-20", sleepHours: 7.5, energy: 4, soreness: 2 });
+    await a.store.saveCheckIn(a.id, "2026-10-22", { sleepHours: 8, energy: 5, soreness: 1 });
+    expect((await a.store.getCheckInsBetween(a.id, "2026-10-19", "2026-10-21")).map((c) => c.date)).toEqual(["2026-10-20"]);
+    // B sees nothing of A's, even naming A's id, and can't write or change A's rows.
+    expect(await b.store.getCheckIn(a.id, "2026-10-20")).toBeNull();
+    expect((await b.client.from("checkins").select("*")).data).toEqual([]);
+    expect((await b.client.from("checkins").insert({ user_id: a.id, local_date: "2026-10-21", sleep_hours: 1, energy: 1, soreness: 5 })).error).not.toBeNull();
+    await b.client.from("checkins").update({ energy: 1 }).eq("user_id", a.id);
+    await b.client.from("checkins").delete().eq("user_id", a.id);
+    expect((await a.store.getCheckIn(a.id, "2026-10-20"))?.energy).toBe(4);
+    const anon = createClient(url, publishable, { auth: { persistSession: false } });
+    expect((await anon.from("checkins").select("*")).data ?? []).toEqual([]);
+    // The database's own limits.
+    await expect(a.store.saveCheckIn(a.id, "2026-10-21", { sleepHours: 20, energy: 3, soreness: 3 })).rejects.toThrow("out of range");
+    await expect(a.store.saveCheckIn(a.id, "2026-10-21", { sleepHours: 7, energy: 6 as 5, soreness: 3 })).rejects.toThrow("out of range");
+    await a.store.deleteCheckIn(a.id, "2026-10-20");
+    expect(await a.store.getCheckIn(a.id, "2026-10-20")).toBeNull();
+    // Deleting an account takes its check-ins with it.
+    const c = await makeUser();
+    await c.store.upsertProfile(c.id, profile);
+    await c.store.saveCheckIn(c.id, "2026-10-20", { sleepHours: 7, energy: 3, soreness: 3 });
+    await c.store.deleteAccount(c.id);
+    expect((await admin().from("checkins").select("user_id").eq("user_id", c.id)).data).toEqual([]);
+  }, 60_000);
+
   it("counts AI usage per user", async () => {
     await a.store.recordAiUsage({ userId: a.id, kind: "photo", model: "test", inputTokens: 1, outputTokens: 1, createdAt: new Date().toISOString() });
     const since = new Date(Date.now() - 60_000);

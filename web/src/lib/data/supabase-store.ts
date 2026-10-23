@@ -9,7 +9,7 @@ import { buildCustomFood } from "./custom-food";
 import { mergeSearch, rankFoods, rankWorldFoods, searchWords } from "./food-rank";
 import { applyItemEdits, mealScore } from "./meal-math";
 import { assembleRecipe, buildRecipe, recipeMeta, usedInRecipe, type RecipeMeta } from "./recipe";
-import { DataError, type DataLayer, type Meal, type MealItem, type Profile } from "./types";
+import { DataError, type CheckIn, type DataLayer, type Meal, type MealItem, type Profile, type Rating } from "./types";
 
 /*
  * DataLayer on Supabase. `user()` must return a client acting as the signed-in user,
@@ -176,6 +176,16 @@ function mealFromRow(r: Row): Meal {
     items,
     savedAt: (r.saved_at as string | null) ?? null,
     createdAt: String(r.created_at),
+    updatedAt: String(r.updated_at),
+  };
+}
+
+function checkInFromRow(r: Row): CheckIn {
+  return {
+    date: String(r.local_date),
+    sleepHours: Number(r.sleep_hours),
+    energy: Number(r.energy) as Rating,
+    soreness: Number(r.soreness) as Rating,
     updatedAt: String(r.updated_at),
   };
 }
@@ -476,6 +486,52 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       if (error) throw toDataError(error);
       const meals = data.map(mealFromRow);
       return { date, meals, totals: sumNutrients(meals.flatMap((m) => m.items.map((i) => i.nutrients))) };
+    },
+
+    async getCheckIn(userId, date) {
+      const db = await clients.user();
+      const { data, error } = await db.from("checkins").select("*").eq("user_id", userId).eq("local_date", date).maybeSingle();
+      if (error) throw toDataError(error);
+      return data ? checkInFromRow(data) : null;
+    },
+
+    async getCheckInsBetween(userId, from, to) {
+      const db = await clients.user();
+      // One row a day, but an all-time export can still pass the 1,000-row cap: page through.
+      const rows: CheckIn[] = [];
+      for (let start = 0; ; start += MEAL_PAGE) {
+        const { data, error } = await db
+          .from("checkins")
+          .select("*")
+          .eq("user_id", userId)
+          .gte("local_date", from)
+          .lte("local_date", to)
+          .order("local_date")
+          .range(start, start + MEAL_PAGE - 1);
+        if (error) throw toDataError(error);
+        rows.push(...data.map(checkInFromRow));
+        if (data.length < MEAL_PAGE) return rows;
+      }
+    },
+
+    async saveCheckIn(userId, date, input) {
+      const db = await clients.user();
+      const { data, error } = await db
+        .from("checkins")
+        .upsert(
+          { user_id: userId, local_date: date, sleep_hours: input.sleepHours, energy: input.energy, soreness: input.soreness },
+          { onConflict: "user_id,local_date" },
+        )
+        .select("*")
+        .single();
+      if (error) throw toDataError(error);
+      return checkInFromRow(data);
+    },
+
+    async deleteCheckIn(userId, date) {
+      const db = await clients.user();
+      const { error } = await db.from("checkins").delete().eq("user_id", userId).eq("local_date", date);
+      if (error) throw toDataError(error);
     },
 
     async listFavouriteFoodIds(userId) {

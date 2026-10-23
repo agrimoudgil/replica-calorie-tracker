@@ -161,7 +161,8 @@ export function SearchField({
 type SegmentedProps<T extends string> = {
   legend: string;
   options: Array<{ value: T; label: string }>;
-  value: T;
+  /** null: nothing chosen yet. */
+  value: T | null;
   onChange: (value: T) => void;
 };
 

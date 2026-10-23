@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MAX_INGREDIENTS, MAX_SERVINGS, SERVING_UNITS } from "@/lib/data/recipe";
+import type { Rating } from "@/lib/data/types";
 import { DIET_TYPES, MEAL_TYPES, UNITS } from "@/lib/nutrition/types";
 
 /** Shared by the onboarding form and PUT /api/profile. */
@@ -114,6 +115,25 @@ export const targetsSchema = z.object({
   carbG: z.number({ error: "Enter carbs." }).int("Use a whole number.").min(20, "Carbs: 20 to 800 g.").max(800, "Carbs: 20 to 800 g."),
   fatG: z.number({ error: "Enter fat." }).int("Use a whole number.").min(15, "Fat: 15 to 300 g.").max(300, "Fat: 15 to 300 g."),
   fiberG: z.number({ error: "Enter fibre." }).int("Use a whole number.").min(10, "Fibre: 10 to 100 g.").max(100, "Fibre: 10 to 100 g."),
+});
+
+const rating = (what: string) =>
+  z
+    .number({ error: `Choose your ${what}.` })
+    .int()
+    .min(1, `Choose your ${what}.`)
+    .max(5, `Choose your ${what}.`)
+    .transform((v) => v as Rating);
+
+/** A recovery check-in. Sleep to the nearest tenth of an hour, as the database keeps it. */
+export const checkInSchema = z.object({
+  sleepHours: z
+    .number({ error: "Enter how many hours you slept." })
+    .min(0, "Sleep: 0 to 16 hours.")
+    .max(16, "Sleep: 0 to 16 hours.")
+    .transform((v) => Math.round(v * 10) / 10),
+  energy: rating("energy"),
+  soreness: rating("soreness"),
 });
 
 /** A recipe: ingredients and how many servings the pot makes. Nutrients are computed on the server. */

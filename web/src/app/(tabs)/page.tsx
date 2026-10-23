@@ -7,17 +7,21 @@ import { PHOTO_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
 import { currentUserId } from "@/lib/data/session";
 import { supabaseEnabled } from "@/lib/supabase/config";
-import { isIsoDate, localDate, localHour } from "@/lib/dates";
+import { addDays, isIsoDate, localDate, localHour } from "@/lib/dates";
 import { dailyNutrientRows, lastNDates, type NutrientRow } from "@/lib/insights/reference";
 import { MEAL_LABEL, mealBudgets, suggestMealType } from "@/lib/meal-type";
 import { MEAL_TYPES } from "@/lib/nutrition/types";
+import { CheckInCard } from "./check-in";
 import { DayNav, longDate } from "./day-nav";
 import { MealSection } from "./meal-section";
 import { SavedNotice, TodayAddButton } from "./today-actions";
 
 const fmt = new Intl.NumberFormat("en-IN");
 
-/** S02 Today, and any past day via ?date=YYYY-MM-DD: calories, the day's meals as a food diary, macros and nutrients. */
+/**
+ * S02 Today, and any past day via ?date=YYYY-MM-DD: calories with the day's recovery check-in,
+ * the day's meals as a food diary, macros and nutrients.
+ */
 export default async function DayPage({ searchParams }: PageProps<"/">) {
   // The main address: visitors who aren't signed in see what Oswald is first.
   const userId = await currentUserId();
@@ -35,7 +39,12 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
   const here = isToday ? "/" : `/?date=${selected}`;
 
   const stripDates = lastNDates(today, 7);
-  const [day, stripMeals] = await Promise.all([db.getDay(userId, selected), db.getMealsBetween(userId, stripDates[0], today)]);
+  const [day, stripMeals, checkIn, dayBefore] = await Promise.all([
+    db.getDay(userId, selected),
+    db.getMealsBetween(userId, stripDates[0], today),
+    db.getCheckIn(userId, selected),
+    db.getDay(userId, addDays(selected, -1)),
+  ]);
   const t = profile.targets;
   const savedMeal = typeof saved === "string" ? day.meals.find((m) => m.id === saved) : undefined;
   const time = new Intl.DateTimeFormat("en-IN", { hour: "numeric", minute: "2-digit", timeZone: tz });
@@ -94,6 +103,18 @@ export default async function DayPage({ searchParams }: PageProps<"/">) {
           </Link>
         )}
       </section>
+
+      <CheckInCard
+        key={selected}
+        date={selected}
+        isToday={isToday}
+        checkIn={checkIn}
+        dayBefore={
+          dayBefore.meals.length
+            ? { kcal: dayBefore.totals.kcal, kcalTarget: t.kcal, proteinG: dayBefore.totals.proteinG, proteinTarget: t.proteinG }
+            : null
+        }
+      />
 
       {/* The day as a food diary: each meal with its foods and its share of the budget. */}
       <section aria-labelledby="meals-heading" className="flex flex-col gap-3">

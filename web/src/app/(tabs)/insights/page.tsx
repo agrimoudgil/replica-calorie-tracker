@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CircleAlert, CircleCheck, Info, Lightbulb, Plus } from "lucide-react";
+import { CircleAlert, CircleCheck, Info, Lightbulb, Moon, Plus } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { TrendChart } from "@/components/ui/charts";
 import { EmptyState } from "@/components/ui/feedback";
 import { MacroBar } from "@/components/ui/progress";
 import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
-import { localDate, localHour } from "@/lib/dates";
+import { addDays, localDate, localHour } from "@/lib/dates";
 import { nextMealIdeas, ideaToQuery, type MealIdea } from "@/lib/insights/next-meal";
 import { lastNDates } from "@/lib/insights/reference";
 import { MIN_DAYS, weeklyInsights, type Gap } from "@/lib/insights/weekly";
@@ -15,13 +15,14 @@ import { MEAL_LABEL, suggestMealType } from "@/lib/meal-type";
 import type { Food, MealType } from "@/lib/nutrition/types";
 import { cn } from "@/lib/cn";
 import { portionText } from "@/lib/format";
+import { ENERGY_LABEL, PATTERN_DAYS, SORENESS_LABEL, eatingByDay, recoveryPatterns, sleepText } from "@/lib/recovery";
 
 export const metadata = { title: "Insights" };
 
 const fmt = new Intl.NumberFormat("en-IN");
 const weekday = new Intl.DateTimeFormat("en-IN", { weekday: "short", timeZone: "UTC" });
 
-/** S09: next-meal ideas, the week's trend, gaps and wins. Rules on your logged meals; no AI. */
+/** S09: next-meal ideas, the week's trend, recovery next to eating, gaps and wins. Rules on your logged meals; no AI. */
 export default async function InsightsPage() {
   const userId = await requireUserId();
   const profile = await db.getProfile(userId);
@@ -32,12 +33,19 @@ export default async function InsightsPage() {
   // Weekly numbers use the last 7 completed days; today is still going, so it only
   // appears on the chart (and drives the next-meal ideas).
   const dates = lastNDates(today, 8).slice(0, 7);
-  const [meals, foods] = await Promise.all([db.getMealsBetween(userId, dates[0], today), db.listFoods(userId)]);
-  const todayMeals = meals.filter((m) => m.localDate === today);
+  // Recovery patterns look back 4 weeks, plus the day before the first check-in.
+  const checkInFrom = addDays(today, -(PATTERN_DAYS - 1));
+  const [meals, foods, checkIns] = await Promise.all([
+    db.getMealsBetween(userId, addDays(checkInFrom, -1), today),
+    db.listFoods(userId),
+    db.getCheckInsBetween(userId, checkInFrom, today),
+  ]);
+  const weekMeals = meals.filter((m) => m.localDate >= dates[0]);
+  const todayMeals = weekMeals.filter((m) => m.localDate === today);
 
   const week = weeklyInsights({
     dates,
-    meals: meals.filter((m) => m.localDate !== today),
+    meals: weekMeals.filter((m) => m.localDate !== today),
     targets: profile.targets,
     sex: profile.sex,
     goal: profile.goal,
@@ -52,6 +60,10 @@ export default async function InsightsPage() {
     foods,
   });
   const t = profile.targets;
+  const eating = eatingByDay(meals);
+  const patterns = recoveryPatterns(checkIns, eating, t);
+  const recentDates = lastNDates(today, 7);
+  const recentCheckIns = checkIns.filter((c) => c.date >= recentDates[0]);
   const todayKcal = Math.round(todayMeals.flatMap((m) => m.items).reduce((s, i) => s + i.nutrients.kcal, 0));
 
   return (
@@ -109,6 +121,61 @@ export default async function InsightsPage() {
             title="More insights after 3 days"
             body={`Log meals on ${MIN_DAYS} different days to see your gaps and wins. ${week.loggedDays === 1 ? "1 full day" : `${week.loggedDays} full days`} logged so far this week.`}
           />
+        )}
+      </section>
+
+      <section aria-labelledby="recovery-heading" className="flex flex-col gap-3">
+        <h2 id="recovery-heading" className="text-lg font-semibold">Recovery</h2>
+        {recentCheckIns.length === 0 ? (
+          <EmptyState
+            icon={<Moon />}
+            title="Check in on Today"
+            body="Note your sleep, energy and soreness each day. They show up here next to what you ate."
+          />
+        ) : (
+          <table className="w-full text-sm">
+            <caption className="sr-only">Sleep, energy, soreness and calories eaten, last 7 days</caption>
+            <thead>
+              <tr className="border-b border-border text-left text-xs text-muted">
+                <th scope="col" className="py-2 pr-2 font-medium">Day</th>
+                <th scope="col" className="py-2 pr-2 font-medium">Sleep</th>
+                <th scope="col" className="py-2 pr-2 font-medium">Energy</th>
+                <th scope="col" className="py-2 pr-2 font-medium">Soreness</th>
+                <th scope="col" className="py-2 text-right font-medium">Ate (kcal)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentDates.map((date) => {
+                const c = recentCheckIns.find((x) => x.date === date);
+                const ate = eating.find((e) => e.date === date);
+                return (
+                  <tr key={date} className="border-b border-border last:border-0">
+                    <th scope="row" className="py-2 pr-2 text-left font-medium">{date === today ? "Today" : weekday.format(new Date(`${date}T00:00:00Z`))}</th>
+                    <td className="py-2 pr-2 tabular-nums">{c ? sleepText(c.sleepHours) : "–"}</td>
+                    <td className="py-2 pr-2">{c ? ENERGY_LABEL[c.energy] : "–"}</td>
+                    <td className="py-2 pr-2">{c ? SORENESS_LABEL[c.soreness] : "–"}</td>
+                    <td className="py-2 text-right tabular-nums">{ate ? fmt.format(Math.round(ate.kcal)) : "–"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        {patterns.length > 0 ? (
+          <>
+            <ul className="flex flex-col gap-2">
+              {patterns.map((p) => (
+                <li key={p.id} className="rounded-lg bg-surface p-4 text-sm">{p.text}</li>
+              ))}
+            </ul>
+            <p className="text-xs text-muted">From your last 4 weeks. Few days each, so treat these as patterns to watch, not rules.</p>
+          </>
+        ) : (
+          recentCheckIns.length > 0 && (
+            <p className="text-sm text-muted">
+              Patterns appear with at least 3 days on each side, for example 3 nights of 7 hours or more and 3 shorter ones.
+            </p>
+          )
         )}
       </section>
 

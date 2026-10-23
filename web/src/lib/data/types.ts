@@ -135,6 +135,20 @@ export type DaySummary = {
   meals: Meal[];
 };
 
+/** 1 to 5. Energy: 1 very low ... 5 great. Soreness: 1 none ... 5 very sore. */
+export type Rating = 1 | 2 | 3 | 4 | 5;
+
+/** A recovery check-in: last night's sleep and how the person feels on one local day. */
+export type CheckIn = {
+  date: string;
+  sleepHours: number;
+  energy: Rating;
+  soreness: Rating;
+  updatedAt: string;
+};
+
+export type CheckInInput = Pick<CheckIn, "sleepHours" | "energy" | "soreness">;
+
 export type AiUsage = {
   userId: string;
   kind: "photo" | "text" | "insight" | "next_meal" | "chat";
@@ -203,6 +217,14 @@ export interface DataLayer {
   getDay(userId: string, localDate: string): Promise<DaySummary>;
   /** Saved meals with items whose local day is between `from` and `to` (inclusive, YYYY-MM-DD). */
   getMealsBetween(userId: string, from: string, to: string): Promise<Meal[]>;
+
+  /** The person's check-in for one local day, if they made one. */
+  getCheckIn(userId: string, localDate: string): Promise<CheckIn | null>;
+  /** Check-ins between `from` and `to` (inclusive, YYYY-MM-DD), oldest first. */
+  getCheckInsBetween(userId: string, from: string, to: string): Promise<CheckIn[]>;
+  /** Creates or replaces the day's check-in. */
+  saveCheckIn(userId: string, localDate: string, input: CheckInInput): Promise<CheckIn>;
+  deleteCheckIn(userId: string, localDate: string): Promise<void>;
 
   listFavouriteFoodIds(userId: string): Promise<string[]>;
   /** Stars or un-stars a food the user can see. Idempotent. */

@@ -12,7 +12,7 @@ import type { Food } from "@/lib/nutrition/types";
 import { buildCustomFood } from "./custom-food";
 import { applyItemEdits, mealScore } from "./meal-math";
 import { assembleRecipe, buildRecipe, recipeMeta, usedInRecipe, type IngredientGrams, type RecipeMeta } from "./recipe";
-import { DataError, type AiUsage, type DataLayer, type Meal, type Profile } from "./types";
+import { DataError, type AiUsage, type CheckIn, type DataLayer, type Meal, type Profile } from "./types";
 
 /*
  * Fake data layer for development before Supabase exists (see architecture.md).
@@ -30,6 +30,8 @@ type State = {
   favourites: Record<string, string[]>;
   /** By recipe id: what the database keeps in the recipe columns of foods and in recipe_ingredients. */
   recipes: Record<string, RecipeMeta & { ingredients: IngredientGrams[] }>;
+  /** By user id, then local date. */
+  checkIns: Record<string, Record<string, CheckIn>>;
 };
 
 export function createFileStore(dir: string): DataLayer {
@@ -41,10 +43,11 @@ export function createFileStore(dir: string): DataLayer {
     try {
       state = JSON.parse(fs.readFileSync(file, "utf8")) as State;
     } catch {
-      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [], favourites: {}, recipes: {} };
+      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [], favourites: {}, recipes: {}, checkIns: {} };
     }
     state.favourites ??= {}; // stores written before favourites existed
     state.recipes ??= {}; // ...or before recipes existed
+    state.checkIns ??= {}; // ...or before check-ins existed
     return state;
   };
 
@@ -264,6 +267,33 @@ export function createFileStore(dir: string): DataLayer {
       return { date, meals, totals: sumNutrients(meals.flatMap((m) => m.items.map((i) => i.nutrients))) };
     },
 
+    async getCheckIn(userId, date) {
+      return load().checkIns[userId]?.[date] ?? null;
+    },
+
+    async getCheckInsBetween(userId, from, to) {
+      return Object.values(load().checkIns[userId] ?? {})
+        .filter((c) => c.date >= from && c.date <= to)
+        .sort((a, b) => a.date.localeCompare(b.date));
+    },
+
+    async saveCheckIn(userId, date, input) {
+      requireId(userId, "user");
+      const s = load();
+      const checkIn: CheckIn = { date, ...input, updatedAt: new Date().toISOString() };
+      (s.checkIns[userId] ??= {})[date] = checkIn;
+      persist();
+      return checkIn;
+    },
+
+    async deleteCheckIn(userId, date) {
+      const s = load();
+      if (s.checkIns[userId]?.[date]) {
+        delete s.checkIns[userId][date];
+        persist();
+      }
+    },
+
     async listFavouriteFoodIds(userId) {
       return [...(load().favourites[userId] ?? [])];
     },
@@ -320,6 +350,7 @@ export function createFileStore(dir: string): DataLayer {
       s.customFoods = s.customFoods.filter((f) => f.ownerId !== userId);
       s.aiUsage = s.aiUsage.filter((u) => u.userId !== userId);
       delete s.favourites[userId];
+      delete s.checkIns[userId];
       persist();
       fs.rmSync(path.join(dir, "photos", userId), { recursive: true, force: true });
     },
