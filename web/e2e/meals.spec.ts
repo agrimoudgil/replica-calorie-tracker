@@ -45,14 +45,15 @@ test.describe("Fixing items, recipes and meal detail", () => {
       await page.getByRole("option", { name: option }).click();
     }
     await page.getByLabel("Cooked weight (optional)").fill("900");
-    await expect(page.locator("#serving-heading").locator("..")).toContainText("158 kcal");
+    // 653.8 kcal in 900 g cooked (IFCT 2017 dal and onion) = 72.6 per 100 g; a 225 g serving is 163 kcal, preview and meal alike
+    await expect(page.locator("#serving-heading").locator("..")).toContainText("163 kcal");
     await expectAccessible(page);
     await page.getByRole("button", { name: "Save and add to meal" }).click();
     await expect(page).toHaveURL(/\/log\/search\?.*items=/);
     await page.getByRole("button", { name: "Save meal" }).click();
     await expect(page).toHaveURL(/\?saved=/);
     const [item] = (await savedMeals(account.id))[0].meal_items;
-    expect([item.name, Math.round(Number(item.kcal))]).toEqual(["Test dal", 158]);
+    expect([item.name, Math.round(Number(item.kcal))]).toEqual(["Test dal", 163]);
 
     await page.goto("/log/search?mode=search");
     await page.getByRole("group", { name: "Your recipes" }).getByRole("button", { name: "+ 1 katori Test dal" }).click();

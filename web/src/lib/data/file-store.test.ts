@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { SEED_FOODS } from "@/lib/nutrition/foods";
 import { createFileStore } from "./file-store";
 import type { DataLayer, DraftMealInput, ProfileInput } from "./types";
 
@@ -177,7 +178,8 @@ describe("file store", () => {
     const meal = await db.createDraftMeal(A, draft());
     const saved = await db.saveMeal(A, meal.id, { mealType: "dinner", items: [{ foodId: recipe.food.id, quantity: 1, unit: "katori" }] });
     const kcal = saved.items[0].nutrients.kcal;
-    expect(kcal).toBeCloseTo((343 * 1.3 + 40 * 1.1 + 20) / 4, 0);
+    const kcal100 = (id: string) => SEED_FOODS.find((f) => f.id === `seed-${id}`)!.per100g.kcal;
+    expect(kcal).toBeCloseTo((kcal100("raw-toor-dal") * 1.3 + kcal100("onion") * 1.1 + 20) / 4, 0);
 
     await expect(db.deleteCustomFood(A, masala.id)).rejects.toThrow("your recipe “My dal”");
     const updated = await db.updateRecipe(A, recipe.food.id, { ...input, servings: 2, ingredients: input.ingredients.slice(0, 2) });

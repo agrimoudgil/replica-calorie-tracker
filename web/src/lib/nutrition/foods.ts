@@ -40,9 +40,9 @@ const rows: Row[] = [
   ["coconut-chutney", "Coconut chutney", "नारियल चटनी", ["chutney"], JAIN_VEGAN, { tbsp: 20, katori: 60 }, "tbsp", [230, 3, 9, 21, 5, 3, 17, 250, 15, 1.2]],
   ["moong-chilla", "Moong dal chilla", "मूंग दाल चीला", ["chilla", "cheela", "moong chilla", "dal chilla", "dal cheela"], VEGAN, { piece: 70 }, "piece", [160, 9, 20, 5, 4, 1, 0.7, 320, 35, 2]],
   ["chai", "Masala chai", "चाय", ["tea", "chai", "milk tea", "cutting chai"], JAIN_VEG, { glass: 150 }, "glass", [50, 1.6, 7.5, 1.5, 0, 7, 1, 25, 60, 0.1]],
-  ["banana", "Banana", "केला", ["kela"], VEGAN, { piece: 118 }, "piece", [89, 1.1, 23, 0.3, 2.6, 12, 0.1, 1, 5, 0.3]],
-  ["apple", "Apple", "सेब", ["seb"], JAIN_VEGAN, { piece: 180 }, "piece", [52, 0.3, 14, 0.2, 2.4, 10, 0, 1, 6, 0.1]],
-  ["boiled-egg", "Boiled egg", "उबला अंडा", ["egg", "anda", "anda boiled"], EGG, { piece: 50 }, "piece", [155, 13, 1.1, 11, 0, 1.1, 3.3, 124, 50, 1.2]],
+  ["banana", "Banana", "केला", ["kela"], VEGAN, { piece: 118 }, "piece", [109, 1.2, 25.6, 0.3, 1.9, 13.7, 0.1, 1, 5, 0.3]], // IFCT 2017: E012
+  ["apple", "Apple", "सेब", ["seb"], JAIN_VEGAN, { piece: 180 }, "piece", [68, 0.3, 15.8, 0.6, 2.3, 9.7, 0.1, 1, 10, 0.3]], // IFCT 2017: average of E001, E003
+  ["boiled-egg", "Boiled egg", "उबला अंडा", ["egg", "anda", "anda boiled"], EGG, { piece: 50 }, "piece", [148, 13.4, 0, 10.5, 0, 0, 3.5, 121, 55, 1.9]], // IFCT 2017: M004
   ["chicken-curry", "Chicken curry", "चिकन करी", ["chicken", "chicken masala", "murgh curry"], MEAT, { katori: 150 }, "katori", [150, 14, 4, 9, 1, 1.5, 2.5, 420, 20, 1]],
   ["salad", "Green salad", "सलाद", ["salad", "kachumber", "cucumber salad"], JAIN_VEGAN, { katori: 100 }, "katori", [20, 1, 4, 0.2, 1.8, 2.5, 0, 10, 20, 0.4]],
   ["samosa", "Samosa", "समोसा", ["aloo samosa"], VEGAN, { piece: 80 }, "piece", [300, 5, 32, 17, 3, 2, 3, 420, 20, 1.5]],
@@ -54,20 +54,21 @@ const rows: Row[] = [
 
 /*
  * Raw staples for building recipes ("my dal" = toor dal + onion + tomato + oil).
- * Rough per-100 g values after USDA FoodData Central. They're ingredients, not dishes:
+ * Per-100 g values from IFCT 2017 where a row says so (see ingredients.ts), otherwise
+ * rough values after USDA FoodData Central. They're ingredients, not dishes:
  * insights never suggest them as something to eat. Aliases avoid short words like
  * "aloo" or "dal" so typed meals still match the cooked dishes above.
  */
 const ingredientRows: Row[] = [
-  ["raw-toor-dal", "Toor dal (raw)", "तूर दाल (कच्ची)", ["raw toor dal", "arhar dal raw", "uncooked dal", "pigeon peas"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [343, 21.7, 62.8, 1.5, 15, 2, 0.3, 17, 130, 5.2]],
-  ["raw-rice", "Rice (raw)", "चावल (कच्चे)", ["raw rice", "uncooked rice"], JAIN_VEGAN, { katori: 140, tbsp: 12 }, "katori", [365, 7.1, 80, 0.7, 1.3, 0.1, 0.2, 5, 28, 0.8]],
-  ["atta", "Whole wheat flour (atta)", "आटा", ["atta", "gehun ka atta", "wheat flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "katori", [340, 13.2, 72, 2.5, 10.7, 0.4, 0.4, 2, 34, 3.6]],
-  ["besan", "Besan (gram flour)", "बेसन", ["besan", "gram flour", "chickpea flour"], JAIN_VEGAN, { katori: 90, tbsp: 7 }, "katori", [387, 22.4, 57.8, 6.7, 10.8, 10.9, 0.7, 64, 45, 4.9]],
-  ["onion", "Onion", "प्याज़", ["pyaz", "pyaaz", "raw onion"], VEGAN, { piece: 110 }, "piece", [40, 1.1, 9.3, 0.1, 1.7, 4.2, 0, 4, 23, 0.2]],
+  ["raw-toor-dal", "Toor dal (raw)", "तूर दाल (कच्ची)", ["raw toor dal", "arhar dal raw", "uncooked dal", "pigeon peas"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [349, 21.7, 64.3, 1.6, 9.1, 2.1, 0.3, 18, 72, 3.9]], // IFCT 2017: B021
+  ["raw-rice", "Rice (raw)", "चावल (कच्चे)", ["raw rice", "uncooked rice"], JAIN_VEGAN, { katori: 140, tbsp: 12 }, "katori", [362, 7.9, 81, 0.5, 2.8, 0.7, 0.2, 2, 7, 0.7]], // IFCT 2017: A015
+  ["atta", "Whole wheat flour (atta)", "आटा", ["atta", "gehun ka atta", "wheat flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "katori", [343, 10.6, 75.5, 1.5, 11.4, 1.8, 0.2, 2, 31, 4.1]], // IFCT 2017: A019
+  ["besan", "Besan (gram flour)", "बेसन", ["besan", "gram flour", "chickpea flour"], JAIN_VEGAN, { katori: 90, tbsp: 7 }, "katori", [359, 21.6, 61.9, 5.3, 15.2, 1, 0.5, 21, 46, 6.1]], // IFCT 2017: B001
+  ["onion", "Onion", "प्याज़", ["pyaz", "pyaaz", "raw onion"], VEGAN, { piece: 110 }, "piece", [53, 1.5, 12, 0.2, 2.5, 5.9, 0.1, 6, 21, 0.4]], // IFCT 2017: G017
   ["tomato", "Tomato", "टमाटर", ["tamatar"], JAIN_VEGAN, { piece: 100 }, "piece", [18, 0.9, 3.9, 0.2, 1.2, 2.6, 0, 5, 10, 0.3]],
-  ["raw-potato", "Potato (raw)", "आलू (कच्चा)", ["raw potato", "aloo raw"], VEGAN, { piece: 150 }, "piece", [77, 2, 17.5, 0.1, 2.2, 0.8, 0, 6, 12, 0.8]],
-  ["green-peas", "Green peas", "मटर", ["matar", "peas"], JAIN_VEGAN, { katori: 145 }, "katori", [81, 5.4, 14.5, 0.4, 5.1, 5.7, 0.1, 5, 25, 1.5]],
-  ["raw-spinach", "Spinach (raw)", "पालक (कच्चा)", ["raw spinach", "palak raw"], JAIN_VEGAN, { katori: 30 }, "katori", [23, 2.9, 3.6, 0.4, 2.2, 0.4, 0.1, 79, 99, 2.7]],
+  ["raw-potato", "Potato (raw)", "आलू (कच्चा)", ["raw potato", "aloo raw"], VEGAN, { piece: 150 }, "piece", [69, 1.4, 15.6, 0.2, 1.7, 0.4, 0, 4, 9, 0.6]], // IFCT 2017: average of F006, F007
+  ["green-peas", "Green peas", "मटर", ["matar", "peas"], JAIN_VEGAN, { katori: 145 }, "katori", [94, 7.2, 18.2, 0.1, 6.3, 1, 0, 4, 28, 1.6]], // IFCT 2017: D061
+  ["raw-spinach", "Spinach (raw)", "पालक (कच्चा)", ["raw spinach", "palak raw"], JAIN_VEGAN, { katori: 30 }, "katori", [29, 2.1, 4.4, 0.6, 2.4, 0.2, 0.2, 43, 82, 3]], // IFCT 2017: C033
   ["oil", "Cooking oil", "तेल", ["oil", "tel", "refined oil", "sunflower oil", "mustard oil"], JAIN_VEGAN, { tbsp: 14 }, "tbsp", [884, 0, 0, 100, 0, 0, 11, 0, 0, 0]],
   ["sugar", "Sugar", "चीनी", ["cheeni", "chini", "shakkar"], JAIN_VEGAN, { tbsp: 12.5 }, "tbsp", [387, 0, 100, 0, 0, 100, 0, 1, 1, 0.1]],
 ];

@@ -272,7 +272,7 @@ export default async function WelcomePage() {
       <footer className="border-t border-border">
         <div className="mx-auto flex w-full max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-muted">
           <span>
-            {SITE.name} is run by {SITE.operator}. World foods from{" "}
+            {SITE.name} is run by {SITE.operator}. Indian ingredients checked against IFCT 2017 (ICMR-NIN, Hyderabad). World foods from{" "}
             <a href="https://fdc.nal.usda.gov/" className="underline underline-offset-2">
               USDA FoodData Central
             </a>

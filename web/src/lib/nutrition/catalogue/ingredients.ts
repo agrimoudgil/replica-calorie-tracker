@@ -1,76 +1,80 @@
 import { EGG, JAIN_VEG, JAIN_VEGAN, MEAT, VEG, VEGAN, type Row } from "./rows";
 
 /*
- * Raw ingredients for the dish recipes in dishes.ts. Rough per-100 g values (edible
- * part, raw or as sold) after USDA FoodData Central and IFCT 2017. Ingredients only:
+ * Raw ingredients for the dish recipes in dishes.ts. Per-100 g values (edible part, raw
+ * or as sold). Rows marked "IFCT 2017" use the Indian Food Composition Tables 2017
+ * (National Institute of Nutrition, Hyderabad), checked by hand on 2026-10-24, in
+ * Oswald's convention: carbs include fibre, and calories add 2 kcal per gram of fibre
+ * (IFCT leaves fibre out of both). The rest are rough values after USDA FoodData
+ * Central, kept where IFCT has no match or its sample is a different product. Ingredients only:
  * searchable and loggable, but insights never suggest them as a meal.
  * Jain: no onion, garlic, potato or other roots (ginger counts as a root here).
  */
 export const INGREDIENT_ROWS: Row[] = [
   // Grains and flours
-  ["raw-brown-rice", "Brown rice (raw)", "ब्राउन चावल (कच्चे)", ["raw brown rice"], JAIN_VEGAN, { katori: 140 }, "g", [367, 7.5, 76.2, 3.2, 3.6, 0.9, 0.6, 7, 9, 1.5]],
-  ["raw-quinoa", "Quinoa (raw)", "किनोआ (कच्चा)", ["raw quinoa"], JAIN_VEGAN, { katori: 130 }, "g", [368, 14.1, 64.2, 6.1, 7, 0, 0.7, 5, 47, 4.6]],
-  ["maida", "Maida (refined flour)", "मैदा", ["maida", "refined flour", "all purpose flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [364, 10.3, 76.3, 1, 2.7, 0.3, 0.2, 2, 15, 1.2]],
-  ["suji", "Suji (semolina)", "सूजी", ["suji", "sooji", "rava", "semolina"], JAIN_VEGAN, { katori: 160, tbsp: 10 }, "g", [360, 12.7, 72.8, 1.1, 3.9, 0.4, 0.2, 1, 17, 1.2]],
-  ["ragi-flour", "Ragi flour", "रागी आटा", ["ragi atta", "nachni flour", "finger millet flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [320, 7.2, 66.8, 1.9, 11.2, 0.6, 0.4, 11, 364, 4.6]],
+  ["raw-brown-rice", "Brown rice (raw)", "ब्राउन चावल (कच्चे)", ["raw brown rice"], JAIN_VEGAN, { katori: 140 }, "g", [363, 9.2, 79.2, 1.2, 4.4, 0.7, 0.3, 4, 11, 1]], // IFCT 2017: A013
+  ["raw-quinoa", "Quinoa (raw)", "किनोआ (कच्चा)", ["raw quinoa"], JAIN_VEGAN, { katori: 130 }, "g", [358, 13.1, 68.3, 5.5, 14.7, 1.4, 0.6, 4, 198, 7.5]], // IFCT 2017: A009
+  ["maida", "Maida (refined flour)", "मैदा", ["maida", "refined flour", "all purpose flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [357, 10.4, 77, 0.8, 2.8, 1.8, 0.1, 2, 20, 1.8]], // IFCT 2017: A018
+  ["suji", "Suji (semolina)", "सूजी", ["suji", "sooji", "rava", "semolina"], JAIN_VEGAN, { katori: 160, tbsp: 10 }, "g", [353, 11.4, 78.2, 0.7, 9.7, 1.6, 0.1, 2, 29, 3]], // IFCT 2017: A022
+  ["ragi-flour", "Ragi flour", "रागी आटा", ["ragi atta", "nachni flour", "finger millet flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [343, 7.2, 78, 1.9, 11.2, 0.3, 0.3, 5, 364, 4.6]], // IFCT 2017: A010
   ["bajra-flour", "Bajra flour", "बाजरा आटा", ["bajra atta", "pearl millet flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [361, 11.6, 67.5, 5, 11.5, 1, 0.9, 10, 27, 6.4]],
-  ["jowar-flour", "Jowar flour", "ज्वार आटा", ["jowar atta", "sorghum flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [349, 10.4, 67.7, 1.9, 9.7, 1, 0.3, 6, 27, 4]],
-  ["makki-atta", "Makki atta (maize flour)", "मक्की का आटा", ["makki atta", "maize flour", "corn flour", "cornflour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [361, 6.9, 76.9, 3.9, 7.3, 0.6, 0.5, 5, 7, 2.4]],
-  ["raw-poha", "Poha (raw flakes)", "पोहा (कच्चा)", ["raw poha", "chiwda flakes"], JAIN_VEGAN, { katori: 60 }, "g", [346, 6.6, 77.3, 1.2, 2, 0.5, 0.2, 5, 20, 4.5]],
+  ["jowar-flour", "Jowar flour", "ज्वार आटा", ["jowar atta", "sorghum flour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [355, 10, 77.9, 1.7, 10.2, 1.3, 0.2, 5, 28, 4]], // IFCT 2017: A005
+  ["makki-atta", "Makki atta (maize flour)", "मक्की का आटा", ["makki atta", "maize flour", "corn flour", "cornflour"], JAIN_VEGAN, { katori: 120, tbsp: 8 }, "g", [359, 8.8, 77, 3.8, 12.2, 1.7, 0.4, 4, 9, 2.5]], // IFCT 2017: A006
+  ["raw-poha", "Poha (raw flakes)", "पोहा (कच्चा)", ["raw poha", "chiwda flakes"], JAIN_VEGAN, { katori: 60 }, "g", [361, 7.4, 80.2, 1.1, 3.5, 0.3, 0.3, 3, 9, 4.5]], // IFCT 2017: A011
   ["sabudana", "Sabudana (raw)", "साबूदाना", ["raw sabudana", "sago", "tapioca pearls"], JAIN_VEGAN, { katori: 150 }, "g", [358, 0.2, 88.7, 0, 0.9, 3.4, 0, 1, 20, 1.6]],
-  ["vermicelli", "Vermicelli (raw)", "सेवइयां", ["semiya", "seviyan", "sevai"], JAIN_VEGAN, { katori: 70 }, "g", [360, 12, 74, 1.5, 3, 2, 0.3, 5, 20, 1.3]],
-  ["dalia", "Dalia (broken wheat, raw)", "दलिया", ["broken wheat", "dalia raw", "bulgur"], JAIN_VEGAN, { katori: 140 }, "g", [342, 12.3, 75.9, 1.3, 12.5, 0.4, 0.2, 17, 35, 2.5]],
+  ["vermicelli", "Vermicelli (raw)", "सेवइयां", ["semiya", "seviyan", "sevai"], JAIN_VEGAN, { katori: 70 }, "g", [351, 9.7, 79.7, 0.5, 9.3, 1.7, 0.1, 3, 19, 2]], // IFCT 2017: A023
+  ["dalia", "Dalia (broken wheat, raw)", "दलिया", ["broken wheat", "dalia raw", "bulgur"], JAIN_VEGAN, { katori: 140 }, "g", [344, 10.6, 76, 1.5, 11.2, 1.8, 0.2, 2, 39, 4]], // IFCT 2017: A020
   ["instant-noodles", "Instant noodles (dry, with masala)", "इंस्टेंट नूडल्स", ["noodle cake"], VEGAN, { piece: 70 }, "piece", [440, 9.5, 61, 17.5, 2.5, 2, 8, 1100, 20, 4]],
   // Pulses, dry
-  ["raw-moong-dal", "Moong dal (raw)", "मूंग दाल (कच्ची)", ["raw moong dal", "yellow moong raw"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [348, 24.5, 59.9, 1.2, 8.2, 2, 0.3, 15, 75, 3.9]],
-  ["raw-masoor-dal", "Masoor dal (raw)", "मसूर दाल (कच्ची)", ["raw masoor dal", "red lentils raw"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [358, 24.6, 63.1, 2.2, 10.8, 1.4, 0.4, 6, 48, 7.4]],
+  ["raw-moong-dal", "Moong dal (raw)", "मूंग दाल (कच्ची)", ["raw moong dal", "yellow moong raw"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [344, 23.9, 62, 1.4, 9.4, 0.9, 0.2, 10, 43, 3.9]], // IFCT 2017: B010
+  ["raw-masoor-dal", "Masoor dal (raw)", "मसूर दाल (कच्ची)", ["raw masoor dal", "red lentils raw"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [343, 24.4, 63, 0.8, 10.4, 1.9, 0.1, 10, 44, 7.1]], // IFCT 2017: B013
   ["raw-chana-dal", "Chana dal (raw)", "चना दाल (कच्ची)", ["raw chana dal", "bengal gram dal raw"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [360, 21, 58, 5.5, 15, 3, 0.6, 20, 46, 6.1]],
-  ["raw-urad-dal", "Urad dal (raw)", "उड़द दाल (कच्ची)", ["raw urad dal", "black gram dal raw"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [341, 25.2, 59, 1.6, 12, 2, 0.1, 38, 138, 7.6]],
-  ["raw-whole-moong", "Whole moong (raw)", "साबुत मूंग", ["green gram raw", "sabut moong raw"], JAIN_VEGAN, { katori: 130 }, "katori", [347, 23.9, 62.6, 1.2, 16.3, 6.6, 0.3, 15, 132, 6.7]],
-  ["raw-rajma", "Rajma (raw)", "राजमा (कच्चा)", ["raw rajma", "kidney beans raw"], JAIN_VEGAN, { katori: 130 }, "katori", [333, 23.6, 60, 0.8, 24.9, 2.2, 0.1, 24, 143, 8.2]],
+  ["raw-urad-dal", "Urad dal (raw)", "उड़द दाल (कच्ची)", ["raw urad dal", "black gram dal raw"], JAIN_VEGAN, { katori: 130, tbsp: 12 }, "katori", [348, 23.1, 62.9, 1.7, 11.9, 0.8, 0.3, 19, 56, 4.7]], // IFCT 2017: B003
+  ["raw-whole-moong", "Whole moong (raw)", "साबुत मूंग", ["green gram raw", "sabut moong raw"], JAIN_VEGAN, { katori: 130 }, "katori", [328, 22.5, 63.2, 1.1, 17, 0.5, 0.3, 12, 92, 4.9]], // IFCT 2017: B011
+  ["raw-rajma", "Rajma (raw)", "राजमा (कच्चा)", ["raw rajma", "kidney beans raw"], JAIN_VEGAN, { katori: 130 }, "katori", [332, 19.5, 66.1, 1.7, 17.1, 1.9, 0.2, 10, 131, 6.2]], // IFCT 2017: average of B018, B019, B020
   ["raw-kabuli-chana", "Kabuli chana (raw)", "काबुली चना (कच्चा)", ["raw chickpeas", "safed chana raw"], JAIN_VEGAN, { katori: 130 }, "katori", [378, 20.5, 63, 6, 12.2, 10.7, 0.6, 24, 57, 4.3]],
-  ["raw-kala-chana", "Kala chana (raw)", "काला चना (कच्चा)", ["raw kala chana", "black chickpeas raw"], JAIN_VEGAN, { katori: 130 }, "katori", [360, 20, 61, 5, 17, 3, 0.5, 39, 150, 6]],
-  ["raw-lobia", "Lobia (raw)", "लोबिया (कच्चा)", ["raw lobia", "black eyed peas raw", "chawli raw"], JAIN_VEGAN, { katori: 130 }, "katori", [336, 23.5, 60, 1.3, 10.6, 6.9, 0.3, 16, 110, 8.3]],
+  ["raw-kala-chana", "Kala chana (raw)", "काला चना (कच्चा)", ["raw kala chana", "black chickpeas raw"], JAIN_VEGAN, { katori: 130 }, "katori", [337, 18.8, 64.8, 5.1, 25.2, 1, 0.5, 27, 150, 6.8]], // IFCT 2017: B002
+  ["raw-lobia", "Lobia (raw)", "लोबिया (कच्चा)", ["raw lobia", "black eyed peas raw", "chawli raw"], JAIN_VEGAN, { katori: 130 }, "katori", [344, 20.8, 65.8, 1.1, 11.6, 1.4, 0.3, 13, 83, 5.5]], // IFCT 2017: average of B005, B006
   ["soya-chunks", "Soya chunks (dry)", "सोया चंक्स", ["soya chunks", "soya badi", "soya nuggets"], JAIN_VEGAN, { katori: 50 }, "g", [345, 52, 33, 0.5, 13, 0, 0.1, 20, 350, 10]],
   ["makhana-dry", "Makhana (dry)", "मखाना (कच्चा)", ["fox nuts dry", "lotus seeds dry"], JAIN_VEGAN, { katori: 30 }, "g", [350, 9.7, 77, 0.1, 7, 0, 0, 1, 60, 1.4]],
   // Vegetables, raw
-  ["cauliflower", "Cauliflower (raw)", "फूलगोभी (कच्ची)", ["gobhi raw", "phool gobhi raw"], JAIN_VEGAN, { katori: 100 }, "g", [25, 1.9, 5, 0.3, 2, 1.9, 0.1, 30, 22, 0.4]],
-  ["cabbage", "Cabbage (raw)", "पत्ता गोभी (कच्ची)", ["patta gobhi raw", "band gobhi raw"], JAIN_VEGAN, { katori: 90 }, "g", [25, 1.3, 5.8, 0.1, 2.5, 3.2, 0, 18, 40, 0.5]],
+  ["cauliflower", "Cauliflower (raw)", "फूलगोभी (कच्ची)", ["gobhi raw", "phool gobhi raw"], JAIN_VEGAN, { katori: 100 }, "g", [30, 2.1, 5.7, 0.4, 3.7, 0.5, 0.1, 31, 25, 1]], // IFCT 2017: D036
+  ["cabbage", "Cabbage (raw)", "पत्ता गोभी (कच्ची)", ["patta gobhi raw", "band gobhi raw"], JAIN_VEGAN, { katori: 90 }, "g", [27, 1.4, 6, 0.1, 2.8, 1, 0.1, 15, 52, 0.3]], // IFCT 2017: C015
   ["capsicum", "Capsicum (raw)", "शिमला मिर्च", ["shimla mirch", "bell pepper", "green capsicum"], JAIN_VEGAN, { piece: 120 }, "g", [20, 0.9, 4.6, 0.2, 1.7, 2.4, 0.1, 3, 10, 0.3]],
-  ["brinjal", "Brinjal (raw)", "बैंगन", ["baingan", "eggplant", "aubergine"], JAIN_VEGAN, { piece: 250 }, "g", [25, 1, 5.9, 0.2, 3, 3.5, 0, 2, 9, 0.2]],
+  ["brinjal", "Brinjal (raw)", "बैंगन", ["baingan", "eggplant", "aubergine"], JAIN_VEGAN, { piece: 250 }, "g", [33, 1.5, 7.5, 0.3, 4, 1, 0.1, 4, 17, 0.4]], // IFCT 2017: D031
   ["raw-bhindi", "Bhindi (raw)", "भिंडी (कच्ची)", ["raw okra", "raw lady finger"], JAIN_VEGAN, { katori: 100 }, "g", [33, 1.9, 7.5, 0.2, 3.2, 1.5, 0, 7, 82, 0.6]],
-  ["lauki", "Lauki (raw)", "लौकी", ["bottle gourd", "doodhi", "ghiya"], JAIN_VEGAN, { katori: 120 }, "g", [14, 0.6, 3.4, 0, 0.5, 1.5, 0, 2, 26, 0.2]],
-  ["tinda", "Tinda (raw)", "टिंडा", ["round gourd"], JAIN_VEGAN, { piece: 50 }, "g", [21, 1.4, 3.4, 0.2, 1, 1, 0, 30, 25, 0.9]],
-  ["karela", "Karela (raw)", "करेला", ["bitter gourd", "bitter melon"], JAIN_VEGAN, { piece: 100 }, "g", [17, 1, 3.7, 0.2, 2.8, 0, 0, 5, 19, 0.4]],
-  ["mushroom", "Mushroom (raw)", "मशरूम", ["button mushroom", "khumb"], VEGAN, { katori: 70 }, "g", [22, 3.1, 3.3, 0.3, 1, 2, 0, 5, 3, 0.5]],
-  ["methi-leaves", "Methi leaves (raw)", "मेथी पत्ते", ["fenugreek leaves", "methi saag"], JAIN_VEGAN, { katori: 40 }, "g", [49, 4.4, 6, 0.9, 1.1, 0, 0.2, 76, 395, 1.9]],
-  ["sarson", "Sarson leaves (raw)", "सरसों का साग (कच्चा)", ["mustard greens"], JAIN_VEGAN, { katori: 50 }, "g", [27, 2.9, 4.7, 0.4, 3.2, 1.3, 0, 20, 115, 1.6]],
-  ["beans", "French beans (raw)", "फ्रेंच बीन्स", ["french beans", "green beans", "phali"], JAIN_VEGAN, { katori: 100 }, "g", [31, 1.8, 7, 0.2, 2.7, 3.3, 0.1, 6, 37, 1]],
-  ["pumpkin", "Pumpkin (raw)", "कद्दू", ["red pumpkin", "raw pumpkin"], JAIN_VEGAN, { katori: 120 }, "g", [26, 1, 6.5, 0.1, 0.5, 2.8, 0.1, 1, 21, 0.8]],
-  ["arbi", "Arbi (raw)", "अरबी", ["taro root", "colocasia"], VEGAN, { piece: 40 }, "g", [112, 1.5, 26.5, 0.2, 4.1, 0.4, 0, 11, 43, 0.6]],
+  ["lauki", "Lauki (raw)", "लौकी", ["bottle gourd", "doodhi", "ghiya"], JAIN_VEGAN, { katori: 120 }, "g", [17, 0.5, 4.3, 0.1, 2.1, 0.4, 0, 1, 16, 0.3]], // IFCT 2017: average of D007, D008, D009
+  ["tinda", "Tinda (raw)", "टिंडा", ["round gourd"], JAIN_VEGAN, { piece: 50 }, "g", [18, 1, 3.9, 0.2, 2, 0.4, 0.1, 21, 20, 0.4]], // IFCT 2017: D073
+  ["karela", "Karela (raw)", "करेला", ["bitter gourd", "bitter melon"], JAIN_VEGAN, { piece: 100 }, "g", [27, 1.5, 6.2, 0.2, 3.7, 0.1, 0.1, 12, 18, 1.2]], // IFCT 2017: average of D004, D005, D006
+  ["mushroom", "Mushroom (raw)", "मशरूम", ["button mushroom", "khumb"], VEGAN, { katori: 70 }, "g", [34, 3.7, 5.1, 0.4, 3.1, 0.1, 0.1, 8, 18, 0.3]], // IFCT 2017: J001
+  ["methi-leaves", "Methi leaves (raw)", "मेथी पत्ते", ["fenugreek leaves", "methi saag"], JAIN_VEGAN, { katori: 40 }, "g", [44, 3.7, 7.1, 0.8, 4.9, 0.9, 0.2, 47, 274, 5.7]], // IFCT 2017: C020
+  ["sarson", "Sarson leaves (raw)", "सरसों का साग (कच्चा)", ["mustard greens"], JAIN_VEGAN, { katori: 50 }, "g", [38, 3.5, 6.3, 0.5, 3.9, 0, 0.1, 19, 191, 2.8]], // IFCT 2017: C026
+  ["beans", "French beans (raw)", "फ्रेंच बीन्स", ["french beans", "green beans", "phali"], JAIN_VEGAN, { katori: 100 }, "g", [32, 2.3, 6.9, 0.2, 4.3, 1, 0.1, 9, 53, 1.1]], // IFCT 2017: average of D049, D050
+  ["pumpkin", "Pumpkin (raw)", "कद्दू", ["red pumpkin", "raw pumpkin"], JAIN_VEGAN, { katori: 120 }, "g", [28, 0.8, 6.6, 0.2, 2.6, 3, 0, 9, 23, 0.4]], // IFCT 2017: D066
+  ["arbi", "Arbi (raw)", "अरबी", ["taro root", "colocasia"], VEGAN, { piece: 40 }, "g", [95, 3.3, 21.1, 0.2, 3.2, 0.9, 0, 5, 30, 0.7]], // IFCT 2017: F004
   ["beetroot", "Beetroot (raw)", "चुकंदर", ["chukandar", "beet"], VEGAN, { piece: 130 }, "g", [43, 1.6, 9.6, 0.2, 2.8, 6.8, 0, 78, 16, 0.8]],
-  ["mooli", "Mooli (raw)", "मूली", ["radish", "white radish"], VEGAN, { piece: 200 }, "g", [16, 0.7, 3.4, 0.1, 1.6, 1.9, 0, 39, 25, 0.3]],
-  ["sweet-potato", "Sweet potato (raw)", "शकरकंद", ["shakarkandi raw", "raw sweet potato"], VEGAN, { piece: 130 }, "g", [86, 1.6, 20.1, 0.1, 3, 4.2, 0, 55, 30, 0.6]],
-  ["garlic", "Garlic", "लहसुन", ["lehsun", "lahsun"], VEGAN, { piece: 3, tbsp: 9 }, "g", [149, 6.4, 33, 0.5, 2.1, 1, 0.1, 17, 181, 1.7]],
-  ["ginger", "Ginger", "अदरक", ["adrak"], VEGAN, { tbsp: 6 }, "g", [80, 1.8, 17.8, 0.8, 2, 1.7, 0.2, 13, 16, 0.6]],
-  ["green-chilli", "Green chilli", "हरी मिर्च", ["hari mirch", "green chili"], JAIN_VEGAN, { piece: 3 }, "g", [40, 2, 9.5, 0.2, 1.5, 5.1, 0, 7, 14, 1]],
-  ["coriander", "Coriander leaves", "हरा धनिया", ["dhania", "cilantro"], JAIN_VEGAN, { tbsp: 4 }, "g", [23, 2.1, 3.7, 0.5, 2.8, 0.9, 0, 46, 67, 1.8]],
+  ["mooli", "Mooli (raw)", "मूली", ["radish", "white radish"], VEGAN, { piece: 200 }, "g", [38, 0.8, 9.2, 0.1, 2.6, 0.9, 0, 28, 30, 0.4]], // IFCT 2017: F010
+  ["sweet-potato", "Sweet potato (raw)", "शकरकंद", ["shakarkandi raw", "raw sweet potato"], VEGAN, { piece: 130 }, "g", [116, 1.3, 28.1, 0.3, 4, 3.8, 0.1, 29, 28, 0.4]], // IFCT 2017: average of F013, F014
+  ["garlic", "Garlic", "लहसुन", ["lehsun", "lahsun"], VEGAN, { piece: 3, tbsp: 9 }, "g", [134, 6.8, 27.2, 0.1, 5.3, 5.4, 0, 10, 19, 1]], // IFCT 2017: average of G011, G012
+  ["ginger", "Ginger", "अदरक", ["adrak"], VEGAN, { tbsp: 6 }, "g", [66, 2.2, 14.3, 0.8, 5.4, 1.3, 0.2, 10, 19, 1.9]], // IFCT 2017: G014
+  ["green-chilli", "Green chilli", "हरी मिर्च", ["hari mirch", "green chili"], JAIN_VEGAN, { piece: 3 }, "g", [52, 2.4, 10.6, 0.7, 4.8, 0.7, 0.1, 2, 18, 1.2]], // IFCT 2017: G008
+  ["coriander", "Coriander leaves", "हरा धनिया", ["dhania", "cilantro"], JAIN_VEGAN, { tbsp: 4 }, "g", [40, 3.5, 6.6, 0.7, 4.7, 0.2, 0.2, 37, 146, 5.3]], // IFCT 2017: G009
   ["lemon-juice", "Lemon juice", "नींबू का रस", ["nimbu ras"], JAIN_VEGAN, { tbsp: 15 }, "tbsp", [22, 0.4, 6.9, 0.2, 0.3, 2.5, 0, 1, 6, 0.1]],
-  ["coconut", "Coconut (fresh, grated)", "नारियल (कसा हुआ)", ["grated coconut", "fresh coconut", "nariyal"], JAIN_VEGAN, { katori: 80, tbsp: 7 }, "g", [354, 3.3, 15.2, 33.5, 9, 6.2, 29.7, 20, 14, 2.4]],
+  ["coconut", "Coconut (fresh, grated)", "नारियल (कसा हुआ)", ["grated coconut", "fresh coconut", "nariyal"], JAIN_VEGAN, { katori: 80, tbsp: 7 }, "g", [430, 3.8, 16.7, 41.4, 10.4, 6.2, 28.1, 8, 8, 1.3]], // IFCT 2017: H007
   ["coconut-milk", "Coconut milk", "नारियल का दूध", ["nariyal doodh"], JAIN_VEGAN, { katori: 150, tbsp: 15 }, "g", [230, 2.3, 5.5, 23.8, 2.2, 3.3, 21.1, 15, 16, 1.6]],
-  ["tamarind", "Tamarind pulp", "इमली", ["imli", "tamarind"], JAIN_VEGAN, { tbsp: 15 }, "g", [239, 2.8, 62.5, 0.6, 5.1, 57.4, 0.3, 28, 74, 2.8]],
-  ["sesame", "Sesame seeds", "तिल", ["til", "sesame"], JAIN_VEGAN, { tbsp: 9 }, "g", [573, 17.7, 23.5, 49.7, 11.8, 0.3, 7, 11, 975, 14.6]],
+  ["tamarind", "Tamarind pulp", "इमली", ["imli", "tamarind"], JAIN_VEGAN, { tbsp: 15 }, "g", [299, 2.9, 72.7, 0.1, 5.3, 52.9, 0, 25, 149, 9.2]], // IFCT 2017: E064
+  ["sesame", "Sesame seeds", "तिल", ["til", "sesame"], JAIN_VEGAN, { tbsp: 9 }, "g", [554, 21.7, 27.8, 43, 17, 0.7, 6.4, 15, 1283, 15]], // IFCT 2017: H011
   // Meat, fish, eggs, tofu, raw
-  ["raw-egg", "Egg (raw)", "अंडा (कच्चा)", ["raw egg"], EGG, { piece: 50 }, "piece", [143, 12.6, 0.7, 9.5, 0, 0.4, 3.1, 142, 56, 1.8]],
+  ["raw-egg", "Egg (raw)", "अंडा (कच्चा)", ["raw egg"], EGG, { piece: 50 }, "piece", [135, 13.3, 0, 9.2, 0, 0, 3, 123, 49, 1.8]], // IFCT 2017: M001
   ["raw-chicken", "Chicken (raw, curry cut)", "चिकन (कच्चा)", ["raw chicken", "chicken curry cut"], MEAT, { katori: 150 }, "g", [140, 19.5, 0, 6.5, 0, 0, 1.8, 85, 10, 0.9]],
   ["raw-chicken-breast", "Chicken breast (raw)", "चिकन ब्रेस्ट (कच्चा)", ["raw chicken breast", "boneless chicken"], MEAT, { piece: 150 }, "g", [120, 22.5, 0, 2.6, 0, 0, 0.6, 45, 5, 0.4]],
-  ["raw-mutton", "Mutton (raw)", "मटन (कच्चा)", ["raw mutton", "goat meat raw"], MEAT, { katori: 150 }, "g", [140, 20, 0, 6.5, 0, 0, 2.5, 80, 12, 2.6]],
+  ["raw-mutton", "Mutton (raw)", "मटन (कच्चा)", ["raw mutton", "goat meat raw"], MEAT, { katori: 150 }, "g", [161, 20.9, 0, 8.6, 0, 0, 4, 45, 6, 1.7]], // IFCT 2017: average of O001, O002, O003
   ["raw-fish", "Fish (raw)", "मछली (कच्ची)", ["raw fish", "rohu raw"], MEAT, { piece: 100 }, "g", [100, 17.5, 0, 3, 0, 0, 0.7, 50, 30, 0.8]],
-  ["raw-prawns", "Prawns (raw)", "झींगा (कच्चा)", ["raw prawns", "raw shrimp"], MEAT, { katori: 120 }, "g", [85, 20.1, 0, 0.5, 0, 0, 0.1, 119, 64, 0.2]],
+  ["raw-prawns", "Prawns (raw)", "झींगा (कच्चा)", ["raw prawns", "raw shrimp"], MEAT, { katori: 120 }, "g", [74, 16.1, 0, 0.6, 0, 0, 0.1, 366, 53, 0.6]], // IFCT 2017: average of S008, Q007, Q008
   ["tofu", "Tofu", "टोफू", ["soy paneer", "bean curd"], JAIN_VEGAN, { piece: 100 }, "g", [144, 15.8, 2.8, 8.7, 2.3, 0.6, 1.3, 14, 200, 2.7]],
   // Dairy and fats
   ["cream", "Fresh cream", "मलाई / क्रीम", ["malai", "fresh cream", "cream"], JAIN_VEG, { tbsp: 15 }, "tbsp", [250, 2.5, 3.5, 25, 0, 3.5, 15.5, 35, 80, 0.1]],
-  ["khoa", "Khoa (mawa)", "खोया", ["khoya", "mawa"], JAIN_VEG, { tbsp: 15 }, "g", [421, 14.6, 20.5, 31.2, 0, 20.5, 19.5, 60, 650, 0.6]],
+  ["khoa", "Khoa (mawa)", "खोया", ["khoya", "mawa"], JAIN_VEG, { tbsp: 15 }, "g", [316, 16.3, 16.5, 20.6, 0, 16.1, 12.9, 48, 602, 2.3]], // IFCT 2017: L004
   // Seasonings
   ["salt", "Salt", "नमक", ["namak"], JAIN_VEGAN, { tbsp: 18 }, "g", [0, 0, 0, 0, 0, 0, 0, 38758, 24, 0.3]],
   ["soy-sauce", "Soy sauce", "सोया सॉस", ["soya sauce"], JAIN_VEGAN, { tbsp: 16 }, "tbsp", [53, 8.1, 4.9, 0.6, 0.8, 0.4, 0.1, 5500, 33, 1.5]],
@@ -79,39 +83,39 @@ export const INGREDIENT_ROWS: Row[] = [
 /* Ready to eat as they are: fruit, nuts, breads, drinks and packaged foods. */
 export const READY_ROWS: Row[] = [
   // Fruit
-  ["mango", "Mango", "आम", ["aam"], JAIN_VEGAN, { piece: 200, katori: 165 }, "piece", [60, 0.8, 15, 0.4, 1.6, 13.7, 0.1, 1, 11, 0.2]],
-  ["papaya", "Papaya", "पपीता", ["papita"], JAIN_VEGAN, { katori: 145 }, "katori", [43, 0.5, 10.8, 0.3, 1.7, 7.8, 0.1, 8, 20, 0.3]],
-  ["guava", "Guava", "अमरूद", ["amrood", "amrud"], JAIN_VEGAN, { piece: 100 }, "piece", [68, 2.6, 14.3, 1, 5.4, 8.9, 0.3, 2, 18, 0.3]],
-  ["orange", "Orange", "संतरा", ["santra", "narangi"], JAIN_VEGAN, { piece: 130 }, "piece", [47, 0.9, 11.8, 0.1, 2.4, 9.4, 0, 0, 40, 0.1]],
-  ["watermelon", "Watermelon", "तरबूज़", ["tarbooz", "tarbuj"], JAIN_VEGAN, { katori: 150 }, "katori", [30, 0.6, 7.6, 0.2, 0.4, 6.2, 0, 1, 7, 0.2]],
-  ["grapes", "Grapes", "अंगूर", ["angoor", "angur"], JAIN_VEGAN, { katori: 150 }, "katori", [69, 0.7, 18.1, 0.2, 0.9, 15.5, 0.1, 2, 10, 0.4]],
-  ["pomegranate", "Pomegranate", "अनार", ["anar", "anaar"], JAIN_VEGAN, { katori: 90, piece: 180 }, "katori", [83, 1.7, 18.7, 1.2, 4, 13.7, 0.1, 3, 10, 0.3]],
-  ["pineapple", "Pineapple", "अनानास", ["ananas"], JAIN_VEGAN, { katori: 165 }, "katori", [50, 0.5, 13.1, 0.1, 1.4, 9.9, 0, 1, 13, 0.3]],
-  ["chikoo", "Chikoo", "चीकू", ["sapota", "chiku", "sapodilla"], JAIN_VEGAN, { piece: 100 }, "piece", [83, 0.4, 20, 1.1, 5.3, 14, 0.2, 12, 21, 0.8]],
-  ["pear", "Pear", "नाशपाती", ["nashpati"], JAIN_VEGAN, { piece: 180 }, "piece", [57, 0.4, 15.2, 0.1, 3.1, 9.8, 0, 1, 9, 0.2]],
-  ["muskmelon", "Muskmelon", "खरबूज़ा", ["kharbooja", "kharbuja", "cantaloupe"], JAIN_VEGAN, { katori: 160 }, "katori", [34, 0.8, 8.2, 0.2, 0.9, 7.9, 0.1, 16, 9, 0.2]],
-  ["litchi", "Litchi", "लीची", ["lychee", "lichi"], JAIN_VEGAN, { piece: 10, katori: 150 }, "piece", [66, 0.8, 16.5, 0.4, 1.3, 15.2, 0.1, 1, 5, 0.3]],
+  ["mango", "Mango", "आम", ["aam"], JAIN_VEGAN, { piece: 200, katori: 165 }, "piece", [52, 0.6, 11.6, 0.5, 1.8, 8.4, 0.2, 1, 15, 0.4]], // IFCT 2017: average of E036, E037, E038, E039, E040, E041, E042
+  ["papaya", "Papaya", "पपीता", ["papita"], JAIN_VEGAN, { katori: 145 }, "katori", [30, 0.4, 7.4, 0.2, 2.8, 4.1, 0.1, 7, 15, 0.2]], // IFCT 2017: E049
+  ["guava", "Guava", "अमरूद", ["amrood", "amrud"], JAIN_VEGAN, { piece: 100 }, "piece", [55, 1.3, 15.1, 0.3, 8, 6, 0, 2, 16, 0.4]], // IFCT 2017: average of E028, E029
+  ["orange", "Orange", "संतरा", ["santra", "narangi"], JAIN_VEGAN, { piece: 130 }, "piece", [40, 0.7, 9.2, 0.1, 1.3, 6.9, 0, 1, 20, 0.8]], // IFCT 2017: E047
+  ["watermelon", "Watermelon", "तरबूज़", ["tarbooz", "tarbuj"], JAIN_VEGAN, { katori: 150 }, "katori", [20, 0.6, 4.2, 0.2, 0.7, 3.3, 0.1, 2, 5, 0.2]], // IFCT 2017: average of E065, E066
+  ["grapes", "Grapes", "अंगूर", ["angoor", "angur"], JAIN_VEGAN, { katori: 150 }, "katori", [71, 1, 16.3, 0.3, 1.3, 10, 0.1, 2, 14, 0.3]], // IFCT 2017: average of E022, E023, E024, E025, E026, E027
+  ["pomegranate", "Pomegranate", "अनार", ["anar", "anaar"], JAIN_VEGAN, { katori: 90, piece: 180 }, "katori", [60, 1.3, 14.4, 0.1, 2.8, 10.9, 0, 2, 11, 0.3]], // IFCT 2017: E055
+  ["pineapple", "Pineapple", "अनानास", ["ananas"], JAIN_VEGAN, { katori: 165 }, "katori", [50, 0.5, 12.9, 0.2, 3.5, 8.6, 0.1, 1, 11, 0.3]], // IFCT 2017: E053
+  ["chikoo", "Chikoo", "चीकू", ["sapota", "chiku", "sapodilla"], JAIN_VEGAN, { piece: 100 }, "piece", [93, 0.9, 23.5, 1.3, 9.6, 12.3, 0.4, 5, 18, 0.5]], // IFCT 2017: E060
+  ["pear", "Pear", "नाशपाती", ["nashpati"], JAIN_VEGAN, { piece: 180 }, "piece", [46, 0.4, 12.6, 0.3, 4.5, 7.4, 0.1, 2, 7, 0.3]], // IFCT 2017: E051
+  ["muskmelon", "Muskmelon", "खरबूज़ा", ["kharbooja", "kharbuja", "cantaloupe"], JAIN_VEGAN, { katori: 160 }, "katori", [28, 0.5, 6.3, 0.3, 1.5, 2.7, 0.1, 15, 9, 0.2]], // IFCT 2017: average of E045, E046
+  ["litchi", "Litchi", "लीची", ["lychee", "lichi"], JAIN_VEGAN, { piece: 10, katori: 150 }, "piece", [56, 1, 12.8, 0.3, 1.3, 9.3, 0.1, 1, 6, 0.8]], // IFCT 2017: E035
   ["jamun", "Jamun", "जामुन", ["java plum", "black plum"], JAIN_VEGAN, { katori: 100 }, "katori", [60, 0.7, 15.6, 0.2, 0.6, 14, 0, 14, 19, 0.2]],
-  ["strawberry", "Strawberries", "स्ट्रॉबेरी", ["strawberry"], JAIN_VEGAN, { katori: 150, piece: 12 }, "katori", [32, 0.7, 7.7, 0.3, 2, 4.9, 0, 1, 16, 0.4]],
+  ["strawberry", "Strawberries", "स्ट्रॉबेरी", ["strawberry"], JAIN_VEGAN, { katori: 150, piece: 12 }, "katori", [30, 1, 5.9, 0.6, 2.5, 3.6, 0.1, 1, 15, 0.4]], // IFCT 2017: E063
   ["kiwi", "Kiwi", "कीवी", ["kiwifruit"], JAIN_VEGAN, { piece: 70 }, "piece", [61, 1.1, 14.7, 0.5, 3, 9, 0, 3, 34, 0.3]],
   // Raw vegetables people eat as they are
-  ["carrot", "Carrot", "गाजर", ["gajar"], VEGAN, { piece: 60, katori: 110 }, "piece", [41, 0.9, 9.6, 0.2, 2.8, 4.7, 0, 69, 33, 0.3]],
-  ["cucumber", "Cucumber", "खीरा", ["kheera", "kakdi"], JAIN_VEGAN, { piece: 200, katori: 120 }, "piece", [15, 0.7, 3.6, 0.1, 0.5, 1.7, 0, 2, 16, 0.3]],
+  ["carrot", "Carrot", "गाजर", ["gajar"], VEGAN, { piece: 60, katori: 110 }, "piece", [44, 1, 10.5, 0.5, 4.3, 3.6, 0.1, 57, 38, 0.7]], // IFCT 2017: average of F002, F003
+  ["cucumber", "Cucumber", "खीरा", ["kheera", "kakdi"], JAIN_VEGAN, { piece: 200, katori: 120 }, "piece", [23, 0.8, 5.3, 0.2, 2.1, 0.2, 0.1, 6, 18, 0.5]], // IFCT 2017: average of D043, D044
   ["sweet-corn", "Sweet corn", "मक्का", ["corn", "bhutta", "makai", "corn kernels"], JAIN_VEGAN, { katori: 150, piece: 100 }, "katori", [96, 3.4, 21, 1.5, 2.4, 4.5, 0.2, 1, 3, 0.5]],
   ["moong-sprouts", "Moong sprouts", "अंकुरित मूंग", ["sprouts", "ankurit moong", "bean sprouts"], JAIN_VEGAN, { katori: 100 }, "katori", [30, 3, 6, 0.2, 1.8, 4.1, 0, 6, 13, 0.9]],
   // Nuts, seeds, dried fruit
-  ["almonds", "Almonds", "बादाम", ["badam"], JAIN_VEGAN, { piece: 1.2, tbsp: 9 }, "g", [579, 21.2, 21.6, 49.9, 12.5, 4.4, 3.8, 1, 269, 3.7]],
-  ["cashews", "Cashews", "काजू", ["kaju", "cashew"], JAIN_VEGAN, { piece: 1.5, tbsp: 9 }, "g", [553, 18.2, 30.2, 43.9, 3.3, 5.9, 7.8, 12, 37, 6.7]],
-  ["walnuts", "Walnuts", "अखरोट", ["akhrot", "walnut"], JAIN_VEGAN, { piece: 4, tbsp: 8 }, "g", [654, 15.2, 13.7, 65.2, 6.7, 2.6, 6.1, 2, 98, 2.9]],
-  ["pistachios", "Pistachios", "पिस्ता", ["pista"], JAIN_VEGAN, { piece: 0.7, tbsp: 9 }, "g", [560, 20.2, 27.2, 45.3, 10.6, 7.7, 5.9, 1, 105, 3.9]],
-  ["peanuts", "Peanuts", "मूंगफली", ["moongphali", "groundnuts", "mungfali"], VEGAN, { katori: 70, tbsp: 9 }, "g", [567, 25.8, 16.1, 49.2, 8.5, 4, 6.3, 18, 92, 4.6]],
-  ["raisins", "Raisins", "किशमिश", ["kishmish", "dry grapes"], JAIN_VEGAN, { tbsp: 10 }, "g", [299, 3.1, 79.2, 0.5, 3.7, 59.2, 0.1, 11, 50, 1.9]],
+  ["almonds", "Almonds", "बादाम", ["badam"], JAIN_VEGAN, { piece: 1.2, tbsp: 9 }, "g", [635, 18.4, 16.1, 58.5, 13.1, 2.2, 4.4, 2, 228, 4.6]], // IFCT 2017: H001
+  ["cashews", "Cashews", "काजू", ["kaju", "cashew"], JAIN_VEGAN, { piece: 1.5, tbsp: 9 }, "g", [590, 18.8, 29.3, 45.2, 3.9, 3.1, 7.8, 9, 34, 6]], // IFCT 2017: H005
+  ["walnuts", "Walnuts", "अखरोट", ["akhrot", "walnut"], JAIN_VEGAN, { piece: 4, tbsp: 8 }, "g", [682, 14.9, 15.5, 64.3, 5.4, 3.2, 5.2, 1, 105, 3.2]], // IFCT 2017: H021
+  ["pistachios", "Pistachios", "पिस्ता", ["pista"], JAIN_VEGAN, { piece: 0.7, tbsp: 9 }, "g", [561, 23.4, 26.5, 42.5, 10.6, 7.9, 4, 7, 135, 4.5]], // IFCT 2017: H018
+  ["peanuts", "Peanuts", "मूंगफली", ["moongphali", "groundnuts", "mungfali"], VEGAN, { katori: 70, tbsp: 9 }, "g", [541, 23.6, 27.6, 39.6, 10.4, 4.4, 8.1, 12, 54, 3.4]], // IFCT 2017: H012
+  ["raisins", "Raisins", "किशमिश", ["kishmish", "dry grapes"], JAIN_VEGAN, { tbsp: 10 }, "g", [310, 2.7, 74.3, 0.3, 4.2, 59.3, 0.1, 11, 63, 5.5]], // IFCT 2017: average of E057, E058
   ["dates", "Dates", "खजूर", ["khajoor", "khajur"], JAIN_VEGAN, { piece: 8 }, "piece", [282, 2.5, 75, 0.4, 8, 63.4, 0, 2, 39, 1]],
   ["dried-figs", "Dried figs", "अंजीर", ["anjeer", "anjir", "figs"], JAIN_VEGAN, { piece: 8 }, "piece", [249, 3.3, 63.9, 0.9, 9.8, 47.9, 0.1, 10, 162, 2]],
-  ["flaxseed", "Flaxseeds", "अलसी", ["alsi", "flax seeds", "linseed"], JAIN_VEGAN, { tbsp: 10 }, "tbsp", [534, 18.3, 28.9, 42.2, 27.3, 1.6, 3.7, 30, 255, 5.7]],
+  ["flaxseed", "Flaxseeds", "अलसी", ["alsi", "flax seeds", "linseed"], JAIN_VEGAN, { tbsp: 10 }, "tbsp", [496, 18.6, 37.2, 35.7, 26.2, 0.6, 3, 33, 257, 5.4]], // IFCT 2017: H014
   ["chia", "Chia seeds", "चिया सीड्स", ["chia"], JAIN_VEGAN, { tbsp: 12 }, "tbsp", [486, 16.5, 42.1, 30.7, 34.4, 0, 3.3, 16, 631, 7.7]],
   ["roasted-chana", "Roasted chana", "भुना चना", ["bhuna chana", "chana roasted", "phutana"], JAIN_VEGAN, { katori: 70, tbsp: 9 }, "g", [369, 22.5, 58.1, 5.2, 16, 6, 0.6, 30, 58, 5]],
-  ["murmura", "Murmura (puffed rice)", "मुरमुरा", ["puffed rice", "kurmura", "mamra"], JAIN_VEGAN, { katori: 15 }, "katori", [402, 6.5, 89.9, 0.5, 1.7, 0.2, 0.1, 5, 6, 4.2]],
+  ["murmura", "Murmura (puffed rice)", "मुरमुरा", ["puffed rice", "kurmura", "mamra"], JAIN_VEGAN, { katori: 15 }, "katori", [367, 7.5, 80.2, 1.6, 2.6, 0.6, 0.1, 4, 15, 4.5]], // IFCT 2017: A012
   // Breads and cereals
   ["white-bread", "White bread", "सफ़ेद ब्रेड", ["bread", "double roti", "bread slice"], VEGAN, { piece: 25 }, "piece", [265, 8.9, 49.4, 3.3, 2.7, 5.7, 0.7, 490, 60, 1.6]],
   ["brown-bread", "Brown bread", "ब्राउन ब्रेड", ["whole wheat bread", "atta bread"], VEGAN, { piece: 28 }, "piece", [247, 12.5, 41.3, 3.4, 6.8, 5.6, 0.7, 450, 80, 2.5]],
@@ -122,8 +126,8 @@ export const READY_ROWS: Row[] = [
   // Drinks
   ["black-coffee", "Black coffee", "ब्लैक कॉफ़ी", ["americano"], JAIN_VEGAN, { glass: 200 }, "glass", [2, 0.3, 0, 0, 0, 0, 0, 2, 2, 0]],
   ["green-tea", "Green tea", "ग्रीन टी", ["green tea"], JAIN_VEGAN, { glass: 200 }, "glass", [1, 0.2, 0, 0, 0, 0, 0, 1, 0, 0]],
-  ["coconut-water", "Coconut water", "नारियल पानी", ["nariyal pani", "tender coconut"], JAIN_VEGAN, { glass: 250 }, "glass", [19, 0.7, 3.7, 0.2, 1.1, 2.6, 0.2, 105, 24, 0.3]],
-  ["sugarcane-juice", "Sugarcane juice", "गन्ने का रस", ["ganne ka ras", "ganna juice"], JAIN_VEGAN, { glass: 250 }, "glass", [70, 0.2, 18, 0, 0, 17, 0, 15, 10, 0.4]],
+  ["coconut-water", "Coconut water", "नारियल पानी", ["nariyal pani", "tender coconut"], JAIN_VEGAN, { glass: 250 }, "glass", [15, 0.3, 3.2, 0.2, 0, 3.1, 0.1, 28, 27, 0.1]], // IFCT 2017: K002
+  ["sugarcane-juice", "Sugarcane juice", "गन्ने का रस", ["ganne ka ras", "ganna juice"], JAIN_VEGAN, { glass: 250 }, "glass", [59, 0.2, 13.7, 0.4, 0.6, 12.8, 0.1, 1, 18, 1.1]], // IFCT 2017: I002
   ["orange-juice", "Orange juice (fresh)", "संतरे का रस", ["mosambi juice", "fresh juice"], JAIN_VEGAN, { glass: 250 }, "glass", [45, 0.7, 10.4, 0.2, 0.2, 8.4, 0, 1, 11, 0.2]],
   ["cola", "Cola (soft drink)", "कोल्ड ड्रिंक", ["cold drink", "soft drink", "soda"], JAIN_VEGAN, { glass: 300 }, "glass", [42, 0, 10.6, 0, 0, 10.6, 0, 4, 2, 0.1]],
   // Spreads and extras
@@ -131,7 +135,7 @@ export const READY_ROWS: Row[] = [
   ["cheese-slice", "Cheese slice", "चीज़", ["cheese", "processed cheese"], JAIN_VEG, { piece: 20 }, "piece", [300, 18, 6, 23, 0, 4, 14, 1200, 600, 0.3]],
   ["jam", "Jam", "जैम", ["fruit jam", "mixed fruit jam"], JAIN_VEGAN, { tbsp: 20 }, "tbsp", [278, 0.4, 69, 0.1, 1, 49, 0, 32, 20, 0.5]],
   ["honey", "Honey", "शहद", ["shahad"], VEG, { tbsp: 21 }, "tbsp", [304, 0.3, 82.4, 0, 0.2, 82.1, 0, 4, 6, 0.4]],
-  ["jaggery", "Jaggery", "गुड़", ["gur", "gud"], JAIN_VEGAN, { piece: 10, tbsp: 15 }, "piece", [383, 0.4, 97, 0.1, 0, 85, 0, 30, 80, 2.6]],
+  ["jaggery", "Jaggery", "गुड़", ["gur", "gud"], JAIN_VEGAN, { piece: 10, tbsp: 15 }, "piece", [354, 1.9, 84.9, 0.2, 0, 84.3, 0.1, 25, 107, 4.6]], // IFCT 2017: I001
   ["peanut-butter", "Peanut butter", "पीनट बटर", ["peanutbutter"], VEGAN, { tbsp: 16 }, "tbsp", [588, 25, 20, 50, 6, 9, 10, 430, 49, 1.9]],
   ["ketchup", "Tomato ketchup", "टोमैटो केचप", ["ketchup", "tomato sauce"], VEGAN, { tbsp: 17 }, "tbsp", [101, 1, 27, 0.1, 0.3, 22, 0, 900, 15, 0.4]],
   ["whey-protein", "Whey protein (powder)", "व्हे प्रोटीन", ["whey", "protein powder"], JAIN_VEG, { tbsp: 10, piece: 30 }, "piece", [400, 78, 8, 6, 0, 5, 3.5, 300, 400, 1]],

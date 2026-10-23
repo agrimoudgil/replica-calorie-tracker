@@ -22,7 +22,8 @@ const dal: RecipeInput = {
     { foodId: "seed-oil", quantity: 1, unit: "tbsp" },
   ],
 };
-const wholeKcal = 343 * 1.3 + 40 * 1.1 + 18 + 884 * 0.14; // 631.7
+const kcal100 = (id: string) => food(id).per100g.kcal;
+const wholeKcal = kcal100("raw-toor-dal") * 1.3 + kcal100("onion") * 1.1 + kcal100("tomato") + kcal100("oil") * 0.14;
 
 describe("recipes", () => {
   it("turns ingredients into a food whose serving is a quarter of the pot", () => {

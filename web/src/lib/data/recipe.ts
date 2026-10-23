@@ -42,7 +42,10 @@ export function recipeNumbers(input: Pick<RecipeInput, "servings" | "cookedGrams
   const rawGrams = round1(ingredients.reduce((sum, x) => sum + x.grams, 0));
   const totalGrams = input.cookedGrams && input.cookedGrams > 0 ? input.cookedGrams : rawGrams;
   const servings = input.servings > 0 ? input.servings : 1;
-  return { ingredients, total, rawGrams, totalGrams, servingGrams: round1(totalGrams / servings), perServing: scaleNutrients(total, 1 / servings) };
+  const servingGrams = round1(totalGrams / servings);
+  // Worked out like a logged serving (through the recipe's per-100 g), so the preview and the meal agree.
+  const perServing = totalGrams > 0 ? nutrientsForGrams({ per100g: scaleNutrients(total, 100 / totalGrams) }, servingGrams) : scaleNutrients(total, 0);
+  return { ingredients, total, rawGrams, totalGrams, servingGrams, perServing };
 }
 
 /**

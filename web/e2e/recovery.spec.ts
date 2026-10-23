@@ -18,8 +18,8 @@ async function seedCheckIns(userId: string, rows: Array<[number, number, number,
   if (error) throw error;
 }
 
-test.describe("REC recovery check-in", () => {
-  test("REC-H1 check in from Today, see it next to the calories, edit it, remove it", async ({ page, account }) => {
+test.describe("RCV recovery check-in", () => {
+  test("RCV-H1 check in from Today, see it next to the calories, edit it, remove it", async ({ page, account }) => {
     await page.goto("/");
     await expect(card(page).getByText(/How did you sleep/)).toBeVisible();
     await card(page).getByRole("button", { name: "Check in" }).click();
@@ -58,7 +58,7 @@ test.describe("REC recovery check-in", () => {
     expect(await checkIns(account.id)).toEqual([]);
   });
 
-  test("REC-H2 the card shows what you ate the day before; a past day takes its own check-in", async ({ page, account }) => {
+  test("RCV-H2 the card shows what you ate the day before; a past day takes its own check-in", async ({ page, account }) => {
     const yesterday = istDate(-1);
     await insertMeal(account.id, { meal_type: "lunch", eaten_at: lunchtime(yesterday) }); // phulka and dal: 388 kcal, 15.9 g protein
     await page.goto("/");
@@ -75,7 +75,7 @@ test.describe("REC recovery check-in", () => {
     expect(await checkIns(account.id)).toEqual([[yesterday, 6, 2, 4]]);
   });
 
-  test("REC-H3 Insights puts the week's check-ins next to calories, with a pattern once there are enough days", async ({ page, account }) => {
+  test("RCV-H3 Insights puts the week's check-ins next to calories, with a pattern once there are enough days", async ({ page, account }) => {
     await page.goto("/insights");
     await expect(page.getByRole("heading", { name: "Check in on Today" })).toBeVisible();
 
@@ -90,9 +90,9 @@ test.describe("REC recovery check-in", () => {
     await expectAccessible(page);
   });
 
-  test("REC-E1 check-ins are private, for days that have started, and come out in the export", async ({ page, account }) => {
+  test("RCV-E1 check-ins are private, for days that have started, and come out in the export", async ({ page, account }) => {
     // Someone else's check-in never shows.
-    const other = await createAccount(true, "rec-other");
+    const other = await createAccount(true, "rcv-other");
     try {
       await seedCheckIns(other.id, [[0, 3, 1, 5]]);
       await page.goto("/");
