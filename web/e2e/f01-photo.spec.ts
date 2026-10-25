@@ -182,11 +182,14 @@ test.describe("F01 log a meal by photo", () => {
   });
 });
 
-test("F02-P1 voice logging is clearly marked as coming later", async ({ page, account }) => {
-  await page.goto("/log");
-  await page.getByRole("link", { name: /Say it/ }).click();
-  await expect(page).toHaveURL(/\/log\/voice/);
-  await expect(page.getByText(/Voice logging comes later/)).toBeVisible();
+// Voice is on (VOICE_LOGGING=on): "Say it" opens Add food ready to listen, keeping the meal.
+test("F02-P1 Say it opens Add food ready to listen", async ({ page, account }) => {
+  await page.goto("/log/voice?meal=dinner");
+  await expect(page).toHaveURL(/\/log\/search\?mode=voice&meal=dinner/);
+  await expect(page.getByRole("heading", { name: "Add food" })).toBeVisible();
+  // A browser with speech recognition shows the microphone; one without says to type instead.
+  await expect(page.getByRole("button", { name: "Tap and say what you ate" }).or(page.getByText(/can't turn speech into text/))).toBeVisible();
+  await expect(page.getByRole("radio", { name: "Dinner" })).toBeChecked();
   await expectAccessible(page);
   expect(account.id).toBeTruthy();
 });
