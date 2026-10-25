@@ -32,3 +32,35 @@ export function dailyEstimateLimit(env: Env): number {
 export function mealModel(env: Env): string {
   return set(env.MEAL_MODEL) ?? "claude-opus-5-5";
 }
+
+/**
+ * AI reading of typed or spoken meals is off unless AI_TEXT_LOGGING=on. Off, typing uses
+ * only the free word matcher. On, the AI reads just the parts the matcher couldn't find;
+ * calories and macros still come from the food list, never from the AI.
+ */
+export function textLogging(env: Env): boolean {
+  return set(env.AI_TEXT_LOGGING)?.toLowerCase() === "on";
+}
+
+/** Model for reading typed and spoken meals; MEAL_MODEL (or its default) when not set. */
+export function textModel(env: Env): string {
+  return set(env.TEXT_MODEL) ?? mealModel(env);
+}
+
+/**
+ * Voice logging (the browser turns speech into text) is off unless VOICE_LOGGING=on.
+ * It costs nothing to run, but the browser's speech service hears the audio, so the
+ * privacy page has to say so before it is switched on.
+ */
+export function voiceLogging(env: Env): boolean {
+  return set(env.VOICE_LOGGING)?.toLowerCase() === "on";
+}
+
+/**
+ * AI calls allowed per day across everyone (all kinds): a whole number ≥ 0, else 300.
+ * The per-person limit alone can't cap spend, because anyone can open a new account.
+ */
+export function globalDailyAiLimit(env: Env): number {
+  const n = Number(set(env.AI_GLOBAL_DAILY_LIMIT) ?? Number.NaN);
+  return Number.isInteger(n) && n >= 0 ? n : 300;
+}

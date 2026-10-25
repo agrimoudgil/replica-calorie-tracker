@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { Screen, ScreenHeader } from "@/components/screen";
+import { VOICE_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
 import { addDays, isIsoDate, localDate, localHour, zonedTimeToUtc } from "@/lib/dates";
@@ -59,7 +60,8 @@ export default async function AddFoodPage({ searchParams }: PageProps<"/log/sear
       />
       <FoodLogger
         initialMealType={parseMealType(meal) ?? suggestMealType(localHour(new Date(), tz))}
-        focus={mode === "search" ? "search" : "type"}
+        focus={mode === "search" ? "search" : mode === "voice" && VOICE_LOGGING ? "voice" : "type"}
+        voice={VOICE_LOGGING}
         popular={popular}
         favourites={favourites}
         recipes={recipes}

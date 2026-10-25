@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { Camera, Mic, Search, Type } from "lucide-react";
 import { Screen, ScreenHeader } from "@/components/screen";
-import { PHOTO_LOGGING } from "@/lib/ai";
+import { AI_TEXT_LOGGING, PHOTO_LOGGING } from "@/lib/ai";
 
 export const metadata = { title: "Log a meal" };
 
 const METHODS = [
   { href: "/log/photo", label: "Take a photo", detail: "Fastest. We work out the items and portions.", icon: Camera },
   { href: "/log/voice", label: "Say it", detail: "“2 roti, dal and a bowl of curd”", icon: Mic },
-  { href: "/log/search?mode=type", label: "Type it", detail: "“2 roti, 1 katori dal aur dahi”. Free, no AI.", icon: Type },
+  {
+    href: "/log/search?mode=type",
+    label: "Type it",
+    detail: AI_TEXT_LOGGING ? "“2 roti, dal aur that green paneer dish”. AI reads what our list doesn't know." : "“2 roti, 1 katori dal aur dahi”. Free, no AI.",
+    icon: Type,
+  },
   { href: "/log/search?mode=search", label: "Search foods", detail: "Pick from Indian dishes and staples.", icon: Search },
 ];
 

@@ -19,8 +19,10 @@ import { changeUnit, defaultQuantity, gramsFor, nutrientsForGrams, sumNutrients 
 import { healthScore } from "@/lib/nutrition/score";
 import type { Food, MealType, Unit } from "@/lib/nutrition/types";
 import { portionText } from "@/lib/format";
+import { parseNotice, type ParseReply } from "@/lib/parse-notice";
 import type { QuickFood } from "@/lib/recents";
 import { BarcodeLookup } from "./barcode-lookup";
+import { useSpeechSupported, VoiceInput } from "./voice-input";
 
 const MEAL_OPTIONS: Array<{ value: MealType; label: string }> = [
   { value: "breakfast", label: "Breakfast" },
@@ -39,7 +41,9 @@ const portion = (l: Pick<Line, "food" | "quantity" | "unit">) => {
 
 type FoodLoggerProps = {
   initialMealType: MealType;
-  focus: "type" | "search";
+  focus: "type" | "search" | "voice";
+  /** Voice input is switched on (the browser turns speech into text). */
+  voice?: boolean;
   popular: Food[];
   favourites: QuickFood[];
   /** The person's recipes (not already favourites): one tap adds a serving. */
@@ -52,7 +56,7 @@ type FoodLoggerProps = {
   pastDay?: { date: string; eatenAt: Record<MealType, string> };
 };
 
-export function FoodLogger({ initialMealType, focus, popular, favourites: initialFavourites, recipes, recents, favouriteIds: initialIds, initialLines = [], pastDay }: FoodLoggerProps) {
+export function FoodLogger({ initialMealType, focus, voice = false, popular, favourites: initialFavourites, recipes, recents, favouriteIds: initialIds, initialLines = [], pastDay }: FoodLoggerProps) {
   const router = useRouter();
   const textId = useId();
   const [favouriteIds, setFavouriteIds] = useState(() => new Set(initialIds));
@@ -70,6 +74,10 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
   /** Starting values for "Create your own food" (from a barcode), if any. */
   const [start, setStart] = useState<CustomFoodStart | undefined>(undefined);
   const [scanning, setScanning] = useState(false);
+  /** Some of the typed text came from speech: the meal is saved as a voice meal. */
+  const [voiced, setVoiced] = useState(false);
+  const voiceBase = useRef("");
+  const speechSupported = useSpeechSupported();
   const mealId = useRef<string | null>(null);
 
   const totals = useMemo(
@@ -137,19 +145,17 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
     const res = await fetch("/api/foods/parse", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: value }),
+      body: JSON.stringify({ text: value, mealType }),
     }).catch(() => null);
     setParsing(false);
     if (!res?.ok) return setNotice(res ? "Couldn't read that. Try shorter phrases separated by commas." : "You seem to be offline.");
-    const body: { items: Array<{ food: Food; quantity: number; unit: Unit }>; unmatched: string[] } = await res.json();
+    const body: ParseReply = await res.json();
     body.items.forEach((i) => add(i.food, i.quantity, i.unit));
     if (body.items.length) {
       setTyped((t) => [...t, value]);
       setText("");
     }
-    const added = body.items.length ? `Added ${body.items.length} ${body.items.length === 1 ? "food" : "foods"}.` : "";
-    const missing = body.unmatched.length ? ` Couldn't find: ${body.unmatched.join(", ")}. Try searching for ${body.unmatched.length === 1 ? "it" : "them"} below.` : "";
-    setNotice((added + missing).trim() || "Couldn't find any foods in that. Try searching below.");
+    setNotice(parseNotice(body));
   };
 
   const editLine = (row: FoodItem) =>
@@ -172,7 +178,7 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
       body: JSON.stringify({
         id: mealId.current,
         mealType,
-        inputMethod: typed.length ? "text" : "search",
+        inputMethod: typed.length ? (voiced ? "voice" : "text") : "search",
         rawText: typed.length ? typed.join("; ").slice(0, 1000) : null,
         eatenAt: pastDay ? pastDay.eatenAt[mealType] : new Date().toISOString(),
         items: [...lines.map((l) => ({ foodId: l.food.id, quantity: l.quantity, unit: l.unit })), ...quickLines.map((q) => ({ custom: q.custom }))],
@@ -194,7 +200,25 @@ export function FoodLogger({ initialMealType, focus, popular, favourites: initia
       <SegmentedControl legend="Which meal?" value={mealType} onChange={setMealType} options={MEAL_OPTIONS} />
 
       <form onSubmit={findFoods} className="flex flex-col gap-2">
-        <label htmlFor={textId} className="text-sm font-semibold">Type what you ate</label>
+        {voice && focus === "voice" && speechSupported === false && (
+          <p className="rounded-md bg-surface px-3 py-2 text-sm">This browser can&apos;t turn speech into text. Type what you ate instead.</p>
+        )}
+        {voice && speechSupported === true && (
+          <VoiceInput
+            prominent={focus === "voice"}
+            onStart={() => {
+              voiceBase.current = text.trim();
+              setNotice(null);
+            }}
+            onText={(heard) => setText(voiceBase.current ? `${voiceBase.current}, ${heard}` : heard)}
+            onDone={(result) => {
+              if ("error" in result) return setNotice(result.error);
+              setVoiced(true);
+              setNotice("Check what I heard, fix any words, then tap Find foods.");
+            }}
+          />
+        )}
+        <label htmlFor={textId} className="text-sm font-semibold">{voice && speechSupported === true ? "Say or type what you ate" : "Type what you ate"}</label>
         <textarea
           id={textId}
           value={text}

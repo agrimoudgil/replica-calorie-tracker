@@ -238,4 +238,13 @@ describe("file store", () => {
     expect(await db.countAiUsageSince(A, new Date(now.getTime() - 1000))).toBe(1);
     expect(await db.countAiUsageSince(B, new Date(now.getTime() - 1000))).toBe(0);
   });
+
+  it("counts everyone's AI usage for the daily cap", async () => {
+    const now = new Date();
+    const at = (ms: number) => new Date(now.getTime() + ms).toISOString();
+    await db.recordAiUsage({ userId: A, kind: "photo", model: "m", inputTokens: 1, outputTokens: 1, createdAt: at(0) });
+    await db.recordAiUsage({ userId: B, kind: "text", model: "m", inputTokens: 1, outputTokens: 1, createdAt: at(0) });
+    await db.recordAiUsage({ userId: B, kind: "text", model: "m", inputTokens: 1, outputTokens: 1, createdAt: at(-2 * 86_400_000) });
+    expect(await db.countAllAiUsageSince(new Date(now.getTime() - 1000))).toBe(2);
+  });
 });

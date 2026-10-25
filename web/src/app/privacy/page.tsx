@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Screen, ScreenHeader } from "@/components/screen";
+import { AI_TEXT_LOGGING, VOICE_LOGGING } from "@/lib/ai";
 import { SITE } from "@/lib/site";
 
 export const metadata = { title: "Privacy policy", alternates: { canonical: "/privacy" } };
@@ -58,6 +59,12 @@ export default function PrivacyPage() {
           <li>
             <strong>Photos:</strong> photo logging is switched off, so we don&apos;t collect meal photos. If we switch it on, we&apos;ll update this page first.
           </li>
+          {VOICE_LOGGING && (
+            <li>
+              <strong>Voice:</strong> when you tap the microphone, your browser turns your speech into text, and only that text reaches us, like typing. We never
+              receive or keep the recording.
+            </li>
+          )}
         </ul>
         <p>We don&apos;t show ads, we don&apos;t use analytics or tracking tools, and we never sell or rent your data.</p>
       </Section>
@@ -81,6 +88,19 @@ export default function PrivacyPage() {
           <li><strong>Supabase:</strong> our database, sign-in and sign-in emails. Our project is hosted in Mumbai, India.</li>
           <li><strong>Vercel:</strong> hosts the app. Our server runs in Mumbai; like any website, requests pass through Vercel&apos;s network on the way.</li>
           <li><strong>Google:</strong> only if you choose to sign in with Google.</li>
+          {AI_TEXT_LOGGING && (
+            <li>
+              <strong>Anthropic:</strong> runs the AI that reads a typed or spoken meal when our food list doesn&apos;t recognise part of it. It receives only
+              those words, the meal (breakfast, lunch…) and how you eat (for example vegetarian), never your name or email. It may process them outside India.
+              Calories and macros still come from our food list, not from the AI.
+            </li>
+          )}
+          {VOICE_LOGGING && (
+            <li>
+              <strong>Your browser&apos;s speech service:</strong> voice input uses your browser&apos;s built-in speech recognition, which may send the audio to
+              the browser&apos;s maker (Google for Chrome, Apple for Safari) under their privacy terms. Don&apos;t want that? Type instead.
+            </li>
+          )}
         </ul>
         <p>
           When you look up a packaged food&apos;s barcode, our server asks Open Food Facts, a free, open food database, for that one number. It sends only

@@ -341,6 +341,11 @@ export function createFileStore(dir: string): DataLayer {
       return load().aiUsage.filter((u) => u.userId === userId && u.createdAt >= t).length;
     },
 
+    async countAllAiUsageSince(since) {
+      const t = since.toISOString();
+      return load().aiUsage.filter((u) => u.createdAt >= t).length;
+    },
+
     async deleteAccount(userId) {
       requireId(userId, "user");
       const s = load();

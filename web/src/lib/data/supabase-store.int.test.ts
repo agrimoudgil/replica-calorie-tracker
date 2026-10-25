@@ -327,6 +327,8 @@ describe.skipIf(!url || !publishable || !secret)("Supabase data layer (live proj
     const since = new Date(Date.now() - 60_000);
     expect(await a.store.countAiUsageSince(a.id, since)).toBe(1);
     expect(await b.store.countAiUsageSince(b.id, since)).toBe(0);
+    // The daily cap counts everyone, so b's store sees a's row too.
+    expect(await b.store.countAllAiUsageSince(since)).toBeGreaterThanOrEqual(1);
   });
 
   it("deletes an account with all its rows and photos", async () => {

@@ -620,6 +620,17 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       return count ?? 0;
     },
 
+    async countAllAiUsageSince(since) {
+      // Everyone's rows: only the secret key can see past row level security.
+      const { count, error } = await clients
+        .admin()
+        .from("ai_usage")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", since.toISOString());
+      if (error) throw toDataError(error);
+      return count ?? 0;
+    },
+
     async deleteAccount(userId) {
       if (!isId(userId)) throw new DataError("invalid", "Bad user id.");
       const admin = clients.admin();

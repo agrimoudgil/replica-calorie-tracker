@@ -35,6 +35,33 @@ export interface MealEstimator {
   fromPhoto(photo: MealPhoto, ctx: EstimateContext): Promise<EstimateResult>;
 }
 
+/** One food the AI read from a typed or spoken meal. It names the food and portion; it never gives nutrients. */
+export type ReadItem = {
+  /** What the person called it ("palak paneer"). */
+  name: string;
+  /** A plain English name to look up in a food database ("spinach and cottage cheese curry"). */
+  searchName: string;
+  quantity: number;
+  unit: Unit;
+  /** The AI's estimate of the portion's weight, used only when the food has no weight for the unit. */
+  grams: number;
+  confidence: "high" | "medium" | "low";
+};
+
+export type ReadResult = {
+  items: ReadItem[];
+  /** One short question when an amount or dish was too unclear to guess, else null. */
+  question: string | null;
+  model: string;
+  /** True when no AI ran (development reader); the UI says so. */
+  demo: boolean;
+  usage: { inputTokens: number; outputTokens: number };
+};
+
+export interface MealReader {
+  fromText(text: string, ctx: EstimateContext): Promise<ReadResult>;
+}
+
 export class EstimateError extends Error {
   constructor(
     public readonly code: "refused" | "unreadable" | "unavailable",

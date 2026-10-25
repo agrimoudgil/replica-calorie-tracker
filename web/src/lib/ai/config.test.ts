@@ -1,5 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { dailyEstimateLimit, estimatorMode, mealModel, photoLogging } from "./config";
+import { dailyEstimateLimit, estimatorMode, globalDailyAiLimit, mealModel, photoLogging, textLogging, textModel, voiceLogging } from "./config";
+
+describe("AI text and voice switches", () => {
+  it("are off unless set to on, even with a key present", () => {
+    for (const read of [textLogging, voiceLogging]) {
+      expect(read({})).toBe(false);
+      expect(read({ ANTHROPIC_API_KEY: "key" })).toBe(false);
+    }
+    for (const v of ["", "off", "yes", "1"]) {
+      expect(textLogging({ AI_TEXT_LOGGING: v })).toBe(false);
+      expect(voiceLogging({ VOICE_LOGGING: v })).toBe(false);
+    }
+    expect(textLogging({ AI_TEXT_LOGGING: " On " })).toBe(true);
+    expect(voiceLogging({ VOICE_LOGGING: "on" })).toBe(true);
+  });
+
+  it("reads the text model, falling back to the meal model and its default", () => {
+    expect(textModel({})).toBe("claude-opus-5-5");
+    expect(textModel({ MEAL_MODEL: "claude-sonnet-5-5", TEXT_MODEL: " " })).toBe("claude-sonnet-5-5");
+    expect(textModel({ MEAL_MODEL: "claude-sonnet-5-5", TEXT_MODEL: "claude-haiku-5-5" })).toBe("claude-haiku-5-5");
+  });
+
+  it("reads the daily cap for everyone, falling back to 300", () => {
+    expect(globalDailyAiLimit({ AI_GLOBAL_DAILY_LIMIT: "50" })).toBe(50);
+    expect(globalDailyAiLimit({ AI_GLOBAL_DAILY_LIMIT: "0" })).toBe(0);
+    for (const v of [undefined, "", "lots", "-1", "1.5"]) expect(globalDailyAiLimit({ AI_GLOBAL_DAILY_LIMIT: v })).toBe(300);
+  });
+});
 
 describe("photo logging switch", () => {
   it("is off unless set to on, even with a key present", () => {

@@ -3,7 +3,7 @@ import { SEED_FOODS } from "@/lib/nutrition/foods";
 import { gramsFor, nutrientsForGrams } from "@/lib/nutrition/portions";
 import type { Unit } from "@/lib/nutrition/types";
 import type { Box } from "@/lib/photo-boxes";
-import type { EstimatedItem, MealEstimator } from "./types";
+import type { EstimatedItem, MealEstimator, MealReader, ReadItem } from "./types";
 
 /*
  * Development estimator: no AI call, no cost. It cannot see the photo, so it picks
@@ -47,6 +47,29 @@ export function createFakeEstimator(): MealEstimator {
         };
       });
       return { isFood: true, items, model: "demo", demo: true, usage: { inputTokens: 0, outputTokens: 0 } };
+    },
+  };
+}
+
+/*
+ * Development reader: no AI call, no cost. It can't understand anything; it splits the
+ * text on commas and "and", takes a leading number as the amount, and passes the rest on
+ * as the food's name, so the matching and review steps can be tried. Marked demo.
+ */
+export function createFakeReader(): MealReader {
+  return {
+    async fromText(text) {
+      const items: ReadItem[] = text
+        .split(/\s*(?:,|\band\b|\baur\b)\s*/i)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .slice(0, 12)
+        .map((part) => {
+          const m = part.match(/^(\d+(?:\.\d+)?)\s+(.*)$/);
+          const name = (m ? m[2] : part).trim();
+          return { name, searchName: name, quantity: m ? Number(m[1]) : 1, unit: "katori", grams: 150, confidence: "low" };
+        });
+      return { items, question: null, model: "demo", demo: true, usage: { inputTokens: 0, outputTokens: 0 } };
     },
   };
 }

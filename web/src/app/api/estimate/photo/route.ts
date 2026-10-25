@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/data";
 import { currentUserId } from "@/lib/data/session";
-import { DAILY_ESTIMATE_LIMIT, EstimateError, PHOTO_LOGGING, estimator } from "@/lib/ai";
+import { DAILY_ESTIMATE_LIMIT, EstimateError, GLOBAL_DAILY_AI_LIMIT, PHOTO_LOGGING, estimator } from "@/lib/ai";
 import { fail, fromError, invalid, unauthenticated } from "@/lib/api/http";
 import { photoFieldsSchema } from "@/lib/api/schemas";
 import { sniffImage } from "@/lib/images";
@@ -41,6 +41,9 @@ export async function POST(req: Request) {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
     if ((await db.countAiUsageSince(userId, since)) >= DAILY_ESTIMATE_LIMIT) {
       return fail(429, "quota", `You've used today's ${DAILY_ESTIMATE_LIMIT} free photo estimates. You can still search and add foods.`);
+    }
+    if ((await db.countAllAiUsageSince(since)) >= GLOBAL_DAILY_AI_LIMIT) {
+      return fail(429, "busy", "Photo estimates are resting for today. You can still type, search and add foods.");
     }
 
     const result = await estimator.fromPhoto({ bytes, mediaType }, { mealType, dietType: profile.dietType });

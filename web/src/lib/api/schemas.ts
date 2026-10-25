@@ -87,13 +87,15 @@ export const favouriteSchema = z.object({ favourite: z.boolean() });
 
 export const parseMealSchema = z.object({
   text: z.string().trim().min(1, "Type what you ate.").max(500, "Keep it under 500 characters."),
+  /** Context for AI reading; optional, so older clients still work. */
+  mealType: z.enum(MEAL_TYPES).optional(),
 });
 
 /** A meal built from catalogue foods (typed or searched). Nutrients are computed on the server. */
 export const catalogueMealSchema = z.object({
   id: z.uuid(),
   mealType: z.enum(MEAL_TYPES),
-  inputMethod: z.enum(["text", "search"]),
+  inputMethod: z.enum(["text", "voice", "search"]),
   rawText: z.string().max(1000).nullable().optional(),
   eatenAt: z.iso.datetime({ offset: true }),
   items: z.array(newItem).min(1, "Add at least one food.").max(12, "Up to 12 foods per meal."),
