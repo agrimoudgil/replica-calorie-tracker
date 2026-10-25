@@ -10,5 +10,5 @@ export const SITE = {
   /** When the terms of use last changed (shown on the page). */
   termsUpdated: "22 October 2026",
   /** When the privacy policy last changed (shown on the page). */
-  privacyUpdated: "23 October 2026",
+  privacyUpdated: "25 October 2026",
 } as const;
