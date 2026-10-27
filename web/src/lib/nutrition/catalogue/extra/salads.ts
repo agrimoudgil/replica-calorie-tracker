@@ -1,0 +1,56 @@
+import type { DishRow } from "../rows";
+
+/* Salads, raitas (a katori is about 100 g) and dips (a tablespoon is about 15 g). */
+export const SALAD_ROWS: DishRow[] = [
+  // Salads
+  ["paneer-fruit-salad", "Paneer, apple and pineapple salad", "पनीर फ्रूट सलाद", ["paneer apple pineapple salad", "paneer fruit salad"], { katori: 150 }, "katori", [["paneer", 40], ["apple", 50], ["pineapple", 40], ["curd-dressing", 20]], 150],
+  ["russian-salad", "Russian salad", "रशियन सलाद", ["olivier salad"], { katori: 135 }, "katori", [["boiled-potato", 40], ["carrot", 30], ["green-peas", 20], ["pineapple", 20], ["mayonnaise", 25]], 135],
+  ["pasta-salad", "Pasta salad", "पास्ता सलाद", ["cold pasta salad"], { katori: 150 }, "katori", [["pasta", 30], ["capsicum", 20], ["tomato", 20], ["cucumber", 20], ["mayonnaise", 15]], 150],
+  ["macaroni-salad", "Macaroni salad", "मैकरोनी सलाद", ["macaroni mayo salad"], { katori: 150 }, "katori", [["pasta", 30], ["mayonnaise", 20], ["capsicum", 15], ["carrot", 15], ["onion", 10]], 150],
+  ["deviled-eggs", "Deviled eggs", "डेविल्ड एग्स", ["devilled eggs", "deviled egg"], { piece: 30 }, "piece", [["boiled-egg", 50], ["mayonnaise", 8], ["prepared-mustard", 2]], 60],
+  ["hawaiian-salad", "Hawaiian salad", "हवाईयन सलाद", ["hawain salad", "pineapple salad"], { katori: 135 }, "katori", [["pineapple", 60], ["apple", 30], ["lettuce", 20], ["cream", 10], ["mayonnaise", 10], ["walnuts", 5]], 135],
+  ["mixed-pulse-salad", "Mixed pulse and vegetable salad", "मिक्स दाल सलाद", ["mixed pulse salad", "bean salad"], { katori: 140 }, "katori", [["boiled-chickpeas", 40], ["boiled-rajma", 40], ["onion", 15], ["tomato", 20], ["cucumber", 20], ["lemon-juice", 5], ["salt", 0.6]], 140],
+  ["veg-curd-salad", "Mixed vegetable salad with curd sauce", "दही वाला मिक्स वेज सलाद", ["vegetable salad with curd dressing"], { katori: 130 }, "katori", [["cucumber", 30], ["carrot", 25], ["tomato", 25], ["cabbage", 20], ["curd-dressing", 30]], 130],
+  ["potato-salad", "Potato salad", "आलू का सलाद", ["aloo ka salaad", "aloo salad"], { katori: 125 }, "katori", [["boiled-potato", 100], ["mayonnaise", 15], ["onion", 10], ["salt", 0.5]], 125],
+  ["sour-cream-potato-salad", "Sour cream potato salad", "सावर क्रीम आलू सलाद", ["creamy potato salad"], { katori: 135 }, "katori", [["boiled-potato", 100], ["sour-cream", 25], ["onion", 10], ["salt", 0.5]], 135],
+  ["waldorf-salad", "Waldorf salad", "वॉल्डॉर्फ़ सलाद", ["waldroff salad"], { katori: 120 }, "katori", [["apple", 70], ["celery", 20], ["walnuts", 10], ["mayonnaise", 20]], 120],
+  ["coleslaw", "Coleslaw", "कोलस्लॉ", ["cole slaw"], { katori: 115 }, "katori", [["cabbage", 70], ["carrot", 20], ["mayonnaise", 20], ["vinegar", 3], ["sugar", 2]], 115],
+  ["beetroot-egg-salad", "Beetroot and egg salad", "चुकंदर अंडा सलाद", ["chukandar aur ande ka salad"], { katori: 130 }, "katori", [["beetroot", 60], ["boiled-egg", 50], ["onion", 10], ["french-dressing", 10]], 130],
+  ["spring-basket-salad", "Spring basket salad", "स्प्रिंग बास्केट सलाद", ["spring salad"], { katori: 115 }, "katori", [["lettuce", 20], ["cucumber", 25], ["tomato", 25], ["carrot", 20], ["mooli", 15], ["french-dressing", 10]], 115],
+  ["chicken-tomato-towers", "Chicken and tomato towers", "चिकन टमाटर टावर्स", ["chicken tomato towers"], { piece: 70 }, "piece", [["tomato", 100], ["raw-chicken-breast", 40], ["mayonnaise", 10], ["lettuce", 10]], 140],
+  ["chicken-salad", "Chicken salad", "चिकन सलाद", ["chicken mayo salad"], { katori: 120 }, "katori", [["raw-chicken-breast", 70], ["mayonnaise", 15], ["celery", 15], ["lettuce", 20], ["apple", 20]], 120],
+  ["kale-salad", "Kale salad", "केल सलाद", ["kale apple salad"], { katori: 115 }, "katori", [["kale", 50], ["apple", 30], ["carrot", 15], ["walnuts", 8], ["french-dressing", 12]], 115],
+  ["jellied-fruit-salad", "Jellied sunshine fruit salad", "जेली फ्रूट सलाद", ["jelly fruit salad"], { katori: 120 }, "katori", [["orange-juice", 80], ["pineapple", 30], ["grapes", 30], ["sugar", 15], ["gelatin", 3]], 160],
+  ["tomato-aspic", "Tomato aspic", "टोमैटो ऐस्पिक", ["tomato jelly"], { katori: 120 }, "katori", [["tomato", 150], ["gelatin", 4], ["lemon-juice", 5], ["sugar", 2], ["salt", 0.8]], 150],
+  ["frozen-fruit-salad", "Frozen fruit salad", "फ्रोज़न फ्रूट सलाद", ["frozen frosty fruit salad", "phalon ka salaad"], { katori: 140 }, "katori", [["banana", 30], ["apple", 30], ["pineapple", 30], ["grapes", 20], ["whipping-cream", 20], ["sugar", 10]], 140],
+
+  // Raitas
+  ["tomato-onion-raita", "Tomato onion raita", "टमाटर प्याज़ रायता", ["tamatar aur pyaaz ka raita", "onion tomato raita"], { katori: 100 }, "katori", [["curd", 80], ["tomato", 20], ["onion", 15], ["salt", 0.6]], 115],
+  ["peanut-raita", "Peanut raita", "मूंगफली रायता", ["mungfali ka raita", "moongphali raita"], { katori: 100 }, "katori", [["curd", 80], ["peanuts", 12], ["salt", 0.6]], 92],
+  ["sprouts-raita", "Sprouted moong raita", "अंकुरित मूंग रायता", ["sprouts raita"], { katori: 100 }, "katori", [["curd", 80], ["moong-sprouts", 25], ["salt", 0.6]], 106],
+  ["lauki-raita", "Lauki raita", "लौकी रायता", ["bottle gourd raita", "ghiya ka raita", "doodhi raita"], { katori: 100 }, "katori", [["curd", 80], ["lauki", 40], ["salt", 0.6]], 115],
+  ["carrot-spinach-raita", "Carrot spinach raita", "गाजर पालक रायता", ["gajar aur palak ka raita"], { katori: 100 }, "katori", [["curd", 80], ["carrot", 15], ["raw-spinach", 15], ["salt", 0.6]], 110],
+  ["pudina-raita", "Pudina raita", "पुदीना रायता", ["mint raita", "pudinay ka raita"], { katori: 100 }, "katori", [["curd", 90], ["mint", 4], ["salt", 0.6]], 95],
+  ["aloo-raita", "Aloo raita", "आलू का रायता", ["potato raita", "aloo ka raita"], { katori: 100 }, "katori", [["curd", 80], ["boiled-potato", 35], ["salt", 0.6]], 115],
+  ["meetha-raita", "Meetha raita", "मीठा रायता", ["sweet raita"], { katori: 100 }, "katori", [["curd", 90], ["sugar", 8], ["raisins", 4]], 102],
+  ["gajar-raita", "Gajar raita", "गाजर का रायता", ["carrot raita"], { katori: 100 }, "katori", [["curd", 80], ["carrot", 30], ["salt", 0.6]], 110],
+  ["kaddu-raita", "Kaddu raita", "कद्दू का रायता", ["pumpkin raita"], { katori: 100 }, "katori", [["curd", 80], ["pumpkin", 30], ["sugar", 2], ["salt", 0.6]], 112],
+  ["mint-peanut-raita", "Mint peanut raita", "पुदीना मूंगफली रायता", ["mint and peanut raita", "pudinay aur moongfali ka raita"], { katori: 100 }, "katori", [["curd", 80], ["peanuts", 8], ["mint", 3], ["salt", 0.6]], 92],
+  ["palak-raita", "Palak raita", "पालक रायता", ["spinach raita", "palak ka raita"], { katori: 100 }, "katori", [["curd", 80], ["raw-spinach", 30], ["salt", 0.6]], 110],
+  ["bathua-raita", "Bathua raita", "बथुआ रायता", ["bathua ka raita"], { katori: 100 }, "katori", [["curd", 80], ["bathua", 30], ["salt", 0.6]], 110],
+  ["ananas-raita", "Ananas raita", "अनानास रायता", ["pineapple raita", "ananas ka raita"], { katori: 100 }, "katori", [["curd", 80], ["pineapple", 30], ["sugar", 4]], 114],
+  ["kela-raita", "Kela raita", "केले का रायता", ["banana raita", "kele ka raita"], { katori: 100 }, "katori", [["curd", 80], ["banana", 35], ["sugar", 3]], 118],
+  ["aam-raita", "Aam raita", "आम का रायता", ["mango raita", "aam ka raita"], { katori: 100 }, "katori", [["curd", 80], ["mango", 35], ["sugar", 3]], 118],
+  ["amrood-raita", "Amrood raita", "अमरूद का रायता", ["guava raita", "amarood ka raita"], { katori: 100 }, "katori", [["curd", 80], ["guava", 30], ["sugar", 2], ["salt", 0.5]], 112],
+  ["angoor-raita", "Angoor raita", "अंगूर का रायता", ["grapes raita", "angoor ka raita"], { katori: 100 }, "katori", [["curd", 80], ["grapes", 30], ["sugar", 2]], 112],
+  ["cabbage-raita", "Cabbage raita", "पत्तागोभी रायता", ["pattagobhi raita"], { katori: 100 }, "katori", [["curd", 80], ["cabbage", 25], ["salt", 0.6]], 105],
+  ["anaar-raita", "Anaar raita", "अनार का रायता", ["pomegranate raita", "anaar ka raita"], { katori: 100 }, "katori", [["curd", 80], ["pomegranate", 25], ["salt", 0.5]], 105],
+  ["pyaaz-raita", "Pyaaz raita", "प्याज़ का रायता", ["onion raita", "pyaaz ka raita"], { katori: 100 }, "katori", [["curd", 80], ["onion", 25], ["salt", 0.6]], 105],
+  ["hari-mirch-raita", "Hari mirch raita", "हरी मिर्च रायता", ["green chilli raita"], { katori: 100 }, "katori", [["curd", 90], ["green-chilli", 5], ["salt", 0.6]], 95],
+
+  // Dips
+  ["curd-dip", "Curd dip", "दही डिप", ["hung curd dip", "yogurt dip"], { tbsp: 15 }, "tbsp", [["curd", 100], ["garlic", 2], ["salt", 0.5]], 70],
+  ["curd-mint-dip", "Curd mint dip", "दही पुदीना डिप", ["mint yogurt dip"], { tbsp: 15 }, "tbsp", [["curd", 90], ["mint", 4], ["salt", 0.5]], 80],
+  ["curd-veg-dip", "Curd vegetable dip", "दही वेज डिप", ["veg yogurt dip"], { tbsp: 15 }, "tbsp", [["curd", 80], ["carrot", 10], ["capsicum", 10], ["salt", 0.5]], 90],
+  ["mayo-veg-dip", "Mayonnaise vegetable dip", "मेयो वेज डिप", ["mayo dip"], { tbsp: 15 }, "tbsp", [["mayonnaise", 50], ["carrot", 10], ["capsicum", 10], ["cabbage", 10]], 80],
+];

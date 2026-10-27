@@ -1,0 +1,80 @@
+import type { DishRow } from "../rows";
+
+/* Breads, rice, pasta and noodles. Fried breads count only the oil they soak up. */
+export const BREAD_RICE_ROWS: DishRow[] = [
+  // Parathas (one each)
+  ["dal-paratha", "Dal paratha", "दाल पराठा", ["dal parantha", "dal stuffed paratha"], { piece: 120 }, "piece", [["atta", 50], ["raw-chana-dal", 20], ["oil", 8], ["salt", 1]], 120],
+  ["sprouted-moong-paratha", "Sprouted moong paratha", "अंकुरित मूंग पराठा", ["sprouts paratha", "sprouted moong parantha"], { piece: 120 }, "piece", [["atta", 50], ["moong-sprouts", 40], ["oil", 8], ["salt", 1]], 120],
+  ["matar-paratha", "Matar paratha", "मटर पराठा", ["pea paratha", "matar ka paratha", "matar parantha", "pea parantha"], { piece: 120 }, "piece", [["atta", 50], ["green-peas", 40], ["oil", 8], ["salt", 1]], 120],
+  ["keema-paratha", "Keema paratha", "कीमा पराठा", ["keema parantha", "mince paratha"], { piece: 130 }, "piece", [["atta", 50], ["keema", 50], ["oil", 8]], 130],
+  ["besan-palak-paratha", "Besan palak paratha", "बेसन पालक पराठा", ["besan and spinach paratha", "besan aur palak ka paratha", "palak paratha", "besan and spinach parantha"], { piece: 110 }, "piece", [["atta", 40], ["besan", 15], ["raw-spinach", 25], ["oil", 8], ["salt", 1]], 110],
+  ["pyaaz-paratha", "Pyaaz paratha", "प्याज़ पराठा", ["onion paratha", "onion green chilli paratha", "pyaaz aur hari mirch ka paratha", "onion parantha", "onion green chilli parantha"], { piece: 115 }, "piece", [["atta", 50], ["onion", 30], ["green-chilli", 3], ["oil", 8], ["salt", 1]], 115],
+  ["tandoori-paratha", "Tandoori paratha", "तंदूरी पराठा", ["tandoori parantha"], { piece: 95 }, "piece", [["atta", 60], ["ghee", 8], ["salt", 0.8]], 95],
+  ["puran-poli", "Puran poli", "पूरन पोली", ["puranpoli", "sweet chana dal roti", "obbattu", "holige", "sweet split chickpea roti"], { piece: 90 }, "piece", [["maida", 25], ["raw-chana-dal", 30], ["jaggery", 25], ["ghee", 6]], 90],
+  ["soya-roti", "Soya roti", "सोया रोटी", ["soy roti", "soya chapati"], { piece: 45 }, "piece", [["atta", 25], ["raw-soybean", 8]], 45],
+  ["paushtik-roti", "Paushtik roti", "पौष्टिक रोटी", ["poshtik roti", "nutritious roti"], { piece: 50 }, "piece", [["atta", 25], ["besan", 8], ["raw-spinach", 10], ["salt", 0.3]], 50],
+
+  // Pooris and kachori (one each)
+  ["palak-poori", "Palak poori", "पालक पूरी", ["spinach poori", "palak puri"], { piece: 30 }, "piece", [["atta", 20], ["raw-spinach", 8], ["oil", 5], ["salt", 0.2]], 30],
+  ["methi-poori", "Methi poori", "मेथी पूरी", ["methi puri"], { piece: 29 }, "piece", [["atta", 20], ["methi-leaves", 6], ["oil", 5], ["salt", 0.2]], 29],
+  ["dal-poori", "Dal poori", "दाल पूरी", ["dal stuffed poori", "dal puri"], { piece: 38 }, "piece", [["atta", 20], ["raw-chana-dal", 8], ["oil", 6], ["salt", 0.3]], 38],
+  ["aloo-ki-poori", "Aloo ki poori", "आलू की पूरी", ["potato stuffed poori", "stuffed aloo poori"], { piece: 44 }, "piece", [["atta", 20], ["boiled-potato", 20], ["oil", 6], ["salt", 0.3]], 44],
+  ["bathua-poori", "Bathua poori", "बथुआ पूरी", ["bathua puri"], { piece: 30 }, "piece", [["atta", 20], ["bathua", 8], ["oil", 5], ["salt", 0.2]], 30],
+  ["besan-poori", "Besan poori", "बेसन पूरी", ["gram flour poori", "besan puri"], { piece: 30 }, "piece", [["atta", 15], ["besan", 8], ["oil", 6], ["salt", 0.2]], 30],
+  ["beetroot-poori", "Beetroot poori", "चुकंदर पूरी", ["chukandar ki poori", "beetroot puri"], { piece: 32 }, "piece", [["atta", 20], ["beetroot", 10], ["oil", 5], ["salt", 0.2]], 32],
+  ["matar-poori", "Matar poori", "मटर की पूरी", ["peas poori", "matar ki poori", "matar puri"], { piece: 34 }, "piece", [["atta", 20], ["green-peas", 10], ["oil", 6], ["salt", 0.2]], 34],
+  ["meethi-poori", "Meethi poori", "मीठी पूरी", ["sweet poori", "meethi puri"], { piece: 30 }, "piece", [["atta", 20], ["sugar", 5], ["oil", 5]], 30],
+  ["matar-kachori", "Matar kachori", "मटर कचौरी", ["peas kachori", "hare matar ki kachori"], { piece: 50 }, "piece", [["maida", 25], ["green-peas", 20], ["oil", 10], ["salt", 0.4]], 50],
+
+  // Dosa (one each)
+  ["jowar-dosa", "Jowar dosa", "ज्वार डोसा", ["jonna dosa", "sorghum dosa"], { piece: 70 }, "piece", [["jowar-flour", 30], ["rice-flour", 10], ["oil", 3], ["salt", 0.4]], 70],
+  ["veg-masala-dosa", "Vegetable masala dosa", "वेज मसाला डोसा", ["masala dosa mixed vegetable fillings", "mixed veg dosa", "veg masala dosa"], { piece: 200 }, "piece", [["dosa", 90], ["boiled-potato", 50], ["carrot", 15], ["green-peas", 15], ["beans", 10], ["onion", 15], ["oil", 5], ["salt", 0.6]], 200],
+  ["paneer-masala-dosa", "Paneer masala dosa", "पनीर मसाला डोसा", ["masala dosa paneer fillings", "paneer dosa"], { piece: 165 }, "piece", [["dosa", 90], ["paneer", 40], ["onion", 15], ["tomato", 15], ["oil", 5], ["salt", 0.5]], 165],
+
+  // Rice and pulao (a katori is about 150 g; a plate of pulao is about 200 g)
+  ["plain-pulao", "Plain pulao", "सादा पुलाव", ["plain pulav", "ghee rice"], { katori: 150 }, "katori", [["raw-rice", 60], ["ghee", 6], ["salt", 1]], 180],
+  ["mushroom-pulao", "Mushroom pulao", "मशरूम पुलाव", ["mushroom pulav", "mushroom rice"], { katori: 150 }, "katori", [["raw-rice", 60], ["mushroom", 50], ["onion", 15], ["oil", 7], ["salt", 1]], 230],
+  ["sprouted-moong-pulao", "Sprouted moong pulao", "अंकुरित मूंग पुलाव", ["sprouts pulao"], { katori: 150 }, "katori", [["raw-rice", 50], ["moong-sprouts", 40], ["onion", 15], ["oil", 6], ["salt", 1]], 220],
+  ["paneer-pulao", "Paneer pulao", "पनीर पुलाव", ["paneer pulav", "paneer rice"], { katori: 150 }, "katori", [["raw-rice", 60], ["paneer", 40], ["onion", 15], ["oil", 7], ["salt", 1]], 230],
+  ["peanut-pulao", "Peanut pulao", "मूंगफली पुलाव", ["moongphali pulao", "peanut rice"], { katori: 150 }, "katori", [["raw-rice", 60], ["peanuts", 15], ["onion", 15], ["oil", 6], ["salt", 1]], 210],
+  ["navratan-pulao", "Navratan pulao", "नवरतन पुलाव", ["navratan pulav", "nine jewel pulao"], { katori: 150 }, "katori", [["raw-rice", 60], ["carrot", 15], ["green-peas", 15], ["beans", 10], ["paneer", 15], ["cashews", 6], ["raisins", 6], ["ghee", 8], ["salt", 1]], 250],
+  ["choliya-pulao", "Hare chane ka pulao", "हरे चने का पुलाव", ["choliya pulao", "green chickpeas pulao", "hara chana pulao"], { katori: 150 }, "katori", [["raw-rice", 60], ["green-peas", 40], ["onion", 15], ["oil", 6], ["salt", 1]], 220], // fresh green chickpeas aren't in USDA; green peas stand in
+  ["matar-pulao", "Matar pulao", "मटर पुलाव", ["peas pulao", "matar pulav", "peas rice"], { katori: 150 }, "katori", [["raw-rice", 60], ["green-peas", 40], ["ghee", 6], ["salt", 1]], 220],
+  ["chana-dal-pulao", "Chana dal vegetable pulao", "चना दाल पुलाव", ["split bengal gram dal and vegetable pulao", "channa dal and vegetable pulao"], { katori: 150 }, "katori", [["raw-rice", 50], ["raw-chana-dal", 20], ["carrot", 15], ["green-peas", 15], ["oil", 6], ["salt", 1]], 240],
+  ["kala-chana-pulao", "Kale chane ka pulao", "काले चने का पुलाव", ["black channa pulao", "bengal gram pulao", "kala chana pulao"], { katori: 150 }, "katori", [["raw-rice", 50], ["raw-kala-chana", 20], ["onion", 15], ["oil", 6], ["salt", 1]], 230],
+  ["mutton-pulao", "Mutton pulao", "मटन पुलाव", ["gosht pulao", "yakhni pulao"], { katori: 200 }, "katori", [["raw-rice", 60], ["raw-mutton", 60], ["onion", 20], ["curd", 10], ["oil", 8], ["salt", 1.2]], 280],
+  ["chicken-pulao", "Chicken pulao", "चिकन पुलाव", ["murgh pulao", "chicken pulav"], { katori: 200 }, "katori", [["raw-rice", 60], ["raw-chicken", 60], ["onion", 20], ["curd", 10], ["oil", 8], ["salt", 1.2]], 280],
+  ["meethe-chawal", "Meethe chawal", "मीठे चावल", ["sweet rice", "zarda", "meetha pulao"], { katori: 120 }, "katori", [["raw-rice", 50], ["sugar", 25], ["ghee", 8], ["raisins", 5], ["cashews", 4]], 180],
+  ["chana-dal-sweet-rice", "Chana dal sweet rice", "चना दाल मीठे चावल", ["split bengal gram sweet rice", "channa dal sweet rice"], { katori: 120 }, "katori", [["raw-rice", 40], ["raw-chana-dal", 15], ["jaggery", 25], ["ghee", 6]], 190],
+  ["spanish-rice", "Spanish rice", "स्पैनिश राइस", ["tomato pilaf"], { katori: 150 }, "katori", [["raw-rice", 60], ["tomato", 50], ["onion", 20], ["capsicum", 15], ["oil", 7], ["salt", 1]], 230],
+  ["mexican-rice", "Mexican rice", "मैक्सिकन राइस", ["mexican rice bowl"], { katori: 150 }, "katori", [["raw-rice", 60], ["tomato", 40], ["onion", 20], ["sweet-corn", 20], ["raw-black-beans", 10], ["oil", 7], ["salt", 1]], 250],
+  ["vangi-bhat", "Vangi bhat", "वांगी भात", ["brinjal rice", "eggplant rice", "vangibath"], { katori: 150 }, "katori", [["raw-rice", 60], ["brinjal", 60], ["peanuts", 4], ["raw-chana-dal", 3], ["oil", 8], ["salt", 1]], 250],
+  ["tahar", "Tahar", "तहर", ["kashmiri tahar", "yellow rice"], { katori: 150 }, "katori", [["raw-rice", 60], ["oil", 8], ["turmeric", 1], ["salt", 1]], 190],
+  ["quinoa-khichdi", "Quinoa khichdi", "क्विनोआ खिचड़ी", ["quinoa khichri"], { katori: 200 }, "katori", [["raw-quinoa", 40], ["raw-moong-dal", 20], ["carrot", 15], ["oil", 5], ["salt", 1]], 250],
+  ["dalia-khichdi", "Dalia khichdi", "दलिया खिचड़ी", ["cracked wheat khichdi", "dalia khichri"], { katori: 200 }, "katori", [["dalia", 40], ["raw-moong-dal", 20], ["carrot", 10], ["green-peas", 10], ["ghee", 4], ["salt", 1]], 280],
+  ["palak-khichdi", "Palak khichdi", "पालक खिचड़ी", ["spinach khichri", "spinach khichdi"], { katori: 200 }, "katori", [["raw-rice", 35], ["raw-moong-dal", 20], ["raw-spinach", 40], ["ghee", 4], ["salt", 1]], 280],
+  ["poshtik-khichdi", "Poshtik khichdi", "पौष्टिक खिचड़ी", ["poshtik khichri", "nutritious khichdi"], { katori: 200 }, "katori", [["raw-rice", 30], ["raw-moong-dal", 15], ["raw-masoor-dal", 10], ["carrot", 15], ["raw-spinach", 20], ["ghee", 4], ["salt", 1]], 280],
+  ["namkeen-seviyan", "Namkeen seviyan", "नमकीन सेवइयां", ["vegetable namkeen jave", "savoury vermicelli", "jave"], { katori: 150 }, "katori", [["vermicelli", 45], ["onion", 15], ["carrot", 15], ["green-peas", 15], ["oil", 6], ["salt", 1]], 200],
+
+  // Pasta and noodles (a katori is about 200 g)
+  ["macaroni-cheese-pie", "Macaroni cheese pie", "मैकरोनी चीज़ पाई", ["macroni cheese pie", "baked macaroni"], { katori: 150 }, "katori", [["pasta", 50], ["cheese-sauce", 100], ["cheddar", 15], ["butter", 3]], 220],
+  ["chicken-chowmein", "Chicken chowmein", "चिकन चाउमीन", ["chicken noodles", "chicken hakka noodles"], { katori: 200 }, "katori", [["egg-noodles", 60], ["raw-chicken-breast", 50], ["cabbage", 30], ["capsicum", 15], ["carrot", 15], ["oil", 8], ["soy-sauce", 6], ["salt", 0.6]], 260],
+  ["cheese-noodle-ring", "Cheese noodle ring", "चीज़ नूडल रिंग", ["baked noodle ring"], { katori: 150 }, "katori", [["egg-noodles", 50], ["cheese-sauce", 80], ["raw-egg", 25], ["butter", 3]], 220],
+  ["spaghetti-cheese-balls", "Spaghetti and cheese balls in tomato sauce", "चीज़ बॉल्स वाली स्पेगेटी", ["spaghetti cheese balls"], { katori: 200 }, "katori", [["pasta", 60], ["tomato-pasta-sauce", 100], ["cheddar", 20], ["white-bread", 10], ["oil", 8], ["salt", 0.5]], 260],
+  ["penne-platter", "Penne platter", "पेने प्लैटर", ["penne in white sauce", "penne pasta"], { katori: 200 }, "katori", [["pasta", 60], ["white-sauce", 60], ["mushroom", 20], ["capsicum", 20], ["cheddar", 10]], 250],
+  ["pasta-hot-pot", "Pasta hot pot", "पास्ता हॉट पॉट", ["baked pasta"], { katori: 200 }, "katori", [["pasta", 50], ["tomato-pasta-sauce", 80], ["white-sauce", 40], ["carrot", 20], ["green-peas", 15], ["cheddar", 10]], 250],
+  ["chicken-lasagne", "Chicken lasagne", "चिकन लज़ान्या", ["chicken lasagna"], { katori: 200 }, "katori", [["pasta", 50], ["raw-chicken-breast", 60], ["tomato-pasta-sauce", 80], ["white-sauce", 60], ["cheddar", 20]], 280],
+  ["fettuccine-spinach", "Fettuccine with spinach sauce", "पालक सॉस वाला फ़ेटुचीनी", ["spinach fettuccine"], { katori: 200 }, "katori", [["pasta", 60], ["raw-spinach", 60], ["white-sauce", 60], ["parmesan", 5], ["garlic", 3]], 260],
+  ["beans-macaroni", "Beans and macaroni", "बीन्स मैकरोनी", ["macaroni with beans", "pasta e fagioli"], { katori: 200 }, "katori", [["pasta", 50], ["boiled-rajma", 50], ["tomato-pasta-sauce", 60], ["cheddar", 10]], 250],
+  ["spaghetti-bolognese", "Spaghetti bolognese", "स्पेगेटी बोलोनीज़", ["spag bol", "spaghetti with meat sauce"], { katori: 200 }, "katori", [["pasta", 60], ["bolognese-sauce", 120], ["parmesan", 5]], 270],
+  ["meat-macaroni-casserole", "Meat and macaroni casserole", "मीट मैकरोनी कैसरोल", ["macaroni casserole"], { katori: 200 }, "katori", [["pasta", 50], ["bolognese-sauce", 100], ["white-sauce", 50], ["cheddar", 15]], 260],
+  ["spaghetti-meatballs", "Spaghetti with meatballs", "मीटबॉल स्पेगेटी", ["spaghetti with meat balls and tomato sauce", "spaghetti meatballs"], { katori: 200 }, "katori", [["pasta", 60], ["raw-mutton", 60], ["tomato-pasta-sauce", 100], ["white-bread", 10], ["raw-egg", 10], ["oil", 6], ["salt", 0.5]], 280],
+  ["spaghetti-paneer-balls", "Spaghetti with paneer balls", "पनीर बॉल्स स्पेगेटी", ["spaghetti with paneer balls and tomato sauce"], { katori: 200 }, "katori", [["pasta", 60], ["paneer", 50], ["tomato-pasta-sauce", 100], ["white-bread", 10], ["oil", 8], ["salt", 0.5]], 270],
+  ["lasagne-meat", "Lasagne with meat sauce", "मीट लज़ान्या", ["meat lasagna", "lasagne"], { katori: 200 }, "katori", [["pasta", 50], ["bolognese-sauce", 120], ["white-sauce", 70], ["cheddar", 20]], 280],
+  ["lasagne-veg", "Vegetable lasagne", "वेज लज़ान्या", ["lasagne with vegetables", "veg lasagna"], { katori: 200 }, "katori", [["pasta", 50], ["tomato-pasta-sauce", 90], ["white-sauce", 70], ["carrot", 20], ["raw-spinach", 30], ["mushroom", 20], ["cheddar", 20]], 300],
+  ["classic-italian-pasta", "Classic Italian pasta", "क्लासिक इटैलियन पास्ता", ["aglio olio", "garlic olive oil pasta"], { katori: 200 }, "katori", [["pasta", 70], ["oil", 10], ["garlic", 5], ["parmesan", 5], ["salt", 1]], 200],
+  ["pasta-spinach-sauce", "Pasta in spinach sauce", "पालक सॉस पास्ता", ["pasta spinach sauce", "green pasta"], { katori: 200 }, "katori", [["pasta", 70], ["raw-spinach", 50], ["white-sauce", 50], ["garlic", 3], ["salt", 0.5]], 250],
+  ["pasta-cheese-sauce", "Pasta in cheese sauce", "चीज़ सॉस पास्ता", ["mac and cheese", "macaroni cheese", "cheese pasta", "pasta cheese sauce"], { katori: 200 }, "katori", [["pasta", 70], ["cheese-sauce", 100]], 260],
+  ["homemade-noodles", "Home made plain noodles", "घर के बने नूडल्स", ["homemade noodles", "plain noodles"], { katori: 150 }, "katori", [["maida", 70], ["salt", 1]], 180],
+  ["homemade-egg-noodles", "Home made egg noodles", "घर के बने एग नूडल्स", ["homemade egg noodles"], { katori: 150 }, "katori", [["maida", 70], ["raw-egg", 25], ["salt", 1]], 200],
+];

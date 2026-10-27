@@ -3,16 +3,24 @@ import { rankFoods } from "@/lib/data/food-rank";
 import { DISH_RECIPES, INGREDIENT_ONLY_IDS, SEED_FOODS, matchFood, normalizeFoodName } from "./foods";
 import { parseMeal } from "./parse-meal";
 import { gramsFor, nutrientsForGrams } from "./portions";
+import worldRows from "./world/usda-foods.json";
 
 const byId = (id: string) => SEED_FOODS.find((f) => f.id === `seed-${id}`)!;
 
 describe("seed catalogue", () => {
-  it("has about 300 foods with unique ids and names (the database requires unique names)", () => {
-    expect(SEED_FOODS.length).toBeGreaterThanOrEqual(300);
+  it("has about 1,300 foods with unique ids and names (the database requires unique names)", () => {
+    expect(SEED_FOODS.length).toBeGreaterThanOrEqual(1300);
     expect(new Set(SEED_FOODS.map((f) => f.id)).size).toBe(SEED_FOODS.length);
     for (const f of SEED_FOODS) expect(f.id).toMatch(/^seed-[a-z0-9-]+$/);
     const names = SEED_FOODS.map((f) => f.name.toLowerCase());
     expect(names.filter((n, i) => names.indexOf(n) !== i)).toEqual([]);
+  });
+
+  it("takes no name a world food already has in the database (shared names are unique, so seeding would fail)", () => {
+    const usda = new Set((worldRows as unknown as Array<[number, string]>).map(([, name]) => name.toLowerCase()));
+    // Honey was in the catalogue before world foods arrived, so USDA's "Honey" was never seeded.
+    const clashes = SEED_FOODS.filter((f) => f.id !== "seed-honey" && usda.has(f.name.toLowerCase())).map((f) => f.name);
+    expect(clashes).toEqual([]);
   });
 
   it("gives every name and alias to one food only, so typing and search are predictable", () => {
@@ -29,6 +37,9 @@ describe("seed catalogue", () => {
   });
 
   it("has believable numbers: macros fit in 100 g, and calories agree with them", () => {
+    // USDA works out these three with food-specific energy factors (much of their protein
+    // and fibre isn't absorbed), so the general 4/4/9 check doesn't fit; Oswald keeps USDA's values.
+    const specificFactors = new Set(["seed-cocoa", "seed-coriander-seeds", "seed-cloves"]);
     const problems: string[] = [];
     for (const f of SEED_FOODS) {
       const n = f.per100g;
@@ -38,7 +49,7 @@ describe("seed catalogue", () => {
       if (n.proteinG + n.carbG + n.fatG > 100.5) problems.push(`${f.id}: macros over 100 g`);
       if ((n.sugarG ?? 0) > n.carbG + 0.5 || n.fiberG > n.carbG + 0.5) problems.push(`${f.id}: sugar or fibre above carbs`);
       if ((n.satFatG ?? 0) > n.fatG + 0.1) problems.push(`${f.id}: saturated fat above fat`);
-      if (n.kcal >= 20 && Math.abs(n.kcal - atwater) > Math.max(0.15 * n.kcal, 15)) problems.push(`${f.id}: ${n.kcal} kcal vs ${Math.round(atwater)} from macros`);
+      if (n.kcal >= 20 && !specificFactors.has(f.id) && Math.abs(n.kcal - atwater) > Math.max(0.15 * n.kcal, 15)) problems.push(`${f.id}: ${n.kcal} kcal vs ${Math.round(atwater)} from macros`);
     }
     expect(problems).toEqual([]);
   });

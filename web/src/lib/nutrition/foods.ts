@@ -1,17 +1,22 @@
 import { DISH_ROWS } from "./catalogue/dishes";
+import { EXTRA_ALIASES, EXTRA_DISH_ROWS, PREP_ONLY_IDS } from "./catalogue/extra";
 import { INGREDIENT_ROWS, READY_ROWS } from "./catalogue/ingredients";
+import { USDA_INGREDIENT_ROWS, USDA_READY_ROWS } from "./catalogue/usda-ingredients";
 import { EGG, JAIN_VEG, JAIN_VEGAN, MEAT, VEG, VEGAN, type DishRow, type Row } from "./catalogue/rows";
 import { nutrientsForGrams, scaleNutrients, sumKnownNutrients } from "./portions";
 import { DIET_TYPES, type Food, type Nutrients } from "./types";
 
 /*
- * The shared food catalogue (about 330 foods), seeded into the database by
+ * The shared food catalogue (about 1,200 foods), seeded into the database by
  * scripts/seed.ts. Values are rough per-100 g estimates, source "ai", verified false:
  * - the first dishes below were estimated directly for typical home cooking;
  * - raw ingredients and ready-to-eat foods (catalogue/ingredients.ts) follow USDA
- *   FoodData Central and IFCT 2017;
- * - the other cooked dishes (catalogue/dishes.ts) are typical home recipes whose
- *   values and diet tags are worked out from those ingredients, as architecture.md plans.
+ *   FoodData Central and IFCT 2017, and catalogue/usda-ingredients.ts adds more from USDA;
+ * - the other cooked dishes (catalogue/dishes.ts and catalogue/extra/) are typical home
+ *   recipes whose values and diet tags are worked out from those ingredients, as
+ *   architecture.md plans. The extra dishes cover the dish list of the Indian Nutrient
+ *   Databank (INDB); the recipes are Oswald's own, with cooked weights and only the
+ *   frying oil a food absorbs, not INDB's numbers.
  */
 
 const rows: Row[] = [
@@ -74,7 +79,11 @@ const ingredientRows: Row[] = [
 ];
 
 /** Catalogue foods that are cooking ingredients only: never suggested as a meal. */
-export const INGREDIENT_ONLY_IDS: ReadonlySet<string> = new Set([...ingredientRows, ...INGREDIENT_ROWS].map(([id]) => `seed-${id}`));
+export const INGREDIENT_ONLY_IDS: ReadonlySet<string> = new Set([
+  ...[...ingredientRows, ...INGREDIENT_ROWS, ...USDA_INGREDIENT_ROWS].map(([id]) => `seed-${id}`),
+  // Stocks, sauces, doughs, icings and spice mixes: made to cook with, not eaten on their own.
+  ...PREP_ONLY_IDS.map((id) => `seed-${id}`),
+]);
 
 function toNutrients(n: Row[7]): Nutrients {
   const [kcal, proteinG, carbG, fatG, fiberG, sugarG, satFatG, sodiumMg, calciumMg, ironMg] = n;
@@ -121,12 +130,18 @@ function fromRecipe([id, name, nameHi, aliases, unitGrams, defaultUnit, recipe, 
 }
 
 function buildCatalogue(): Food[] {
-  const foods = [...rows, ...ingredientRows, ...INGREDIENT_ROWS, ...READY_ROWS].map(fromRow);
+  const foods = [...rows, ...ingredientRows, ...INGREDIENT_ROWS, ...USDA_INGREDIENT_ROWS, ...READY_ROWS, ...USDA_READY_ROWS].map(fromRow);
   const known = new Map(foods.map((f) => [f.id, f]));
-  for (const dish of DISH_ROWS) {
+  for (const dish of [...DISH_ROWS, ...EXTRA_DISH_ROWS]) {
     const food = fromRecipe(dish, known);
     known.set(food.id, food);
     foods.push(food);
+  }
+  // Other names people use for foods already here ("Uble chawal" is Steamed rice).
+  for (const [id, names] of Object.entries(EXTRA_ALIASES)) {
+    const food = known.get(`seed-${id}`);
+    if (!food) throw new Error(`Extra names for unknown food ${id}`);
+    food.aliases = [...food.aliases, ...names];
   }
   return foods;
 }
@@ -135,7 +150,7 @@ export const SEED_FOODS: readonly Food[] = buildCatalogue();
 
 /** The recipe behind each computed dish, for checks and for showing how a number came about. */
 export const DISH_RECIPES: ReadonlyMap<string, { recipe: DishRow[6]; cookedGrams: number }> = new Map(
-  DISH_ROWS.map(([id, , , , , , recipe, cookedGrams]) => [`seed-${id}`, { recipe, cookedGrams }]),
+  [...DISH_ROWS, ...EXTRA_DISH_ROWS].map(([id, , , , , , recipe, cookedGrams]) => [`seed-${id}`, { recipe, cookedGrams }]),
 );
 
 export function normalizeFoodName(s: string): string {

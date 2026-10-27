@@ -24,8 +24,11 @@ if (!url || !key) {
 const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 
 async function seedFoods() {
-  const { error } = await admin.from("foods").upsert(SEED_FOODS.map(foodToRow), { onConflict: "id" });
-  if (error) throw new Error(`foods: ${error.message}`);
+  // In batches, like the world foods: the catalogue is over 1,000 foods.
+  for (let i = 0; i < SEED_FOODS.length; i += 500) {
+    const { error } = await admin.from("foods").upsert(SEED_FOODS.slice(i, i + 500).map(foodToRow), { onConflict: "id" });
+    if (error) throw new Error(`foods (from ${i}): ${error.message}`);
+  }
   console.log(`Catalogue: ${SEED_FOODS.length} foods upserted.`);
 }
 

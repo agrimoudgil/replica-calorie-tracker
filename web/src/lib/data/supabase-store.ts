@@ -214,6 +214,8 @@ function toDataError(error: PostgrestError): Error {
 
 const MEAL_WITH_ITEMS = "*, meal_items(*)";
 const MEAL_PAGE = 500;
+/** The most rows one Supabase request returns (max_rows in supabase/config.toml). */
+const FOOD_PAGE = 1000;
 const photoKey = (userId: string, mealId: string) => `${userId}/${mealId}.jpg`;
 
 export function createSupabaseStore(clients: Clients): DataLayer {
@@ -297,11 +299,17 @@ export function createSupabaseStore(clients: Clients): DataLayer {
     },
 
     async listFoods() {
-      // Never the 7,700 world foods: a page holds at most 1,000 rows, and they'd push the catalogue out.
+      // Never the 7,700 world foods. The catalogue alone is over 1,000 rows, the most one
+      // request returns, so read it page by page (ordered by id too, so pages never overlap).
       const db = await clients.user();
-      const { data, error } = await db.from("foods").select("*").neq("source", "usda").order("name");
-      if (error) throw toDataError(error);
-      return data.map(foodFromRow);
+      const rows: Row[] = [];
+      for (let from = 0; ; from += FOOD_PAGE) {
+        const { data, error } = await db.from("foods").select("*").neq("source", "usda").order("name").order("id").range(from, from + FOOD_PAGE - 1);
+        if (error) throw toDataError(error);
+        rows.push(...data);
+        if (data.length < FOOD_PAGE) break;
+      }
+      return rows.map(foodFromRow);
     },
 
     async getFoods(_userId, ids) {
