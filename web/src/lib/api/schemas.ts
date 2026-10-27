@@ -54,9 +54,19 @@ export const quickAddSchema = z.object({
   fiberG: amount("Fibre", 200).optional(),
 });
 
+/** An AI estimate for a food the list doesn't have; the server checks the numbers again. */
+export const aiEstimateSchema = macroNumbersSchema.extend({
+  name: z.string().trim().min(1).max(120),
+  quantity,
+  unit: z.enum(UNITS),
+  grams: z.number().positive().max(3000),
+  confidence: z.enum(["high", "medium", "low"]),
+});
+
 const newItem = z.union([
   z.object({ foodId, quantity, unit: z.enum(UNITS), name: z.string().trim().max(120).optional(), override: macroNumbersSchema.optional() }).strict(),
   z.object({ custom: quickAddSchema }).strict(),
+  z.object({ estimate: aiEstimateSchema }).strict(),
 ]);
 
 export const saveMealSchema = z.object({

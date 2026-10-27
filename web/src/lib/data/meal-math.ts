@@ -1,7 +1,7 @@
 import { healthScore } from "@/lib/nutrition/score";
-import { gramsFor, nutrientsForGrams, rescaleItem, round1, sumNutrients } from "@/lib/nutrition/portions";
+import { clampGrams, gramsFor, nutrientsForGrams, rescaleItem, round1, sanitizeNutrients, sumNutrients } from "@/lib/nutrition/portions";
 import type { Food, Nutrients } from "@/lib/nutrition/types";
-import { DataError, type ItemEdit, type MacroNumbers, type Meal, type MealItem, type QuickAdd } from "./types";
+import { DataError, type AiEstimate, type ItemEdit, type MacroNumbers, type Meal, type MealItem, type QuickAdd } from "./types";
 
 export function mealTotals(meal: Pick<Meal, "items">) {
   return sumNutrients(meal.items.map((i) => i.nutrients));
@@ -38,6 +38,17 @@ export function quickAddItem(q: QuickAdd): Omit<MealItem, "id" | "position"> {
   return { foodId: null, name, quantity: 1, unit: "piece", grams: QUICK_ADD_GRAMS, nutrients: cleanMacros(q), source: "user" };
 }
 
+/**
+ * A food the list doesn't have, at the AI's portion and numbers. They come back from the
+ * browser, so they're checked again here: in range, no more energy than pure fat, no more
+ * macros than the portion weighs. Saved as an AI item with its confidence, like photo items.
+ */
+export function aiEstimateItem(e: AiEstimate): Omit<MealItem, "id" | "position"> {
+  const grams = clampGrams(e.grams);
+  const name = e.name.trim().slice(0, 120) || "AI estimate";
+  return { foodId: null, name, quantity: e.quantity, unit: e.unit, grams, nutrients: sanitizeNutrients(cleanMacros(e), grams), source: "ai", aiConfidence: e.confidence };
+}
+
 /** True for quick-added items (no catalogue food, numbers typed by the person). */
 export const isQuickAdd = (item: Pick<MealItem, "foodId" | "source">) => item.foodId === null && item.source === "user";
 
@@ -59,6 +70,7 @@ export function applyItemEdits(meal: Meal, edits: ItemEdit[], foods: readonly Fo
 
   return edits.map((edit, position): MealItem => {
     if ("custom" in edit) return { ...quickAddItem(edit.custom), id: crypto.randomUUID(), position };
+    if ("estimate" in edit) return { ...aiEstimateItem(edit.estimate), id: crypto.randomUUID(), position };
     if (!("id" in edit)) {
       const added: MealItem = { ...itemFromFood(mustFood(edit.foodId), edit.quantity, edit.unit), id: crypto.randomUUID(), position };
       return withNameAndNumbers(added, edit.name, edit.override);

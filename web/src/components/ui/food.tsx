@@ -78,8 +78,8 @@ export type FoodItem = {
   unit: Unit;
   kcal: number;
   confidence?: Confidence;
-  /** Numbers typed by the person: "quick" = a quick add (no portion), "own" = a food with their numbers. */
-  entered?: "quick" | "own";
+  /** Where the numbers come from: "quick" = a quick add (no portion), "own" = the person's numbers, "ai" = an AI estimate (not in the food list). */
+  entered?: "quick" | "own" | "ai";
   /** Its number on the meal photo, when the photo has markers. */
   marker?: number;
 };
@@ -113,6 +113,7 @@ export function FoodItemRow({ item, editable = false, onChange, onRemove, favour
             <span className="text-sm text-muted">{quick ? "Quick add, your numbers" : `${item.quantity} ${item.unit}`}</span>
           )}
           {item.entered === "own" && <span className="text-xs text-muted">Your numbers</span>}
+          {item.entered === "ai" && <span className="text-xs text-muted">AI estimate, not in the food list</span>}
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <span className="text-sm font-semibold tabular-nums">{Math.round(item.kcal)} kcal</span>

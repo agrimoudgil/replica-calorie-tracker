@@ -1,11 +1,31 @@
 import { matchFood, normalizeFoodName } from "@/lib/nutrition/foods";
-import { clampGrams, MAX_ITEM_GRAMS } from "@/lib/nutrition/portions";
-import { UNITS, type Food, type Unit } from "@/lib/nutrition/types";
+import { clampGrams, MAX_ITEM_GRAMS, round1, sanitizeNutrients } from "@/lib/nutrition/portions";
+import { UNITS, type Food, type Nutrients, type Unit } from "@/lib/nutrition/types";
 import type { ReadItem } from "./types";
 
 export const MAX_READ_ITEMS = 12;
 
-type RawReadItem = { name: string; search_name: string; quantity: number; unit: string; grams: number; confidence: ReadItem["confidence"] };
+type RawEstimate = { kcal: number; protein_g: number; carb_g: number; fat_g: number; fiber_g: number };
+type RawReadItem = { name: string; search_name: string; quantity: number; unit: string; grams: number; confidence: ReadItem["confidence"] } & Partial<RawEstimate>;
+
+/**
+ * The AI's numbers for a portion, made safe: no negatives, no more energy than pure fat,
+ * no more macros than the portion weighs. When its calories and its macros disagree by
+ * more than a quarter, the calories are worked out from the macros (4 kcal a gram of
+ * protein and carbs, 2 of fibre, 9 of fat), since a model is steadier on the parts.
+ * No calories at all means no estimate.
+ */
+export function cleanEstimate(raw: Partial<RawEstimate>, grams: number): Nutrients | null {
+  const n = sanitizeNutrients(
+    { kcal: raw.kcal ?? Number.NaN, proteinG: raw.protein_g ?? 0, carbG: raw.carb_g ?? 0, fatG: raw.fat_g ?? 0, fiberG: raw.fiber_g ?? 0 },
+    grams,
+  );
+  if (!(n.kcal > 0)) return null;
+  n.fiberG = Math.min(n.fiberG, n.carbG);
+  const fromMacros = 4 * n.proteinG + 4 * (n.carbG - n.fiberG) + 2 * n.fiberG + 9 * n.fatG;
+  if (fromMacros > 0 && Math.abs(n.kcal - fromMacros) > Math.max(0.25 * n.kcal, 20)) n.kcal = round1(Math.min(fromMacros, grams * 9));
+  return n;
+}
 
 /** Turns model output into safe items: names trimmed, amounts sensible, the list capped. */
 export function cleanReadItems(raw: RawReadItem[]): ReadItem[] {
@@ -28,6 +48,7 @@ export function cleanReadItems(raw: RawReadItem[]): ReadItem[] {
         unit,
         grams,
         confidence: r.confidence,
+        estimate: cleanEstimate(r, grams),
       };
     });
 }
@@ -41,6 +62,18 @@ export type MatchedItem = {
   portionEstimated: boolean;
   /** What the AI read, to show next to the food it was matched to. */
   heard: string;
+  /** The AI's own calories for the portion, to flag a match that looks far off. */
+  aiKcal: number | null;
+};
+
+/** A food the list doesn't have, logged with the AI's checked numbers for the portion. */
+export type TextEstimate = {
+  name: string;
+  quantity: number;
+  unit: Unit;
+  grams: number;
+  nutrients: Nutrients;
+  confidence: ReadItem["confidence"];
 };
 
 /** A food whose name or alias is exactly this (after normalising), or its singular ("eggs" → "egg"), else null. */
@@ -82,17 +115,19 @@ function fits(food: Food, query: string): boolean {
 
 /**
  * Finds each item in the food list (Oswald's catalogue and the person's own foods first,
- * then search, which adds world foods). Calories and macros then come from that food.
- * Exact names come first and loose word matching last: a description like "yogurt drink"
- * must not become Curd just because it contains "yogurt". An item with no match is
- * reported, never given made-up numbers.
+ * then search, which adds world foods). Calories and macros then come from that food, so
+ * the same dish always counts the same. Exact names come first and loose word matching
+ * last: a description like "yogurt drink" must not become Curd just because it contains
+ * "yogurt". A food the list doesn't have keeps the AI's checked estimate; one with no
+ * usable estimate either is reported as not found, never given made-up numbers.
  */
 export async function matchReadItems(
   items: readonly ReadItem[],
   foods: readonly Food[],
   search: (query: string) => Promise<Food[]>,
-): Promise<{ items: MatchedItem[]; unmatched: string[] }> {
+): Promise<{ items: MatchedItem[]; estimated: TextEstimate[]; unmatched: string[] }> {
   const matched: MatchedItem[] = [];
+  const estimated: TextEstimate[] = [];
   const unmatched: string[] = [];
   for (const item of items) {
     let food = exactFood(item.name, foods) ?? exactFood(item.searchName, foods);
@@ -102,7 +137,13 @@ export async function matchReadItems(
     }
     food ??= matchFood(item.name, foods);
     if (!food) {
-      unmatched.push(item.name);
+      if (item.estimate) {
+        // The numbers are for the AI's weight, so a portion in grams is that weight ("2 plates" isn't 2 g).
+        const quantity = item.unit === "g" ? Math.round(item.grams) : item.quantity;
+        estimated.push({ name: item.name, quantity, unit: item.unit, grams: item.grams, nutrients: item.estimate, confidence: item.confidence });
+      } else {
+        unmatched.push(item.name);
+      }
       continue;
     }
     // The food list's own weight for the unit when it has one; otherwise the AI's weight in grams.
@@ -114,7 +155,8 @@ export async function matchReadItems(
       confidence: item.confidence,
       portionEstimated: !known,
       heard: item.name,
+      aiKcal: item.estimate?.kcal ?? null,
     });
   }
-  return { items: matched, unmatched };
+  return { items: matched, estimated, unmatched };
 }

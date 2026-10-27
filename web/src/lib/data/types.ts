@@ -76,6 +76,9 @@ export type MacroNumbers = { kcal: number; proteinG: number; carbG: number; fatG
 /** A food someone adds by hand, without a catalogue entry ("Quick add"). */
 export type QuickAdd = { name: string } & Partial<MacroNumbers> & { kcal: number };
 
+/** A food the food list doesn't have, with the AI's numbers for the portion, which the person saw before saving. */
+export type AiEstimate = { name: string; quantity: number; unit: Unit; grams: number; confidence: "high" | "medium" | "low" } & MacroNumbers;
+
 /**
  * One item in a save. Existing items (by id) can change portion, be renamed, be swapped
  * for another food, or get the person's own numbers. New items come from the catalogue
@@ -84,7 +87,8 @@ export type QuickAdd = { name: string } & Partial<MacroNumbers> & { kcal: number
 export type ItemEdit =
   | { id: string; quantity: number; unit: Unit; name?: string; foodId?: string; override?: MacroNumbers }
   | { foodId: string; quantity: number; unit: Unit; name?: string; override?: MacroNumbers }
-  | { custom: QuickAdd };
+  | { custom: QuickAdd }
+  | { estimate: AiEstimate };
 
 export type SaveMealInput = {
   mealType: MealType;

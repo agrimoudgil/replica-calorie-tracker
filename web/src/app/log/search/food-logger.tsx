@@ -13,13 +13,13 @@ import { Chip, SegmentedControl } from "@/components/ui/fields";
 import { EmptyState } from "@/components/ui/feedback";
 import { FoodItemRow, type FoodItem } from "@/components/ui/food";
 import { BottomSheet } from "@/components/ui/overlays";
-import { quickAddItem } from "@/lib/data/meal-math";
+import { cleanMacros, quickAddItem } from "@/lib/data/meal-math";
 import type { QuickAdd } from "@/lib/data/types";
-import { changeUnit, defaultQuantity, gramsFor, nutrientsForGrams, sumNutrients } from "@/lib/nutrition/portions";
+import { changeUnit, defaultQuantity, gramsFor, nutrientsForGrams, rescaleItem, sumNutrients } from "@/lib/nutrition/portions";
 import { healthScore } from "@/lib/nutrition/score";
 import type { Food, MealType, Unit } from "@/lib/nutrition/types";
 import { portionText } from "@/lib/format";
-import { parseNotice, type ParseReply } from "@/lib/parse-notice";
+import { parseNotice, type ParsedEstimate, type ParseReply } from "@/lib/parse-notice";
 import type { QuickFood } from "@/lib/recents";
 import { BarcodeLookup } from "./barcode-lookup";
 import { useSpeechSupported, VoiceInput } from "./voice-input";
@@ -66,6 +66,8 @@ export function FoodLogger({ initialMealType, focus, voice = false, popular, fav
   const [typed, setTyped] = useState<string[]>([]);
   const [lines, setLines] = useState<Line[]>(() => initialLines.map((l, i) => ({ ...l, key: `start-${i}` })));
   const [quickLines, setQuickLines] = useState<Array<{ key: string; custom: QuickAdd }>>([]);
+  /** Foods the food list doesn't have, with the AI's numbers; saved as AI items. */
+  const [estimateLines, setEstimateLines] = useState<Array<{ key: string; estimate: ParsedEstimate }>>([]);
   const [parsing, setParsing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -81,10 +83,15 @@ export function FoodLogger({ initialMealType, focus, voice = false, popular, fav
   const mealId = useRef<string | null>(null);
 
   const totals = useMemo(
-    () => sumNutrients([...lines.map((l) => portion(l).nutrients), ...quickLines.map((q) => quickAddItem(q.custom).nutrients)]),
-    [lines, quickLines],
+    () =>
+      sumNutrients([
+        ...lines.map((l) => portion(l).nutrients),
+        ...quickLines.map((q) => quickAddItem(q.custom).nutrients),
+        ...estimateLines.map((e) => e.estimate.nutrients),
+      ]),
+    [lines, quickLines, estimateLines],
   );
-  const count = lines.length + quickLines.length;
+  const count = lines.length + quickLines.length + estimateLines.length;
   const score = count ? healthScore(totals) : null;
 
   const changeLines = (update: (list: Line[]) => Line[]) => {
@@ -150,12 +157,30 @@ export function FoodLogger({ initialMealType, focus, voice = false, popular, fav
     setParsing(false);
     if (!res?.ok) return setNotice(res ? "Couldn't read that. Try shorter phrases separated by commas." : "You seem to be offline.");
     const body: ParseReply = await res.json();
+    const estimates = body.estimates ?? [];
     body.items.forEach((i) => add(i.food, i.quantity, i.unit));
-    if (body.items.length) {
+    if (estimates.length) {
+      mealId.current = null;
+      setEstimateLines((list) => [...list, ...estimates.map((estimate) => ({ key: crypto.randomUUID(), estimate }))]);
+    }
+    if (body.items.length || estimates.length) {
       setTyped((t) => [...t, value]);
       setText("");
     }
-    setNotice(parseNotice(body));
+    setNotice(parseNotice(body, (i) => portion(i).nutrients.kcal));
+  };
+
+  /** A new portion for an AI estimate: its numbers scale with the weight. */
+  const editEstimate = (row: FoodItem) => {
+    mealId.current = null;
+    setError(null);
+    setEstimateLines((list) =>
+      list.map((e) => {
+        if (e.key !== row.id) return e;
+        const estimate = row.unit === e.estimate.unit ? rescaleItem(e.estimate, row.quantity, row.unit) : changeUnit(e.estimate, row.unit);
+        return { ...e, estimate };
+      }),
+    );
   };
 
   const editLine = (row: FoodItem) =>
@@ -181,7 +206,13 @@ export function FoodLogger({ initialMealType, focus, voice = false, popular, fav
         inputMethod: typed.length ? (voiced ? "voice" : "text") : "search",
         rawText: typed.length ? typed.join("; ").slice(0, 1000) : null,
         eatenAt: pastDay ? pastDay.eatenAt[mealType] : new Date().toISOString(),
-        items: [...lines.map((l) => ({ foodId: l.food.id, quantity: l.quantity, unit: l.unit })), ...quickLines.map((q) => ({ custom: q.custom }))],
+        items: [
+          ...lines.map((l) => ({ foodId: l.food.id, quantity: l.quantity, unit: l.unit })),
+          ...quickLines.map((q) => ({ custom: q.custom })),
+          ...estimateLines.map(({ estimate: e }) => ({
+            estimate: { name: e.name, quantity: e.quantity, unit: e.unit, grams: e.grams, confidence: e.confidence, ...cleanMacros(e.nutrients) },
+          })),
+        ],
       }),
     }).catch(() => null);
     if (res?.ok) {
@@ -336,6 +367,18 @@ export function FoodLogger({ initialMealType, focus, voice = false, popular, fav
                   onRemove={(row) => changeLines((list) => list.filter((x) => x.key !== row.id))}
                   favourite={favouriteIds.has(l.food.id)}
                   onToggleFavourite={() => toggleFavourite(l)}
+                />
+              ))}
+              {estimateLines.map(({ key, estimate: e }) => (
+                <FoodItemRow
+                  key={key}
+                  item={{ id: key, name: e.name, quantity: e.quantity, unit: e.unit, kcal: e.nutrients.kcal, confidence: e.confidence, entered: "ai" }}
+                  editable
+                  onChange={editEstimate}
+                  onRemove={() => {
+                    mealId.current = null;
+                    setEstimateLines((list) => list.filter((x) => x.key !== key));
+                  }}
                 />
               ))}
               {quickLines.map((q) => (

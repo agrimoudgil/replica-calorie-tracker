@@ -46,6 +46,8 @@ export type ReadItem = {
   /** The AI's estimate of the portion's weight, used only when the food has no weight for the unit. */
   grams: number;
   confidence: "high" | "medium" | "low";
+  /** The AI's own numbers for the whole portion, checked; used only when the food list doesn't have the food. */
+  estimate: Nutrients | null;
 };
 
 export type ReadResult = {

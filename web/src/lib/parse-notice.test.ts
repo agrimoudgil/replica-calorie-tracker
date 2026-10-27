@@ -39,4 +39,28 @@ describe("parseNotice", () => {
       "Couldn't find: sushi. Try searching for it below. AI reading is resting for today.",
     );
   });
+
+  it("says which foods are AI estimates because the food list doesn't have them", () => {
+    const notice = parseNotice({
+      items: [],
+      estimates: [{ name: "Bisi bele bath", quantity: 1, unit: "katori", grams: 200, nutrients: { kcal: 259.6, proteinG: 8, carbG: 40, fatG: 7.5, fiberG: 5 }, confidence: "medium" }],
+      unmatched: [],
+      ai: { used: true, demo: false, question: null, note: null },
+    });
+    expect(notice).toBe("Added 1 food. Not in the food list, so these are AI estimates: Bisi bele bath (about 260 kcal). Check them; you can change the portion.");
+  });
+
+  it("flags a match the AI expected to be very different", () => {
+    const reply = {
+      items: [
+        { food: food("seed-curd"), quantity: 1, unit: "katori" as const, ai: { confidence: "high" as const, portionEstimated: false, heard: "dahi", aiKcal: 300 } },
+        { food: food("seed-phulka"), quantity: 2, unit: "piece" as const, ai: { confidence: "high" as const, portionEstimated: false, heard: "roti", aiKcal: 200 } },
+      ],
+      unmatched: [],
+      ai: { used: true, demo: false, question: null, note: null },
+    };
+    const notice = parseNotice(reply, (i) => (i.food.id === "seed-curd" ? 90 : 190));
+    expect(notice).toContain("Check Curd: the AI expected about 300 kcal.");
+    expect(notice).not.toContain("Check Phulka");
+  });
 });

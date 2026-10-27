@@ -90,9 +90,9 @@ export default function PrivacyPage() {
           <li><strong>Google:</strong> only if you choose to sign in with Google.</li>
           {AI_TEXT_LOGGING && (
             <li>
-              <strong>Anthropic:</strong> runs the AI that reads a typed or spoken meal when our food list doesn&apos;t recognise part of it. It receives only
-              those words, the meal (breakfast, lunch…) and how you eat (for example vegetarian), never your name or email. It may process them outside India.
-              Calories and macros still come from our food list, not from the AI.
+              <strong>Anthropic:</strong> runs the AI that reads a typed or spoken meal. It receives only those words, the meal (breakfast, lunch…) and how
+              you eat (for example vegetarian), never your name or email. It may process them outside India. Calories and macros come from our food list
+              whenever it has the food; for a food it doesn&apos;t have, the AI&apos;s estimate is used and labelled as one.
             </li>
           )}
           {VOICE_LOGGING && (

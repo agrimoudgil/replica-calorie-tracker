@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { Screen, ScreenHeader } from "@/components/screen";
-import { VOICE_LOGGING } from "@/lib/ai";
+import { AI_TEXT_LOGGING, VOICE_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
 import { requireUserId } from "@/lib/data/session";
 import { addDays, isIsoDate, localDate, localHour, zonedTimeToUtc } from "@/lib/dates";
@@ -55,7 +55,7 @@ export default async function AddFoodPage({ searchParams }: PageProps<"/log/sear
     <Screen>
       <ScreenHeader
         title="Add food"
-        subtitle={pastDate ? `Adding to ${new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${pastDate}T00:00:00Z`))}.` : "Type it or search. Calories come from our food list."}
+        subtitle={pastDate ? `Adding to ${new Intl.DateTimeFormat("en-IN", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(`${pastDate}T00:00:00Z`))}.` : AI_TEXT_LOGGING ? "Type it or search. Calories come from our food list, or an AI estimate for foods it doesn't have." : "Type it or search. Calories come from our food list."}
         back={pastDate ? `/?date=${pastDate}` : "/"}
       />
       <FoodLogger

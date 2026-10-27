@@ -54,7 +54,8 @@ export function createFakeEstimator(): MealEstimator {
 /*
  * Development reader: no AI call, no cost. It can't understand anything; it splits the
  * text on commas and "and", takes a leading number as the amount, and passes the rest on
- * as the food's name, so the matching and review steps can be tried. Marked demo.
+ * as the food's name with the same sample estimate, so the matching, estimate and review
+ * steps can be tried. Marked demo.
  */
 export function createFakeReader(): MealReader {
   return {
@@ -67,7 +68,9 @@ export function createFakeReader(): MealReader {
         .map((part) => {
           const m = part.match(/^(\d+(?:\.\d+)?)\s+(.*)$/);
           const name = (m ? m[2] : part).trim();
-          return { name, searchName: name, quantity: m ? Number(m[1]) : 1, unit: "katori", grams: 150, confidence: "low" };
+          // A sample estimate (one katori of a typical curry), so the not-in-the-list path can be tried.
+          const estimate = { kcal: 180, proteinG: 6, carbG: 24, fatG: 6, fiberG: 3 };
+          return { name, searchName: name, quantity: m ? Number(m[1]) : 1, unit: "katori", grams: 150, confidence: "low", estimate };
         });
       return { items, question: null, model: "demo", demo: true, usage: { inputTokens: 0, outputTokens: 0 } };
     },

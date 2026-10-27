@@ -6,7 +6,7 @@ import { UNITS } from "@/lib/nutrition/types";
 import { cleanReadItems } from "./read";
 import { EstimateError, type EstimateContext, type MealReader } from "./types";
 
-// No nutrient fields on purpose: the app looks every number up in its food list.
+// The estimate fields are a fallback: the app uses its food list's numbers whenever it has the food.
 const ReadSchema = z.object({
   items: z.array(
     z.object({
@@ -15,6 +15,11 @@ const ReadSchema = z.object({
       quantity: z.number(),
       unit: z.enum(UNITS),
       grams: z.number(),
+      kcal: z.number(),
+      protein_g: z.number(),
+      carb_g: z.number(),
+      fat_g: z.number(),
+      fiber_g: z.number(),
       confidence: z.enum(["high", "medium", "low"]),
     }),
   ),
@@ -31,9 +36,10 @@ List each distinct food or drink as its own item:
 - search_name: a short, plain, generic English description of the food as a food-composition database would name it, main ingredient first (for example "spinach cottage cheese curry", "yogurt drink sweetened", "chicken breast grilled"). No brand names.
 - quantity and unit: the amount the person said, in one of these units: katori (a 150 ml bowl), piece, glass (250 ml), tbsp, or g. A bowl is a katori. A plate of rice or of a dry dish is about 1.5 katori. A cup of tea or coffee is a glass. Use g for an amount given in grams or ml. With no amount given, use one usual serving.
 - grams: your estimate of the weight of the whole portion.
+- kcal, protein_g, carb_g, fat_g, fiber_g: your best estimate for the whole portion as eaten, for typical Indian home cooking unless the message says otherwise (restaurant, fried, with ghee, sugar-free and so on). Count only the oil a fried food soaks up, not the oil left in the pan. Carbohydrates include fibre.
 - confidence: "high" when the dish and the amount are clear, "medium" when the dish is clear but the amount is a guess, "low" when you are unsure what the dish is.
 
-Never give calories or nutrients. The app looks those up in its food database.
+The app uses its own food database's numbers whenever it has the food, and your estimate only when it doesn't, so name the dish as people know it rather than guessing a similar one.
 
 If a food is too unclear to guess (for example "some of that thing from yesterday"), leave it out and ask one short question about it in "question". Otherwise question is null. If the message has no food or drink in it, return an empty list.
 

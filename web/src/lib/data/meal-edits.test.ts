@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SEED_FOODS } from "@/lib/nutrition/foods";
 import { customFoodSchema, saveMealSchema } from "@/lib/api/schemas";
+import { catalogueItems } from "./catalogue-items";
 import { buildCustomFood } from "./custom-food";
 import { applyItemEdits, cleanMacros, isQuickAdd, itemFromFood } from "./meal-math";
 import type { Meal } from "./types";
@@ -55,6 +56,25 @@ describe("applyItemEdits", () => {
 
   it("keeps typed numbers in sane ranges", () => {
     expect(cleanMacros({ kcal: 30000, proteinG: -5, carbG: Number.NaN })).toEqual({ kcal: 5000, proteinG: 0, carbG: 0, fatG: 0, fiberG: 0 });
+  });
+
+  it("saves an AI estimate as an AI item, checking its numbers again", () => {
+    const estimate = { name: "Bisi bele bath", quantity: 1, unit: "katori" as const, grams: 200, confidence: "medium" as const, kcal: 260, proteinG: 8, carbG: 40, fatG: 7.5, fiberG: 5 };
+    const [item] = catalogueItems([{ estimate }], SEED_FOODS);
+    expect(item).toMatchObject({ foodId: null, name: "Bisi bele bath", grams: 200, source: "ai", aiConfidence: "medium", nutrients: { kcal: 260, proteinG: 8 } });
+    // Numbers sent back from the browser can't beat pure fat or outweigh the portion.
+    const [tampered] = catalogueItems([{ estimate: { ...estimate, grams: 50, kcal: 4000, proteinG: 300 } }], SEED_FOODS);
+    expect(tampered.nutrients).toMatchObject({ kcal: 450, proteinG: 50 });
+    // An estimate edited later rescales like a photo item.
+    const later = applyItemEdits({ ...meal, items: [{ ...item, id: "c", position: 0 }] }, [{ id: "c", quantity: 2, unit: "katori" }], SEED_FOODS)[0];
+    expect(later).toMatchObject({ grams: 400, source: "ai", nutrients: { kcal: 520 } });
+  });
+
+  it("accepts estimate items in a saved meal", () => {
+    const estimate = { name: "Bisi bele bath", quantity: 1, unit: "katori", grams: 200, confidence: "medium", kcal: 260, proteinG: 8, carbG: 40, fatG: 7.5, fiberG: 5 };
+    expect(saveMealSchema.safeParse({ mealType: "lunch", items: [{ estimate }] }).success).toBe(true);
+    expect(saveMealSchema.safeParse({ mealType: "lunch", items: [{ estimate: { ...estimate, confidence: "sure" } }] }).success).toBe(false);
+    expect(saveMealSchema.safeParse({ mealType: "lunch", items: [{ estimate: { ...estimate, grams: 0 } }] }).success).toBe(false);
   });
 });
 
