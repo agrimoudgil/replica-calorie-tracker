@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 /**
  * For an uptime monitor: 200 when the app can read its database (one row of the shared
  * food list), 503 when it can't. Says nothing else, so it is safe to leave public.
+ * A Vercel cron (vercel.json) also calls it once a day, so the free Supabase project
+ * never goes a week without a query and gets paused.
  */
 export async function GET() {
   const headers = { "Cache-Control": "no-store" };
