@@ -177,6 +177,8 @@ function mealFromRow(r: Row): Meal {
     savedAt: (r.saved_at as string | null) ?? null,
     createdAt: String(r.created_at),
     updatedAt: String(r.updated_at),
+    // Absent before migration 20261110120000; every meal was from the app then.
+    origin: r.origin === "whatsapp" ? "whatsapp" : "app",
   };
 }
 

@@ -34,7 +34,13 @@ export function MealSection({ type, meals, budget, addHref, time }: { type: Meal
       ) : (
         meals.map((m) => (
           <div key={m.id} className="border-t border-border">
-            {meals.length > 1 && <p className="px-4 pt-2 text-xs text-muted">{time.format(new Date(m.eatenAt))}</p>}
+            {(meals.length > 1 || m.origin === "whatsapp") && (
+              <p className="px-4 pt-2 text-xs text-muted">
+                {meals.length > 1 && time.format(new Date(m.eatenAt))}
+                {meals.length > 1 && m.origin === "whatsapp" && " · "}
+                {m.origin === "whatsapp" && "From WhatsApp"}
+              </p>
+            )}
             <ul>
               {m.items.map((i) => (
                 <li key={i.id}>

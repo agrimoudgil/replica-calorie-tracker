@@ -57,6 +57,8 @@ export type Meal = {
   savedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Where it was logged: the app (default) or the linked Oswald WhatsApp tracker. */
+  origin?: "app" | "whatsapp";
 };
 
 export type DraftMealInput = {

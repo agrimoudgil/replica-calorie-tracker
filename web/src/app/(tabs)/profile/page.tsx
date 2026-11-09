@@ -8,8 +8,11 @@ import { db } from "@/lib/data";
 import { isGuest, requireUserId } from "@/lib/data/session";
 import { supabaseEnabled } from "@/lib/supabase/config";
 import { THEME_COOKIE, parseTheme } from "@/lib/theme";
+import { WHATSAPP_LINK } from "@/lib/integrations/whatsapp/config";
+import { linkStatus } from "@/lib/integrations/whatsapp/store";
 import { AccountActions } from "./account-actions";
 import { Appearance } from "./appearance";
+import { WhatsAppLink } from "./whatsapp-link";
 
 export const metadata = { title: "Profile" };
 
@@ -50,6 +53,10 @@ export default async function ProfilePage() {
         ))}
       </ul>
       <Appearance initial={parseTheme((await cookies()).get(THEME_COOKIE)?.value)} />
+      {/* Listed only while the WhatsApp link is switched on (WHATSAPP_LINK=on with the shared secret). */}
+      {WHATSAPP_LINK && supabaseEnabled && (
+        <WhatsAppLink linkedAt={(await linkStatus(userId).catch(() => null))?.linkedAt ?? null} guest={await isGuest()} />
+      )}
       <section aria-labelledby="data-heading" className="flex flex-col gap-3">
         <h2 id="data-heading" className="text-lg font-semibold">Your data</h2>
         <p className="text-sm text-muted">

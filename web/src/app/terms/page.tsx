@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Screen, ScreenHeader } from "@/components/screen";
+import { WHATSAPP_LINK } from "@/lib/integrations/whatsapp/config";
 import { SITE } from "@/lib/site";
 
 export const metadata = { title: "Terms of use", alternates: { canonical: "/terms" } };
@@ -22,7 +23,7 @@ const list = "flex list-disc flex-col gap-1.5 pl-5";
 export default function TermsPage() {
   return (
     <Screen className="text-base leading-relaxed">
-      <ScreenHeader title="Terms of use" subtitle={`Last updated ${SITE.termsUpdated}`} />
+      <ScreenHeader title="Terms of use" subtitle={`Last updated ${WHATSAPP_LINK ? SITE.whatsappLinkTextAdded : SITE.termsUpdated}`} />
 
       <p>
         {SITE.name} is a free calorie and nutrition tracker, run by {SITE.operator} as a public test. By starting or signing in, you agree to these terms
@@ -51,6 +52,13 @@ export default function TermsPage() {
             give it back, because there&apos;s nothing to prove it&apos;s yours. Download your data from Profile whenever you want a copy.
           </li>
           <li>Keep the device you use {SITE.name} on locked: anyone who can open your browser can see your meals.</li>
+          {WHATSAPP_LINK && (
+            <li>
+              If you link {SITE.name} on WhatsApp, meals you save there afterwards are copied into this account, and WhatsApp stays in charge of them: a
+              later correction there replaces your edits here. Unlink in Profile or by sending UNLINK on WhatsApp. Unlink before you sign out of an account
+              that lives in this browser.
+            </li>
+          )}
         </ul>
       </Section>
 

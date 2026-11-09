@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { AI_TEXT_LOGGING, VOICE_LOGGING } from "@/lib/ai";
+import { WHATSAPP_LINK } from "@/lib/integrations/whatsapp/config";
 import { SITE } from "@/lib/site";
 
 export const metadata = { title: "Privacy policy", alternates: { canonical: "/privacy" } };
@@ -23,7 +24,7 @@ const list = "flex list-disc flex-col gap-1.5 pl-5";
 export default function PrivacyPage() {
   return (
     <Screen className="text-base leading-relaxed">
-      <ScreenHeader title="Privacy policy" subtitle={`Last updated ${SITE.privacyUpdated}`} />
+      <ScreenHeader title="Privacy policy" subtitle={`Last updated ${WHATSAPP_LINK ? SITE.whatsappLinkTextAdded : SITE.privacyUpdated}`} />
 
       <p>
         {SITE.name} is a free calorie and nutrition tracker for Indian meals, run by {SITE.operator} as a public test. This page explains what we store, why,
@@ -63,6 +64,13 @@ export default function PrivacyPage() {
             <li>
               <strong>Voice:</strong> when you tap the microphone, your browser turns your speech into text, and only that text reaches us, like typing. We never
               receive or keep the recording.
+            </li>
+          )}
+          {WHATSAPP_LINK && (
+            <li>
+              <strong>Meals from WhatsApp, only if you link it:</strong> if you link {SITE.name} on WhatsApp to this account, each meal you save there
+              afterwards is copied here: its words, meal, date and time, and each food with its portion. We work out the nutrients from our own food list. We
+              keep a random link number for each side, never your phone number. Meals saved on WhatsApp before you linked are not copied.
             </li>
           )}
         </ul>
@@ -121,6 +129,12 @@ export default function PrivacyPage() {
           <li><strong>See your data:</strong> Profile → Your data downloads everything you&apos;ve logged as spreadsheet files.</li>
           <li><strong>Correct it:</strong> edit your details, your targets and any meal you&apos;ve logged.</li>
           <li><strong>Delete it:</strong> Profile → Delete account. This also withdraws your consent.</li>
+          {WHATSAPP_LINK && (
+            <li>
+              <strong>Stop WhatsApp copies:</strong> Profile → WhatsApp → Unlink, or send UNLINK on WhatsApp. Meals already copied stay until you delete them
+              here. Changes you make on WhatsApp to a copied meal (a correction, UNDO, or deleting your WhatsApp data) also change or remove it here.
+            </li>
+          )}
           <li>
             <strong>Anything else</strong>, such as a question, a complaint, or naming someone to act for you if you can&apos;t: email {mail}. We&apos;ll reply
             within 30 days.
