@@ -58,6 +58,10 @@ export default function PrivacyPage() {
             <strong>Recovery check-ins, if you make them:</strong> the hours you slept, and how your energy and muscle soreness feel that day.
           </li>
           <li>
+            <strong>Feedback, if you send it:</strong> how easy logging is for you (1 to 5), what you write about what&apos;s missing, whether you&apos;d
+            rather log on WhatsApp, and when you answered. We read it without your name or email, only to decide what to improve.
+          </li>
+          <li>
             <strong>Photos:</strong> photo logging is switched off, so we don&apos;t collect meal photos. If we switch it on, we&apos;ll update this page first.
           </li>
           {VOICE_LOGGING && (
@@ -118,7 +122,7 @@ export default function PrivacyPage() {
 
       <Section id="keep" title="How long we keep it">
         <p>
-          Until you delete your account. Deleting it removes your profile, meals, foods, recipes, check-ins, the email you started with and your sign-in from our
+          Until you delete your account. Deleting it removes your profile, meals, foods, recipes, check-ins, feedback, the email you started with and your sign-in from our
           database straight away. Our providers may keep security logs for a short time after that. If you started with just your email, delete your
           account before signing out: without a password, you can&apos;t sign back in to delete it later.
         </p>

@@ -10,7 +10,7 @@ export const SITE = {
   /** When the terms of use last changed (shown on the page). */
   termsUpdated: "22 October 2026",
   /** When the privacy policy last changed (shown on the page). */
-  privacyUpdated: "25 October 2026",
-  /** When the WhatsApp-link wording was added to both pages; shown instead while WHATSAPP_LINK is on. */
-  whatsappLinkTextAdded: "10 November 2026",
+  privacyUpdated: "27 November 2026",
+  /** When the WhatsApp-link wording was added to both pages; shown instead while WHATSAPP_LINK is on. Set it to the switch-on day. */
+  whatsappLinkTextAdded: "27 November 2026",
 } as const;

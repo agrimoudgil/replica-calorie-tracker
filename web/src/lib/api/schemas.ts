@@ -148,6 +148,30 @@ export const checkInSchema = z.object({
   soreness: rating("soreness"),
 });
 
+/**
+ * Feedback: the one-time question after the third saved meal ("prompt") or the Profile form.
+ * Every answer is optional, but an answer has at least one part unless it's "Not now".
+ */
+export const feedbackSchema = z
+  .object({
+    kind: z.enum(["prompt", "profile"]),
+    ease: rating("rating").nullable().default(null),
+    missing: z
+      .string()
+      .trim()
+      .max(1000, "Keep it under 1,000 characters.")
+      .nullable()
+      .default(null)
+      .transform((v) => (v ? v : null)),
+    prefersWhatsapp: z.enum(["yes", "maybe", "no"]).nullable().default(null),
+    dismissed: z.boolean().default(false),
+  })
+  .refine((f) => f.dismissed || f.ease !== null || f.missing !== null || f.prefersWhatsapp !== null, {
+    message: "Answer at least one question.",
+    path: ["ease"],
+  })
+  .refine((f) => !f.dismissed || f.kind === "prompt", { message: "Only the question can be put off.", path: ["dismissed"] });
+
 /** A recipe: ingredients and how many servings the pot makes. Nutrients are computed on the server. */
 export const recipeSchema = z.object({
   name: z.string().trim().min(1, "Give the recipe a name.").max(120, "Keep the name under 120 characters."),

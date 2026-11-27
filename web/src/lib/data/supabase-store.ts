@@ -544,6 +544,35 @@ export function createSupabaseStore(clients: Clients): DataLayer {
       if (error) throw toDataError(error);
     },
 
+    async saveFeedback(userId, input) {
+      const db = await clients.user();
+      // The database refuses an 11th answer in a day (23514), which maps to "invalid".
+      const { error } = await db.from("feedback").insert({
+        user_id: userId,
+        kind: input.kind,
+        ease: input.ease,
+        missing: input.missing,
+        prefers_whatsapp: input.prefersWhatsapp,
+        dismissed: input.dismissed,
+      });
+      if (error) throw toDataError(error);
+    },
+
+    async feedbackAsked(userId) {
+      const db = await clients.user();
+      const { data, error } = await db.from("feedback").select("id").eq("user_id", userId).eq("kind", "prompt").limit(1);
+      // Before the feedback table exists (code deployed ahead of its migration), never ask.
+      if (error) return true;
+      return data.length > 0;
+    },
+
+    async countSavedMeals(userId) {
+      const db = await clients.user();
+      const { count, error } = await db.from("meals").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("status", "saved");
+      if (error) throw toDataError(error);
+      return count ?? 0;
+    },
+
     async listFavouriteFoodIds(userId) {
       const db = await clients.user();
       const { data, error } = await db.from("favourite_foods").select("food_id").eq("user_id", userId).order("created_at");

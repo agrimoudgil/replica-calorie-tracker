@@ -12,7 +12,7 @@ import type { Food } from "@/lib/nutrition/types";
 import { buildCustomFood } from "./custom-food";
 import { applyItemEdits, mealScore } from "./meal-math";
 import { assembleRecipe, buildRecipe, recipeMeta, usedInRecipe, type IngredientGrams, type RecipeMeta } from "./recipe";
-import { DataError, type AiUsage, type CheckIn, type DataLayer, type Meal, type Profile } from "./types";
+import { DataError, FEEDBACK_DAILY_LIMIT, type AiUsage, type CheckIn, type DataLayer, type FeedbackInput, type Meal, type Profile } from "./types";
 
 /*
  * Fake data layer for development before Supabase exists (see architecture.md).
@@ -32,6 +32,8 @@ type State = {
   recipes: Record<string, RecipeMeta & { ingredients: IngredientGrams[] }>;
   /** By user id, then local date. */
   checkIns: Record<string, Record<string, CheckIn>>;
+  /** By user id, oldest first. */
+  feedback: Record<string, Array<FeedbackInput & { at: string }>>;
 };
 
 export function createFileStore(dir: string): DataLayer {
@@ -43,11 +45,12 @@ export function createFileStore(dir: string): DataLayer {
     try {
       state = JSON.parse(fs.readFileSync(file, "utf8")) as State;
     } catch {
-      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [], favourites: {}, recipes: {}, checkIns: {} };
+      state = { profiles: {}, meals: {}, customFoods: [], aiUsage: [], favourites: {}, recipes: {}, checkIns: {}, feedback: {} };
     }
     state.favourites ??= {}; // stores written before favourites existed
     state.recipes ??= {}; // ...or before recipes existed
     state.checkIns ??= {}; // ...or before check-ins existed
+    state.feedback ??= {}; // ...or before feedback existed
     return state;
   };
 
@@ -294,6 +297,26 @@ export function createFileStore(dir: string): DataLayer {
       }
     },
 
+    async saveFeedback(userId, input) {
+      requireId(userId, "user");
+      const s = load();
+      const mine = (s.feedback[userId] ??= []);
+      const dayAgo = Date.now() - 86_400_000;
+      if (mine.filter((f) => Date.parse(f.at) > dayAgo).length >= FEEDBACK_DAILY_LIMIT) {
+        throw new DataError("invalid", "Some values are out of range.");
+      }
+      mine.push({ ...input, at: new Date().toISOString() });
+      persist();
+    },
+
+    async feedbackAsked(userId) {
+      return (load().feedback[userId] ?? []).some((f) => f.kind === "prompt");
+    },
+
+    async countSavedMeals(userId) {
+      return Object.values(load().meals).filter((m) => m.userId === userId && m.status === "saved").length;
+    },
+
     async listFavouriteFoodIds(userId) {
       return [...(load().favourites[userId] ?? [])];
     },
@@ -356,6 +379,7 @@ export function createFileStore(dir: string): DataLayer {
       s.aiUsage = s.aiUsage.filter((u) => u.userId !== userId);
       delete s.favourites[userId];
       delete s.checkIns[userId];
+      delete s.feedback[userId];
       persist();
       fs.rmSync(path.join(dir, "photos", userId), { recursive: true, force: true });
     },
