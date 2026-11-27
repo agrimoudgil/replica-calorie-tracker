@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ChevronRight, Download } from "lucide-react";
+import { FeedbackForm } from "@/components/feedback-form";
 import { Screen, ScreenHeader } from "@/components/screen";
 import { PHOTO_LOGGING } from "@/lib/ai";
 import { db } from "@/lib/data";
@@ -50,6 +51,11 @@ export default async function ProfilePage() {
         ))}
       </ul>
       <Appearance initial={parseTheme((await cookies()).get(THEME_COOKIE)?.value)} />
+      <section id="feedback" aria-labelledby="feedback-heading" className="flex scroll-mt-4 flex-col gap-3">
+        <h2 id="feedback-heading" className="text-lg font-semibold">Send feedback</h2>
+        <p className="text-sm text-muted">Oswald is a free public test. Tell us what works, what doesn&apos;t and what&apos;s missing, any time.</p>
+        <FeedbackForm kind="profile" />
+      </section>
       <section aria-labelledby="data-heading" className="flex flex-col gap-3">
         <h2 id="data-heading" className="text-lg font-semibold">Your data</h2>
         <p className="text-sm text-muted">

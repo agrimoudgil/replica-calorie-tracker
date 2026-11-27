@@ -149,6 +149,26 @@ export type CheckIn = {
 
 export type CheckInInput = Pick<CheckIn, "sleepHours" | "energy" | "soreness">;
 
+/**
+ * What someone tells us about Oswald: the one-time question after their third saved meal
+ * ("prompt"), or any time from Profile ("profile"). "Not now" on the question is `dismissed`.
+ */
+export type FeedbackInput = {
+  kind: "prompt" | "profile";
+  /** How easy logging is: 1 very hard ... 5 very easy. */
+  ease: Rating | null;
+  /** What's missing, in their words (up to 1,000 characters). */
+  missing: string | null;
+  /** Would they rather log meals by WhatsApp? */
+  prefersWhatsapp: "yes" | "maybe" | "no" | null;
+  dismissed: boolean;
+};
+
+/** Feedback each person may send in a day. */
+export const FEEDBACK_DAILY_LIMIT = 10;
+/** Saved meals before Oswald asks its one-time question. */
+export const FEEDBACK_AFTER_MEALS = 3;
+
 export type AiUsage = {
   userId: string;
   kind: "photo" | "text" | "insight" | "next_meal" | "chat";
@@ -225,6 +245,13 @@ export interface DataLayer {
   /** Creates or replaces the day's check-in. */
   saveCheckIn(userId: string, localDate: string, input: CheckInInput): Promise<CheckIn>;
   deleteCheckIn(userId: string, localDate: string): Promise<void>;
+
+  /** Stores one piece of feedback; past the daily limit it's refused as invalid. */
+  saveFeedback(userId: string, input: FeedbackInput): Promise<void>;
+  /** True once the person answered, or said "Not now" to, the one-time question. */
+  feedbackAsked(userId: string): Promise<boolean>;
+  /** How many meals the person has saved. */
+  countSavedMeals(userId: string): Promise<number>;
 
   listFavouriteFoodIds(userId: string): Promise<string[]>;
   /** Stars or un-stars a food the user can see. Idempotent. */
